@@ -1,0 +1,113 @@
+{
+  "reports": [
+    {
+      "breadth": "broad",
+      "finding": "llama.cpp merged mainline diffusion-LM support: PR #14644 (merged 2025-07-16) added Dream 7B, then LLaDA (confirmed merged 2025-08-01 in discussion #12208), and later RND1, via a dedicated llama-diffusion-cli. Practitioner numbers from the PR: sampling was initially CPU-bound (total generation 132.8s, optimized to 19.3s); on an RTX 3090 at Q8_0 roughly ~1s per denoising step; per-step logits transfer from GPU cost ~15ms (311MB buffer); context capped at 2048. ggerganov asked to keep libllama changes minimal; a user hit assertion failures until follow-up PR #14771 made --diffusion-eps or --diffusion-block-length mandatory. Key for the build: examples/diffusion README documents flags --diffusion-steps (default 256), --diffusion-algorithm (origin/entropy/margin/random/confidence) and --diffusion-visual, a built-in live terminal visualization of unmasking — i.e., consumer-hardware GGUF inference of dLLMs plus denoising visualization is already a shipped, maintained feature.",
+      "url": "https://github.com/ggml-org/llama.cpp/pull/14644",
+      "who": "am17an (llama.cpp collaborator), ggerganov, CISC, users in ggml-org/llama.cpp"
+    },
+    {
+      "breadth": "broad",
+      "finding": "LLaDA's issue tracker is consistent multi-user evidence that running/fine-tuning an 8B dLLM locally is painful: #51 SFT OOMs on RTX 3090 24GB even with 4-bit quantization + gradient checkpointing (open since Mar 2025); #24 user with ~10GB VRAM could not load the model (AMD RX 6750XT via DirectML); #44 'Inference Speed' confirms slower-than-AR generation with no KV cache due to non-causal attention (10+ reactions); #88 evaluation takes 6-44 hours on dual A100s; #112 GSM8K eval estimated ~31 hours on an A100 80GB; #91 eval harness memory bloat allocating 40GB+ for a 15GB model; #124 (Feb 2026) community PR for VRAM-efficient Gumbel sampling. Implication: 8B-class dLLM local work is inference-only at best on consumer GPUs; math evaluation loops are the slowest case.",
+      "url": "https://github.com/ML-GSAI/LLaDA/issues",
+      "who": "JohnConnor123, ethrx, jacklishufan, Kairong-Han, Algolzw, sean-lamont and others (ML-GSAI/LLaDA issues)"
+    },
+    {
+      "breadth": "broad",
+      "finding": "Dream 7B issue tracker shows the same slowness pattern even on datacenter GPUs, from multiple independent users: #3 simple completion took 33.7s diffusion time on an A800; #32 61.1s per iteration on HumanEvalPlus on an A6000 at 256 steps ('Dream 7B is too slow'); #42 ~3 minutes for 512 tokens / 128 steps on an A100; #22 general plea for acceleration. GPTQModel's maintainer (Qubitium) added alpha quantization support (8-bit, group 128) in Apr 2025 — the quantization ecosystem engaged early. Combined with Dream's stated 20GB+ VRAM requirement, running Dream on a consumer laptop was effectively impossible until GGUF/llama.cpp support landed.",
+      "url": "https://github.com/DreamLM/Dream/issues",
+      "who": "anyshu, allzero-kwon, diasforgood, zcsh, Qubitium (DreamLM/Dream issues)"
+    },
+    {
+      "breadth": "broad",
+      "finding": "r/LocalLLaMA LLaDA release thread (284 points, 64 comments, Feb 2025) contains multiple independent firsthand runs: _wred_ reported VRAM usage grows with prompt length until OOM and 4-bit quantization helps but does not fix linear memory growth; ashirviskas benchmarked 32-65 tok/s at 128 tokens / 32 steps (block-size dependent) with quality collapsing at 256 tokens when steps were insufficient (mostly unfilled tokens); cafedude found the demo emitting only 'Sure, I can help you with that' boilerplate instead of code; Cergorach: 'a brick will be more creative than this LLaDA'; Mart-McUH raised the reasoning concern that non-sequential generation may rationalize wrong answers rather than correct them. Community verdict: interesting mechanism, weak product at 8B in Feb 2025.",
+      "url": "https://www.reddit.com/r/LocalLLaMA/comments/1izfy2d/",
+      "who": "r/LocalLLaMA users (_wred_, ashirviskas, cafedude, Cergorach, Mart-McUH; OP Aaaaaaaaaeeeee)"
+    },
+    {
+      "breadth": "broad",
+      "finding": "r/LocalLLaMA Dream 7B thread (893 points, 158 comments) documents community reception: launch-day HuggingFace weight links 404'd and the GitHub was empty (Competitive_Ad_5515, 16 upvotes), breeding 'not really releasing' cynicism; Xquarx observed the model 'does not change a word after it's been placed' — no self-correction during denoising, contrary to image-diffusion intuition; Fallingdowndizzyvr flagged the UX regression that you cannot read along during generation (no token streaming); TheRealGentlefox: 'randomly a god at sudoku' — the planning-task edge was noticed by users, matching the paper's Countdown/Sudoku numbers. Relevant to the build: expect no self-correction from vanilla masked diffusion sampling, and design the UI around block refinement instead of streaming.",
+      "url": "https://www.reddit.com/r/LocalLLaMA/comments/1jptset/",
+      "who": "r/LocalLLaMA users (Competitive_Ad_5515, MoffKalast, Xquarx, Fallingdowndizzyvr, TheRealGentlefox; OP jd_3d)"
+    },
+    {
+      "breadth": "anecdote",
+      "finding": "Strongest small-scale from-scratch practitioner datapoint found: hr-diffuse-1-nano — bidirectional Mamba-2 + LLaDA-style masked diffusion at 288M params, cross-architecture distilled from SmolLM-135M, trained on a single H100 for ~$500, weights on HuggingFace. Reported results: 14% infill recovery where AR models score ~0 (cannot condition on text after the blank); repetition-loop rate 7.5% vs 37.5% for the AR teacher; but 'six different self-correction methods all failed at this scale, while a 300k-param external critic head detects errors far above chance' — 'Small models don't doubt; they rationalize.' Directly calibrates the feasibility envelope: at sub-300M scale expect infill and anti-repetition wins, but do NOT expect self-correction; an external verifier/critic is the workable error-detection path for a laptop math model.",
+      "url": "https://news.ycombinator.com/item?id=48792131",
+      "who": "farisallafi (HN, 2026-07-05, posting own project)"
+    },
+    {
+      "breadth": "broad",
+      "finding": "The 'BERT is just a single text diffusion step' HN thread (455 points, Oct 2025) validates the minimal build path and adds prior art plus firsthand experiments: koningrobot traced the AR/denoising equivalence to Li Yao et al. 2014 (arXiv 1409.0585); jaaustin linked D3PM and 1904.09324 generative-MLM work; DiffusionBERT was surfaced as having done RoBERTa-as-diffusion 'more rigorously' earlier; zaptrem reported byte-level MLM with curriculum-ramped corruption working firsthand; thatjoeoverthr found mask placement matters ('always put the [MASK] at the end'); briandw articulated the core discreteness objection ('you can't add noise to a token'). Karpathy publicly endorsed the post ('Nice, short post illustrating how simple text (discrete) diffusion can be'). Multiple independent replications (nathan-barry RoBERTa, gumran DistilBERT, ZHZisZZ dllm BERT-Chat, DiffusionBERT) make 'BERT + variable mask rate + unmask schedule = small dLLM' broad, replicated practitioner knowledge.",
+      "url": "https://news.ycombinator.com/item?id=45644328",
+      "who": "nathan-barry (author) + HN commenters (zaptrem, thatjoeoverthr, koningrobot, briandw); Karpathy amplification at x.com/karpathy/status/1980347971935068380"
+    },
+    {
+      "breadth": "anecdote",
+      "finding": "Verified details of gumran/language-diffusion, the smallest complete fine-tune recipe found: fine-tunes DistilBERT into a LLaDA-style masked diffusion generator on TinyStories with a training script under 80 lines, HuggingFace accelerate-based with author guidance to 'change the training arguments as required by your compute constraints'; trained checkpoint published (gumran/distilbert-diffusion-TinyStories); 53 stars. No quantitative eval — quality evidenced only by a demo GIF. Author's stated next step is reimplementing the architecture from scratch without the transformers library. Useful as the lowest-effort working template for the laptop build, but it is one hobbyist artifact without benchmarks.",
+      "url": "https://github.com/gumran/language-diffusion",
+      "who": "gumran (GitHub hobbyist)"
+    },
+    {
+      "breadth": "broad",
+      "finding": "The denoising-visualization UI is a solved, repeatedly reimplemented pattern with a concrete reference implementation: multimodalart's LLaDA Space (app.py) keeps a visualization_states list of (token, color) tuples captured after every denoising step and streams them via Gradio yield with a 0-1s delay slider; color scheme: #444444 masked, confidence-binned reveals (<0.3 red #FF6666, 0.3-0.7 orange #FFAA33, >0.7 green #66CC66), previously-revealed blue #6699CC; exposed controls: gen length 16-128, steps 8-64, temperature, CFG scale, block length, remasking strategy (low-confidence vs random), plus position:word user constraints. The newer LLaDA-2-1 Space switched to the diffusers-library LLaDA2Pipeline with BlockRefinementScheduler, coloring tokens from the scheduler's sampled_probs. Independent implementations of the same idea: ML-GSAI's official Gradio app, llama.cpp's --diffusion-visual terminal mode, simonw's curses port of tiny-diffusion's matplotlib demo, and nathan-barry's visualize.py — at least five independent builds confirm this is a small, low-risk component.",
+      "url": "https://huggingface.co/spaces/multimodalart/LLaDA/blob/main/app.py",
+      "who": "multimodalart (Apolinario Passos, Hugging Face), plus simonw, nathan-barry, llama.cpp contributors"
+    },
+    {
+      "breadth": "broad",
+      "finding": "Hugging Face diffusers v0.38.0 added LLaDA2Pipeline — a text diffusion-LM pipeline (block-wise iterative refinement, confidence-ordered unmasking from a fully masked sequence) in the mainstream diffusers library, already consumed by public Spaces via BlockRefinementScheduler. Ecosystem signal: text dLLM inference is entering standard tooling (transformers-adjacent diffusers, llama.cpp, GGUF quants, GPTQ alpha support), so a laptop build can target established APIs and formats rather than bespoke research code.",
+      "url": "https://github.com/huggingface/diffusers/releases/tag/v0.38.0",
+      "who": "Hugging Face diffusers maintainers"
+    },
+    {
+      "breadth": "anecdote",
+      "finding": "Only hands-on Gemini Diffusion tester reports found (HN launch thread): findingMeaning — 'I have access to it and my god it is fast', while noting susceptibility to prompt injection; airstrike called it 'ridiculously fast' but doubted usefulness on real codebases. The rest of the 44057820 thread is informed speculation, notably nvtop's explanation of iterative token replacement as diffusion's error-correction advantage and EGreg's unresolved question of how token counts are predetermined. Access remained waitlisted, so firsthand evidence stayed thin — consistent with Simon Willison being one of few to publish measured numbers (857 tok/s).",
+      "url": "https://news.ycombinator.com/item?id=44057820",
+      "who": "HN users findingMeaning, airstrike, nvtop, EGreg"
+    },
+    {
+      "breadth": "anecdote",
+      "finding": "First commercial-adjacent fine-tune of an open dLLM by a small company: Proximile LLC (on-prem AI for SMBs) released LLaDA-8B-Tools (May 14 2025, MIT), a LoRA SFT (rank 128, alpha 256, targeting q/k/v/gate_proj) of LLaDA-8B-Instruct on a modified ToolACE subset to emit JSON tool calls; their r/LocalLLaMA post claims 'bidirectional attention seems to help with structured outputs.' No benchmarks published, training hardware unstated, 57 upvotes and minimal discussion. Evidence that LoRA-SFT of an 8B dLLM is practical for a small team (workstation class), and that structured-output tasks are where practitioners reach for diffusion first.",
+      "url": "https://huggingface.co/Proximile/LLaDA-8B-Tools",
+      "who": "Proximile LLC (ProximileLLC on r/LocalLLaMA)"
+    },
+    {
+      "breadth": "broad",
+      "finding": "Cramming (Geiping & Goldstein, arXiv 2212.14034, Dec 2022): a BERT-class masked language model trained from scratch on a single consumer GPU in 24 hours reaches performance close to BERT, and scaling-law behavior holds at this tiny compute scale. Since the modern masked-diffusion objective is exactly BERT-style masked CE with variable mask rate (MDLM/LLaDA equivalence), this peer-reviewed, widely cited study is the strongest broad evidence that the laptop build's core pretraining problem (one-GPU-day encoder MLM) is tractable, and its pipeline re-analysis (what helps at low compute vs what doesn't) transfers directly.",
+      "url": "https://arxiv.org/abs/2212.14034",
+      "who": "Jonas Geiping & Tom Goldstein (U Maryland)"
+    },
+    {
+      "breadth": "broad",
+      "finding": "Ask HN 'Is anyone doing anything cool with tiny language models?' (Jan 2025, 200+ comments) grounds the narrow-domain-tiny-model thesis with production and hobbyist reports: JetBrains ships a 0.1B local single-line code-completion model (~70MB zipped per language, 1536-token context) inside IDEs; behohippy runs a 3B Q4 model on an N100 mini-PC CPU generating endless stories at reading pace on one core; Raspberry Pi 5 offline RAG reported by ata_aman. Broad corroboration that sub-1B specialized local models deliver real utility — supporting the plan of a small math-specialized dLLM rather than a general model.",
+      "url": "https://news.ycombinator.com/item?id=42784365",
+      "who": "HN practitioners (withInReason, pseudosavant, behohippy, ata_aman)"
+    },
+    {
+      "breadth": "anecdote",
+      "finding": "Calibration for naive from-scratch training costs on consumer hardware: r/LocalLLaMA user dual_ears reported training a ~70M-param model entirely from scratch takes 'multiple weeks of GPU time' (Jan 2024, pre-Muon/pre-speedrun stack), which is why they sought pretrained 300-700M checkpoints to fine-tune instead. Useful as the pessimistic bound the modded-nanogpt/Muon efficiency stack (corpus: ~30x improvements; 4090 GPT-2-124M in ~90 min) has since moved — but a laptop builder using a vanilla stack should still expect multi-day-to-week runs at 50-100M params.",
+      "url": "https://www.reddit.com/r/LocalLLaMA/comments/1abzhg5/",
+      "who": "dual_ears (r/LocalLLaMA)"
+    },
+    {
+      "breadth": "anecdote",
+      "finding": "Corroborated the tiny-diffusion Show HN specifics beyond the corpus: author nathan-barry confirmed 10.7M params 'so you can try it out locally' and that fixed-length canvases are handled acceptably because 'there are usually multiple ways to express an idea in varying lengths'; simonw posted a working curses terminal port of the matplotlib denoising demo with GIF; rand0mwalk explained the practical variable-length recipe (shorter outputs pad with empty content, longer ones require extending the canvas); kouteiheika identified ReLU-squared as inherited from the nanoGPT-speedrun lineage; MIT license added on request. Ecosystem pointers from the thread: NVIDIA Fast-dLLM, ZHZisZZ/dllm, and char-mdlm as further minimal references.",
+      "url": "https://news.ycombinator.com/item?id=45876742",
+      "who": "nathan-barry, simonw, rand0mwalk, kouteiheika (HN)"
+    },
+    {
+      "breadth": "anecdote",
+      "finding": "Mercury/Inception got near-zero traction on r/LocalLLaMA (top Mercury posts: 1 point, 0 comments each, per pullpush archive) in stark contrast to open-weight LLaDA (284 pts) and Dream (893 pts) threads — the local-model community engages with dLLMs only when weights are downloadable, and no local Mercury usage reports exist because it is API-only. For the plan: practitioner evidence about local dLLM behavior comes almost entirely from LLaDA/Dream/tiny repos, not from the fastest commercial models, and speed claims from H100-based products do not transfer to laptop expectations.",
+      "url": "https://www.reddit.com/r/LocalLLaMA/comments/1kbtf9g/",
+      "who": "r/LocalLLaMA aggregate (pullpush.io archive query)"
+    },
+    {
+      "breadth": "anecdote",
+      "finding": "diffuse-cpp (HuggingFace org, maintainer commits under 'Carmenest') is the only dedicated CPU dLLM inference engine found, shipping GGUFs for both LLaDA-8B-Instruct and Dream-v0-Instruct-7B; model-card benchmarks on a 12-core AMD EPYC report 15.3 tok/s average with inter-step cache enabled (1.8x llama.cpp AR baseline) and up to 27.7 tok/s (3.3x) on translation-style prompts using only 2-5 denoising steps — but reasoning/arithmetic prompts need 15-16 steps and drop to ~0.6x llama.cpp, i.e., slower than AR on CPU. Single-maintainer numbers, unreplicated, but the direction (math is the worst case for step-count reduction) matches ParallelBench and MED findings in the corpus.",
+      "url": "https://huggingface.co/diffuse-cpp/LLaDA-8B-Instruct-GGUF",
+      "who": "diffuse-cpp org / Carmenest (Hugging Face)"
+    }
+  ],
+  "summary": "Practitioner-reality sweep for building a laptop-scale math dLLM, drawn from issue trackers, r/LocalLLaMA (via pullpush archive), HN threads, HuggingFace artifacts, and repo code. Headline findings: (1) Local inference of 8B open dLLMs is now genuinely possible but was painful for a year — LLaDA/Dream issue trackers show OOM on RTX 3090 SFT, 10GB VRAM insufficient to load, no KV cache, 30-180s completions even on A100-class GPUs, and 31-hour GSM8K evals; the pain drove mainline llama.cpp diffusion support (PR #14644, Dream+LLaDA+RND1, GGUF, ~1s/step on RTX 3090 Q8) including a built-in --diffusion-visual terminal denoising view, plus diffusers v0.38's LLaDA2Pipeline and CPU engines (diffuse-cpp: faster than AR on few-step prompts, slower than AR on math prompts needing 15+ steps). (2) The from-scratch small build path is broadly replicated: BERT+variable-mask-rate equivalence has at least four independent hobbyist implementations (nathan-barry 10.7M char-level, gumran <80-line DistilBERT, nanoLLaDA, BERT-Chat), Karpathy publicly endorsed the minimal approach, and Cramming proves 1-GPU-day encoder MLM training works — but the best small-scale datapoint (farisallafi's 288M hr-diffuse-1-nano, ~$500 H100) found infill wins (14% vs ~0 AR) and repetition reduction while six self-correction methods all failed at small scale (external 300k-param critic head worked), matching r/LocalLLaMA observations that deployed dLLMs never revise committed tokens. (3) The real-time unmasking visualization is a solved small problem with ≥5 independent implementations; multimodalart's Gradio app.py is a complete copyable recipe (per-step (token,color) states, confidence-binned coloring, yield streaming, steps/block/remasking controls). (4) Community-reception reality: open weights got heavy engagement (Dream thread 893 pts) while API-only Mercury was ignored locally; users consistently report speed enthusiasm, quality skepticism (boilerplate outputs, weak creative writing), no streaming UX, and an unusual strength profile ('randomly a god at sudoku') that matches the corpus's planning-task evidence. Anecdote vs broad is flagged per report; the broadest-supported build implications are: target BERT-style masked CE at <150M params, plan an external verifier instead of relying on self-correction, budget steps generously for math prompts, and reuse the established Gradio/terminal visualization pattern."
+}

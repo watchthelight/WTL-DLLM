@@ -1,0 +1,262 @@
+{
+  "aspect": "Practitioner & community reality of diffusion language models (DLLMs) — what hobbyists, open-source maintainers, and hands-on testers actually experience when running, fine-tuning, and building discrete diffusion LMs, especially at local/consumer scale",
+  "findings": [
+    {
+      "claim": "Andrej Karpathy publicly amplified how simple discrete text diffusion is ('Nice, short post illustrating how simple text (discrete) diffusion can be'), framing diffusion as parallel iterated denoising vs autoregression's left-to-right, in reaction to Nathan Barry's RoBERTa-diffusion post; secondary coverage reports he was tempted to 'train nanochat with a diffusion model' and mused that generation order is a 'flexible' part of LLM architecture",
+      "url": "https://x.com/karpathy/status/1980347971935068380",
+      "title": "Andrej Karpathy on X: 'Nice, short post illustrating how simple text (discrete) diffusion can be...'",
+      "tier": "A",
+      "date": "2025-10-20",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "The post Karpathy amplified — Nathan Barry's 'BERT is just a Single Text Diffusion Step' — demonstrates that a fine-tuned RoBERTa generates coherent text with only a training-objective change (variable masking rates + scheduled denoising), validating that BERT-style masked LM is a single-masking-rate special case of text diffusion; this became the community's canonical 'diffusion LMs are simpler than you think' artifact",
+      "url": "https://nathan.rs/posts/roberta-diffusion/",
+      "title": "BERT is just a Single Text Diffusion Step (nathan.rs)",
+      "tier": "A",
+      "date": "2025-10",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "Nathan Barry's follow-up tiny-diffusion is a character-level text diffusion model at 10.7M parameters trained on Tiny Shakespeare, presented as a from-scratch minimal implementation (secondary posts describe it as ~364 lines, ~80% code-identical to a tiny GPT with differences isolated mainly to generate and get_batch); its Show HN hit 172 points, proving laptop-scale from-scratch text diffusion is a done, replicated thing",
+      "url": "https://github.com/nathan-barry/tiny-diffusion",
+      "title": "GitHub - nathan-barry/tiny-diffusion: A character-level language diffusion model trained on Tiny Shakespeare",
+      "tier": "S",
+      "date": "2025-11-10",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "In the Tiny Diffusion HN thread, practitioners exposed ecosystem gaps and behaviors: gdiamos noted 'One year later and there is still no inference engine for diffusion LLMs,' another user said 'someone needs to make it work with vllm,' Simon Willison converted the matplotlib denoising demo into a terminal curses UI (a working example of real-time unmasking visualization), and the author explained confidence-aware parallel decoding as the fix for tokens that don't fit their region",
+      "url": "https://news.ycombinator.com/item?id=45876742",
+      "title": "Show HN: Tiny Diffusion – A character-level text diffusion model from scratch (Hacker News, 172 points)",
+      "tier": "B",
+      "date": "2025-11-10",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "ash80/diffusion-gpt (258 stars) adapts Karpathy's baby GPT into an annotated 7.23M-parameter character-level discrete diffusion model on Shakespeare using a continuous-time Markov chain corruption process and discrete Tweedie sampler, with a GIF of the denoising process — a second independent minimal reference implementation at trivially small scale",
+      "url": "https://github.com/ash80/diffusion-gpt",
+      "title": "GitHub - ash80/diffusion-gpt: From baby GPT to diffusion GPT",
+      "tier": "S",
+      "date": "2025",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "nanoLLaDA ('the most bare-bones masked diffusion language model on earth', ~500 LOC, 110 stars) documents that the entire architectural delta from GPT is one line (is_causal=False in attention) plus the loss CE(logits[masked], targets)/mask_ratio, and publishes a hardware table on 4x NVIDIA L4 (23GB): 20M params ≈ 2 min, 135M ≈ 2.3 h, 477M ≈ 4 days compute-optimal — the best public calibration of what small-scale DLLM training actually costs, implying single-laptop-GPU builds should target roughly the 10-30M range for fast iteration",
+      "url": "https://github.com/Lukas-Xue/nanoLLaDA",
+      "title": "GitHub - Lukas-Xue/nanoLLaDA: The most bare-bones masked diffusion language model on earth",
+      "tier": "S",
+      "date": "2025-2026",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "LLaDA's official GUIDELINES.md states pre-training is 'straightforward and simple. Starting from an existing autoregressive model training code, only a few lines need to be modified,' provides the exact forward_process + weighted cross-entropy loss code, a 1%-of-batches random-length trick for variable-length generation, and specifies that SFT differs only in not noising the prompt — the primary recipe practitioners are pointed to when they ask how to train one",
+      "url": "https://github.com/ML-GSAI/LLaDA/blob/main/GUIDELINES.md",
+      "title": "LLaDA GUIDELINES.md (ML-GSAI/LLaDA, 3,911 stars)",
+      "tier": "S",
+      "date": "2025-02",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "In LLaDA issue #30, the authors admitted the released ecosystem does not reproduce their training: LLaDA-8B was trained on H800 80GB GPUs (batch size 4/card) with a private cluster-optimized framework, the public SMDM repo 'only share[s] the same loss function,' and they are 'not sure whether SMDM can successfully train an 8B model' — practitioners trying to retrain from public code hit config gaps and OOMs; the community answer became ZHZisZZ/dllm (2,653 stars, Sept 2025), a lightweight HF-Trainer fine-tuning framework for LLaDA/Dream",
+      "url": "https://github.com/ML-GSAI/LLaDA/issues/30",
+      "title": "LLaDA issue #30: How implement LLaDA training from the SMDM",
+      "tier": "S",
+      "date": "2025-03-05",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "A self-described non-coder (angrysky56) built llada_gui — a GUI for LLaDA with quantization and CPU options — reporting he got it 'about 10x faster and able to run on 12gb nvidia gpu' via quantization but that 'CPU is much slower than GPU'; the project (posted to LLaDA issue #23 and iterated into llada_gui_new with prototype training) is direct evidence that (a) 8B DLLMs fit mid-range consumer GPUs only with quantization, (b) CPU-only inference of 8B DLLMs is painful, and (c) there is organic community demand for diffusion-process GUIs",
+      "url": "https://github.com/ML-GSAI/LLaDA/issues/23",
+      "title": "LLaDA issue #23: 'I made you a GUI with quantization and CPU options' (angrysky56/llada_gui)",
+      "tier": "B",
+      "date": "2025-03-02",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "In the 284-upvote r/LocalLLaMA LLaDA thread, firsthand numbers were rough: ashirviskas measured ~19GB VRAM on an RX 7900 XTX at gen_length=128/steps=32 with 16-65 tok/s ('very unoptimized'), _wred_ flagged that VRAM grows linearly with prompt length (no KV-cache equivalent), aguspiza found it fails 'calculate 4095+4095 and write the result in hexadecimal' (ignores the hex part), cafedude got 'Sure, I can help you with that' followed by no code from the demo, and hp1337 warned llama.cpp support 'will likely require effort' due to the different architecture",
+      "url": "https://www.reddit.com/r/LocalLLaMA/comments/1izfy2d/llada_large_language_diffusion_model_weights_demo/",
+      "title": "r/LocalLLaMA: LLaDA - Large Language Diffusion Model (weights + demo)",
+      "tier": "B",
+      "date": "2025-02-27",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "llama.cpp merged diffusion-model support in mid-2025 (PR #14644 by am17an, 'Both Dream and LLaDA support is now merged' Aug 1, 2025), and the shipped llama-diffusion-cli supports Dream, LLaDA, and RND1 GGUFs with a built-in --diffusion-visual flag for live denoising visualization, --diffusion-steps (default 256), block-length scheduling, and five unmasking strategies (origin/entropy/margin/random/confidence) — meaning local laptop inference AND a reference implementation of denoising visualization already exist in mainstream tooling",
+      "url": "https://github.com/ggml-org/llama.cpp/discussions/12208",
+      "title": "Diffusion-model (LLaDA) support for llama.cpp? - Discussion #12208 (+ examples/diffusion/README.md, PR #14644)",
+      "tier": "S",
+      "date": "2025-08-01",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "Dream repo issue #42 shows real-world DLLM speed confusion even among maintainers: a practitioner's A100 took ~3 min for 512 tokens at 128 steps while the maintainer first claimed 16s then corrected to ~4s on H800 (~8-12s A100 expected), confirmed steps scale linearly with wall-clock time, and the user hit OOM when batching — practitioner throughput on real hardware routinely lands far from paper/marketing numbers and needs careful config",
+      "url": "https://github.com/DreamLM/Dream/issues/42",
+      "title": "Dream issue #42: Expected slow generation speed or bad config/setup?",
+      "tier": "S",
+      "date": "2025-07-10",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "In the 893-upvote r/LocalLLaMA Dream 7B thread, testers' verdict was mixed-to-negative on quality: UserXtheUnknown found it 'not particularly good when compared to similar-in-size sequential LLMs,' Pyros-SD-Models flagged the fixed-length canvas problem (ask 'what does meow in a word?' with length 1024 → 'cat' plus 1023 invalidated tokens), and xor_2 argued block-size/speed/quality tradeoffs erase the theoretical speed advantage at quality-optimal settings",
+      "url": "https://www.reddit.com/r/LocalLLaMA/comments/1jptset/university_of_hong_kong_releases_dream_7b/",
+      "title": "r/LocalLLaMA: University of Hong Kong releases Dream 7B",
+      "tier": "B",
+      "date": "2025-04-02",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "For math-reasoning specialization, d1 (diffu-GRPO RL on LLaDA-8B for GSM8K/MATH/Countdown/Sudoku, 453 stars) issues reveal the honest cost: authors report ~1-2 days on 8x A100-80GB to converge (7,700 gradient steps for GSM8K), practitioners on 6x 48GB GPUs saw multi-thousand-hour ETAs with default configs, maintainers explain 'online RL is typically slow... for diffu-GRPO, this issue is further exacerbated due to the slower dLLM inference,' and the fast-dllm acceleration 'did not work very stably' in RL sampling — RL-based math tuning of DLLMs is firmly out of consumer-laptop reach; SFT is the feasible path",
+      "url": "https://github.com/dllm-reasoning/d1/issues/11",
+      "title": "d1 issue #11: diffu-GRPO Training Time (+ issue #25)",
+      "tier": "S",
+      "date": "2025",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "The first Mercury Coder HN thread mixed 'Holy shit this is fast' reactions with grounded skepticism: nacs challenged the 'commodity GPU' framing ('H100s cost $30K+'), questioned replication on an RTX 3090, and noted Groq/Cerebras had hit similar speeds a year earlier; vessenes observed diffusion-style artifacts in long-context code (features tried then abandoned mid-sequence), and Inception's cofounder promised the tech report while citing arXiv 2310.16834 and 2406.07524 as the underlying science",
+      "url": "https://news.ycombinator.com/item?id=43187518",
+      "title": "Mercury Coder: frontier diffusion LLM generating 1000+ tok/sec on commodity GPUs (Hacker News)",
+      "tier": "B",
+      "date": "2025-02",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "Maxim Saplin's independent benchmark of Mercury Coder measured a stable ~370 tok/s versus the advertised 737 tok/s, LiveBench 35.9 (below GPT-4.1 Nano's 42.7 and Gemma-3's 50.7), and persistent hallucinations/illegal moves in LLM Chess — concluding the model is a genuine speed win but performs like 'in 2023 in terms of performance'",
+      "url": "https://dev.to/maximsaplin/mercury-coder-a-quick-test-of-diffusion-language-model-12b2",
+      "title": "Mercury Coder - A Quick Test of Diffusion Language Model (Maxim Saplin, dev.to)",
+      "tier": "B",
+      "date": "2025-04-18",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "Simon Willison's firsthand Gemini Diffusion test measured 857 tok/s building a working chat app in single-digit seconds, with the top community correction (nvtop) being that 'Diffusion LMs have little to do with image diffusion and are much closer to BERT and old good masked language modeling'; the ensuing 890-point HN thread converged on: parallel speedup is real, bidirectional attention is a real advantage, but quality-at-scale and reasoning remain unproven, and boroboro4 noted AR inference is bandwidth-bound while diffusion is compute-bound — a property that helps big GPUs but works AGAINST weak laptop/CPU hardware",
+      "url": "https://simonwillison.net/2025/May/21/gemini-diffusion/",
+      "title": "Gemini Diffusion (Simon Willison) + HN thread id 44057820",
+      "tier": "A",
+      "date": "2025-05-21",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "By the Mercury 2 HN thread (Feb 2026), practitioner sentiment had matured but not converged: users still reported spelling corruption ('Dieadona' for Maradona), early-token errors the model contradicts but cannot self-correct mid-canvas, and a Zed user found Mercury 1 inline completions slower than Cursor's autocomplete; Inception's cofounder repositioned Mercury 2 as a 'fast agent' tier (~Haiku 4.5 quality at ~5x speed), not a frontier reasoner — one commenter noted it was 'easily fooled by usual trick questions' but adequate on math/engineering queries",
+      "url": "https://news.ycombinator.com/item?id=47144464",
+      "title": "Mercury 2: Fast reasoning LLM powered by diffusion (Hacker News)",
+      "tier": "B",
+      "date": "2026-02-24",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "Adoption signals are lopsided: official GSAI-ML/LLaDA-8B-Instruct shows ~371,857 downloads and 359 likes on Hugging Face (snapshot July 2026), yet the community GGUF/quantization ecosystem for diffusion LMs is thin (a single LLaDA-MoE GGUF by mradermacher with ~1,177 downloads surfaced in search; no Dream-7B GGUF surfaced), and community fine-tunes exist but are early (e.g., ProximileLLC's LLaDA-8B-Tools tool-calling finetune, which found bidirectional attention 'seems to help with structured outputs' but produced extraneous trailing text) — lots of curiosity-downloading, little production-grade local tooling",
+      "url": "https://huggingface.co/GSAI-ML/LLaDA-8B-Instruct",
+      "title": "Hugging Face model API snapshot: GSAI-ML LLaDA models + community GGUF/fine-tunes",
+      "tier": "S",
+      "date": "2026-07-25",
+      "confidence": "medium",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "A secondary Chinese-tech-press writeup of Karpathy's October 2025 commentary ('Diffusion Won't Die, BERT Will Live Forever') reports his fuller reflection: human thinking 'may be more autoregressive' but a diffusion-like mechanism in mental latent space can't be ruled out, and 'perhaps there's room for interpolation or further generalization between the two' — exploratory endorsement, not a claim that diffusion beats AR",
+      "url": "https://eu.36kr.com/en/p/3539549367824519",
+      "title": "Diffusion Won't Die, BERT Will Live Forever: Karpathy's Late-Night Reflection (36kr)",
+      "tier": "C",
+      "date": "2025-10",
+      "confidence": "medium",
+      "evidenceType": "inference"
+    }
+  ],
+  "coverage": {
+    "attempted": [
+      "reddit LocalLLaMA LLaDA/Dream diffusion experience (WebSearch + pullpush.io API)",
+      "site:reddit.com LocalLLaMA LLaDA (WebSearch)",
+      "hacker news diffusion LM threads: Mercury Coder, Mercury, Mercury 2, Gemini Diffusion, Tiny Diffusion (Algolia HN API items 43187518, 44489690, 44057820, 45876742, 47144464)",
+      "'I trained a diffusion language model' blog posts",
+      "Nathan Barry RoBERTa diffusion / tiny-diffusion",
+      "karpathy diffusion language models tweet + secondary coverage",
+      "GitHub issues mining via gh CLI: ML-GSAI/LLaDA (#23, #30), DreamLM/Dream (#42, #67), dllm-reasoning/d1 (#11, #25)",
+      "GitHub repo discovery via gh search: nanoLLaDA, mdlm, dllm, llada_gui, diffusion-gpt",
+      "llama.cpp diffusion support (discussion #12208, PR #14644, examples/diffusion/README.md)",
+      "LLaDA GUIDELINES.md official training recipe",
+      "simonwillison.net Gemini Diffusion",
+      "huggingface API model search: LLaDA downloads, diffusion language models, Dream GGUF",
+      "masked diffusion single-GPU training blogs"
+    ],
+    "useful": [
+      "Algolia HN API (all five threads yielded substantive practitioner comments)",
+      "pullpush.io Reddit API (LLaDA thread 1izfy2d comments, Dream 7B thread discovery, LLaDA-8B-Tools)",
+      "gh CLI issue mining (highest-signal source: training hardware truths, speed disputes, GUI project, RL cost)",
+      "GitHub repo READMEs (nanoLLaDA hardware table, llama.cpp diffusion CLI flags, GUIDELINES.md loss code)",
+      "WebSearch for Karpathy/Nathan Barry chain",
+      "HF API for LLaDA download counts"
+    ],
+    "failed": [
+      "WebSearch with site:reddit.com operator (returned arXiv results instead of Reddit)",
+      "direct news.ycombinator.com fetch (HTTP 429; worked around via Algolia API)",
+      "direct X/Twitter thread access (login-walled; Karpathy tweet text verified only via search snippets and secondary coverage)",
+      "HF search for Dream-7B GGUF quants (only unrelated 'Dream'-named models surfaced; existence unconfirmed either way)",
+      "generic 'huggingface community small diffusion LM tutorial' queries (returned image-diffusion course content, not text diffusion)"
+    ]
+  },
+  "contradictions": [
+    "Speed marketing vs measured reality: Mercury advertised 737-1000+ tok/s but an independent tester measured ~370 tok/s; Dream maintainers themselves miscalculated expected generation time by 15x in their own issue tracker (16s -> 4s claimed vs 3 min observed on A100); one Mercury 2 user called it 'incredibly slow and full of unforgivable mistakes' while others in the same thread called it near-instantaneous.",
+    "'Commodity GPU' framing vs hardware truth: Inception marketed Mercury as running on commodity GPUs, but HN commenters pointed out the demo hardware was H100-class ($30K+), and replication on an RTX 3090 was an open question; similarly LLaDA-8B needed ~19GB VRAM unquantized at modest settings — above most laptop GPUs.",
+    "Compute-bound cuts both ways: the Reddit LLaDA thread framed diffusion as escaping the memory-bandwidth bottleneck (good for batch-1 GPU inference), while the Gemini Diffusion HN thread noted diffusion makes inference compute-bound — an advantage on beefy GPUs but a disadvantage on CPU-only/weak laptop hardware, and it erases batching economies.",
+    "Paper claims vs community testing: LLaDA/Dream papers claim parity with same-size autoregressive models (LLaMA3-8B class), but multiple hands-on testers found them 'not particularly good' vs same-size sequential LLMs, with instruction-following failures (hex arithmetic ignored, empty code responses).",
+    "'Only a few lines changed from AR training' (official GUIDELINES.md) vs reproduction reality: the actual 8B training used a private cluster framework on H800s, the public SMDM code shares only the loss function, and practitioners hit unanswered config gaps — the simplicity claim holds at toy scale (nanoLLaDA, tiny-diffusion prove it) but not at 8B scale.",
+    "Self-correction narrative vs observed behavior: diffusion's bidirectional refinement is theoretically able to revise earlier tokens, yet Mercury 2 testers documented the model generating a wrong early claim and then repeatedly contradicting itself without fixing it mid-canvas."
+  ],
+  "practitionerReality": "The community has decisively validated the LOW end and remains skeptical of the MIDDLE. At toy scale, text diffusion is now a solved weekend project: three independent minimal implementations (tiny-diffusion 10.7M chars/364 lines, ash80/diffusion-gpt 7.23M, nanoLLaDA ~500 LOC) plus Karpathy's amplification established that the delta from a GPT you already know is one attention flag (is_causal=False) and a reweighted masked cross-entropy loss; nanoLLaDA's hardware table (20M params in ~2 min, 135M in ~2.3h on 4x L4) is the best public calibration and implies a single mid-range laptop GPU comfortably trains ~5-30M param models and can stretch to ~100M with patience, while CPU-only training stays in the low millions. For inference, llama.cpp already ships diffusion support (Dream/LLaDA/RND1) with a --diffusion-visual live-unmasking mode and five unmasking strategies — so a real-time denoising UI has working prior art in mainstream tooling, plus Simon Willison's curses TUI and angrysky56's llada_gui (quantized 8B on a 12GB GPU, 'CPU much slower'). The recurring pain points practitioners hit: VRAM grows linearly with sequence length (no KV cache), fixed-length canvases waste tokens on short answers, steps trade linearly with wall-clock time, quality at 7-8B is judged below same-size AR models, arithmetic/instruction-following is brittle, and there is still no mature serving stack (vLLM absent; 'no inference engine' complaint a year in). For the math specialization: RL-style tuning (d1/diffu-GRPO on GSM8K) costs ~2 days on 8x A100-80GB and is laptop-infeasible — the realistic local path is masked-diffusion SFT per LLaDA's GUIDELINES.md (don't noise the prompt, weight loss by 1/mask_ratio) on a small from-scratch model over synthetic arithmetic + GSM8K-style data, with expectations set at 'coherent small-model' not 'LLaMA-class'.",
+  "gaps": [
+    "No verified end-to-end practitioner account of training a diffusion LM on a CPU-only machine or single laptop GPU with wall-clock numbers (closest calibrations: nanoLLaDA on 4x L4, tiny-diffusion at 10.7M params; laptop feasibility is inference from these, not directly documented).",
+    "Could not access X/Twitter threads directly (login walls) — from-scratch experiment threads on X beyond Karpathy's tweet text (verified via search snippets and secondary coverage) are unverified; twitter query effectively unfulfilled except through secondary sources.",
+    "No community project found that specializes a small diffusion LM for GSM8K/arithmetic at consumer scale (d1 is 8B multi-GPU research RL; a gap the user's project would actually fill).",
+    "Dream-7B GGUF quantization availability unconfirmed — llama.cpp supports the architecture so quants likely exist, but my HF searches did not surface them.",
+    "Did not deep-mine r/MachineLearning threads or 2026-era Reddit (pullpush coverage skews 2025); recent LLaDA2.0-mini / RND1-era community sentiment is underrepresented.",
+    "Karpathy's fuller 'BERT will live forever' reflections are sourced from a translated secondary writeup (36kr); exact original phrasing unverified.",
+    "tiny-diffusion's '364 lines, 80% identical to GPT' detail comes from a third-party Threads summary, not verified against the repo file itself."
+  ],
+  "bestSources": [
+    {
+      "title": "llama.cpp diffusion support: discussion #12208 + examples/diffusion README + PR #14644",
+      "url": "https://github.com/ggml-org/llama.cpp/discussions/12208",
+      "why": "Proves local diffusion-LM inference is mainstream-supported today (Dream/LLaDA/RND1 GGUF) and ships a working --diffusion-visual live-unmasking mode plus five named unmasking algorithms — directly reusable prior art for both the local-inference and visualization requirements of the build plan."
+    },
+    {
+      "title": "nanoLLaDA + LLaDA GUIDELINES.md + LLaDA issue #30 (training reality cluster)",
+      "url": "https://github.com/Lukas-Xue/nanoLLaDA",
+      "why": "Together these give the exact from-scratch recipe (one-line attention change, weighted CE loss, SFT prompt-no-noise rule), a concrete params-vs-hardware-vs-time table for small scale, and the authors' own admission of what the public code cannot reproduce at 8B — the single most load-bearing cluster for setting realistic laptop expectations."
+    },
+    {
+      "title": "Show HN: Tiny Diffusion (thread + nathan-barry/tiny-diffusion repo)",
+      "url": "https://news.ycombinator.com/item?id=45876742",
+      "why": "The closest existing artifact to the user's target project (10.7M char-level diffusion LM trained from scratch, with denoising visualizations including Simon Willison's terminal UI), plus candid community feedback on decoding pitfalls and the missing inference-engine ecosystem."
+    },
+    {
+      "title": "r/LocalLLaMA: LLaDA weights + demo thread (284 pts, 64 comments)",
+      "url": "https://www.reddit.com/r/LocalLLaMA/comments/1izfy2d/llada_large_language_diffusion_model_weights_demo/",
+      "why": "Densest collection of firsthand consumer-hardware numbers: 19GB VRAM at modest settings, 16-65 tok/s, VRAM linear in prompt length, concrete arithmetic-instruction failure — the ground truth for what unoptimized DLLM inference costs on hardware near the user's."
+    },
+    {
+      "title": "d1 issues #11/#25: diffu-GRPO training time on GSM8K",
+      "url": "https://github.com/dllm-reasoning/d1/issues/11",
+      "why": "The honest cost accounting for math-reasoning specialization of diffusion LMs (8x A100-80GB for ~2 days; acceleration tricks unstable under RL) — decisively rules out RL on a laptop and redirects the plan toward small-scale SFT on math data."
+    }
+  ]
+}

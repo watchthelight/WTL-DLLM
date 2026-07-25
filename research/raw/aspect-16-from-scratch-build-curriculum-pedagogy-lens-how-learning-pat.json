@@ -1,0 +1,255 @@
+{
+  "aspect": "From-scratch build curriculum & pedagogy — lens: How / learning path (for building a laptop-scale diffusion LLM)",
+  "findings": [
+    {
+      "claim": "Karpathy's free 'Neural Networks: Zero to Hero' is the canonical prerequisite curriculum: 8 video lectures building from scratch in code — micrograd/backprop (2h25m), makemore bigram LM (1h57m), MLP (1h15m), activations/gradients/BatchNorm (1h55m), manual backprop (1h55m), WaveNet (56m), 'Let's build GPT' transformer (1h56m), and GPT tokenizer/BPE (2h13m). Stated prerequisites: solid Python and intro calculus. It contains no diffusion content — the diffusion leg of a DLLM curriculum must come from elsewhere.",
+      "url": "https://karpathy.ai/zero-to-hero.html",
+      "title": "Neural Networks: Zero To Hero (karpathy.ai)",
+      "tier": "S",
+      "date": "Lectures 2022–2024; page verified 2026-07-25",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "build-nanogpt teaches training craft via a deliberately clean git-commit history: it reproduces GPT-2 (124M) from an empty file, with each commit explained in an accompanying video lecture. The reproduction takes ~1 hour and ~$10 on cloud GPUs. Pedagogical model: walk the commit history sequentially alongside the video; scope is base-model pretraining only (no chat finetuning).",
+      "url": "https://github.com/karpathy/build-nanogpt",
+      "title": "karpathy/build-nanogpt: Video+code lecture on building nanoGPT from scratch",
+      "tier": "S",
+      "date": "2024; verified 2026-07-25",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "nanoGPT's char-level Shakespeare config is the proven laptop-scale recipe and the natural AR baseline before a diffusion swap: 6 layers / 6 heads / 384-dim, context 256, batch 64, lr 1e-3 decaying to 1e-4, warmup 100 iters, beta2 0.99, dropout 0.2, 5,000 iters (~3 min on A100, val loss ~1.47). The documented CPU-only 'baby GPT' variant (4 layers / 4 heads / 128-dim, context 64, batch 12, 2,000 iters, dropout 0) trains in ~3 minutes on CPU; --device=mps gives 2–3x on Apple Silicon. Note: repo carries a deprecation notice (Nov 2025) pointing to nanochat.",
+      "url": "https://github.com/karpathy/nanoGPT/blob/master/config/train_shakespeare_char.py",
+      "title": "nanoGPT config/train_shakespeare_char.py + README (small-hardware section)",
+      "tier": "S",
+      "date": "Config verified 2026-07-25; deprecation notice Nov 2025",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "Primary-source hyperparameter defaults at GPT-2-124M scale, from nanoGPT train.py: lr 6e-4, min_lr 6e-5, warmup 2,000 iters, cosine decay, weight_decay 0.1, AdamW betas (0.9, 0.95), grad_clip 1.0, dtype bfloat16 if supported else float16 (autocast + GradScaler only needed for fp16), torch.compile enabled by default, gradient_accumulation 5*8 with micro-batch 12. Contrast with the tiny char-model config (lr 1e-3, beta2 0.99): 'defaults' are scale-dependent, and copying big-model schedules onto tiny models is a known failure mode.",
+      "url": "https://raw.githubusercontent.com/karpathy/nanoGPT/master/train.py",
+      "title": "nanoGPT train.py (default hyperparameters)",
+      "tier": "S",
+      "date": "Verified 2026-07-25",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "minbpe is the standard from-scratch tokenizer module for the curriculum: minimal, clean BPE code with three levels (BasicTokenizer, RegexTokenizer, GPT4Tokenizer reproducing tiktoken's GPT-4 tokenizer), covering train/encode/decode, paired with the 2h13m 'Let's build the GPT Tokenizer' lecture and an exercise progression. For a math-specialized DLLM this stage is where digit-tokenization decisions get made — though a char-level model (tiny-diffusion route) lets you skip BPE entirely at first.",
+      "url": "https://github.com/karpathy/minbpe",
+      "title": "karpathy/minbpe: Minimal, clean code for Byte Pair Encoding",
+      "tier": "S",
+      "date": "Released Feb 2024; verified 2026-07-25",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "The Annotated Transformer (harvardnlp) teaches the 'paper as line-by-line code' method: an annotated Jupyter/jupytext reimplementation of 'Attention Is All You Need' where each concept is immediately followed by the PyTorch code implementing it (original 2018, updated 2022). It is the template for how to read the LLaDA/MDLM papers as code later in the curriculum, though it implements the full encoder-decoder rather than the decoder-only/bidirectional encoder a DLLM needs.",
+      "url": "https://github.com/harvardnlp/annotated-transformer",
+      "title": "harvardnlp/annotated-transformer + nlp.seas.harvard.edu/annotated-transformer",
+      "tier": "S",
+      "date": "2018, updated 2022; verified 2026-07-25",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "Hugging Face's 'The Annotated Diffusion Model' (Niels Rogge & Kashif Rasul, June 7 2022) implements continuous DDPM (Ho et al. 2020) on Fashion-MNIST 28x28: Gaussian noise on pixels, U-Net denoiser, timestep schedule, sampling loop. It contains zero discrete/text diffusion content. Curriculum implication: it builds diffusion intuition (forward corruption process, iterative reverse process, timestep conditioning) but its core machinery (epsilon-prediction, U-Net, Gaussian math) does NOT transfer to masked discrete diffusion for text — treat as optional intuition, not the implementation path.",
+      "url": "https://huggingface.co/blog/annotated-diffusion",
+      "title": "The Annotated Diffusion Model (Hugging Face blog)",
+      "tier": "S",
+      "date": "2022-06-07; verified 2026-07-25",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "nanoLLaDA ('the most bare-bones masked diffusion language model on earth') is a ~500-line implementation of LLaDA-style masked diffusion with a tutorial.ipynb that runs the full pipeline from scratch: download data, train tokenizer, pretrain, generate. Training objective: mask random tokens, loss = CE(logits[masked], targets[masked]) / mask_ratio — the weighting makes it a proper ELBO. Sampling: start all-[MASK], iteratively unmask highest-confidence predictions; supports temperature, semi-autoregressive blocks, and classifier-free guidance. Tested at 20M/135M/477M params on 4x L4 GPUs (20M trains in ~2 min there; 43K–143K tok/s).",
+      "url": "https://github.com/Lukas-Xue/nanoLLaDA",
+      "title": "Lukas-Xue/nanoLLaDA: bare-bones masked diffusion language model",
+      "tier": "S",
+      "date": "2025 (post-LLaDA); verified 2026-07-25",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "The single most load-bearing pedagogical fact for the build plan: the architectural delta from a GPT to a masked diffusion LM is tiny — nanoLLaDA frames it as changing is_causal=True to is_causal=False in attention (bidirectional attention) plus adding a [MASK] token and swapping the objective/sampler. tiny-diffusion confirms: its diffusion and GPT implementations share ~80% of code (diffusion ~400 lines vs gpt.py 313 lines). The curriculum can therefore be 'build nanoGPT first, then flip it'.",
+      "url": "https://github.com/nathan-barry/tiny-diffusion",
+      "title": "nanoLLaDA README + nathan-barry/tiny-diffusion (corroborating)",
+      "tier": "S",
+      "date": "2025; verified 2026-07-25",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "tiny-diffusion (Nathan Barry) is the closest existing artifact to the parent project's goal: a 10.7M-param character-level masked discrete diffusion model on Tiny Shakespeare, adapted minimally from Karpathy's nanochat GPT, trained ~20 min on an A100 (vs ~10 min for its GPT twin at 5,000 vs 10,000 iters — roughly 2x training cost at equal scale). It generates in parallel blocks by iteratively filling masked tokens with confidence-based decoding, and ships visualize.py for step-by-step generation visualization — a direct starting point for the denoising-UI requirement. Size permits local/consumer execution.",
+      "url": "https://github.com/nathan-barry/tiny-diffusion",
+      "title": "nathan-barry/tiny-diffusion: character-level text diffusion from scratch",
+      "tier": "S",
+      "date": "Late 2025 (post-nanochat); verified 2026-07-25",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "Practitioner evidence from the tiny-diffusion Show HN thread: (1) masked diffusion requires pre-committing to a fixed-length masked canvas; the author argues varying-length phrasings plus confidence-aware decoding mitigate truncation; (2) the ReLU^2 activation was inherited from the nanogpt-speedrun → nanochat → tiny-diffusion lineage on empirical grounds, not theory; (3) commenters flagged the lack of production inference engines for diffusion LLMs (NVIDIA Fast-dLLM cited as early work) — meaning a from-scratch builder writes their own sampler, which is pedagogically fine but sets expectations.",
+      "url": "https://news.ycombinator.com/item?id=45876742",
+      "title": "Show HN: Tiny Diffusion – character-level text diffusion model from scratch (HN discussion)",
+      "tier": "B",
+      "date": "Late 2025; verified 2026-07-25",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "Awesome-Diffusion-LLM provides the explicit two-notebook pedagogical bridge plus a maintained paper list: continuous_diff.ipynb (diffusion LM in continuous word-vector space, as an entry point) then masked_diff.ipynb (mask-based discrete diffusion LM in token space supporting text generation), inspired by LLaDA's guidelines — a deliberate continuous-then-discrete sequencing for learners, plus organized paper categories (discrete diffusion, efficiency/inference acceleration, CoT reasoning applications).",
+      "url": "https://github.com/yczhou001/Awesome-Diffusion-LLM",
+      "title": "yczhou001/Awesome-Diffusion-LLM: paper list, tutorial, and nano code for Diffusion LLMs",
+      "tier": "S",
+      "date": "2025; verified 2026-07-25",
+      "confidence": "medium",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "The LLaDA training objective the curriculum must teach: sample masking ratio t ~ Uniform[0,1], independently mask each token with probability t, compute cross-entropy only on masked positions with a 1/t weighting — proven an upper bound on negative log-likelihood, making it a principled generative objective rather than BERT-style fixed-15% MLM. LLaDA-8B pretrained on 2.3T tokens. Both minimal repos (nanoLLaDA, tiny-diffusion) implement exactly this objective, so paper and toy code align one-to-one.",
+      "url": "https://github.com/ML-GSAI/LLaDA",
+      "title": "ML-GSAI/LLaDA official implementation + explainer coverage (Towards Data Science / Medium)",
+      "tier": "S",
+      "date": "2025 (LLaDA paper Feb 2025); verified 2026-07-25",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "Karpathy's 'A Recipe for Training Neural Networks' supplies the debugging discipline layer of the curriculum: neural net training 'fails silently', so proceed staged — (1) inspect data extensively; (2) build end-to-end skeleton with sanity checks: fix seeds, verify loss at init equals -log(1/n_classes) (= ln(vocab_size) for an LM), init final layer correctly, overfit one small batch to ~zero loss, visualize the exact tensors entering the net, gradient-check dependency structure; (3) overfit ('don't be a hero' — copy a known architecture; Adam at 3e-4 early); (4) regularize; (5) random-search tune; (6) squeeze. Named common bugs: off-by-one target leakage in autoregressive models, view-vs-transpose batch mixing, clipping loss instead of gradients, copied LR schedules from unrelated domains.",
+      "url": "https://karpathy.github.io/2019/04/25/recipe/",
+      "title": "A Recipe for Training Neural Networks (Andrej Karpathy)",
+      "tier": "A",
+      "date": "2019-04-25 (canonical, explicitly historical)",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "Official PyTorch AMP guidance relevant to the laptop constraint: torch.autocast + GradScaler together for fp16 training (autocast alone for inference); expect ~2–3x speedup only on Tensor-Core GPUs (Volta/Turing/Ampere+), modest gains on older ones; matmul dims should be multiples of 8; and — critically for this project — small or CPU-bound networks may see no benefit from mixed precision. bfloat16 has float32's exponent range, is more overflow-resilient, and can eliminate the need for GradScaler (nanoGPT's default: bf16 if supported, GradScaler only for fp16). Implication: on CPU-only laptops skip AMP; on a mid-range laptop GPU use bf16 autocast if Ampere+, else fp16+GradScaler.",
+      "url": "https://docs.pytorch.org/tutorials/recipes/recipes/amp_recipe.html",
+      "title": "Automatic Mixed Precision — PyTorch official recipe (+ PyTorch mixed-precision blog)",
+      "tier": "S",
+      "date": "Current docs (PyTorch 2.13); verified 2026-07-25",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "Sebastian Raschka's 'Build a Large Language Model (From Scratch)' (book + rasbt/LLMs-from-scratch repo) is the laptop-first alternative/complement to the Karpathy path: main-chapter code is explicitly 'designed to run on conventional laptops within a reasonable timeframe' with no GPU required (GPU auto-used if present); 7 chapters (text data → attention → GPT architecture → pretraining → classification/instruction finetuning) plus appendices on training optimizations and LoRA, bonus BPE-from-scratch notebooks, LR scheduler/hyperparameter material, and a 17-hour companion video course.",
+      "url": "https://github.com/rasbt/LLMs-from-scratch",
+      "title": "rasbt/LLMs-from-scratch (Build a Large Language Model From Scratch)",
+      "tier": "S",
+      "date": "Book 2024, repo actively updated; verified 2026-07-25",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "nanochat is Karpathy's current (2025) recommended successor to nanoGPT and the codebase both minimal DLLM repos derive from: a full pipeline (tokenizer → pretraining → finetuning → evaluation → CLI inference) in a minimal/hackable codebase; headline '$100 speedrun' trains a GPT-2-class model in ~1.5–4h on 8x H100 (single GPU works ~8x slower), and it explicitly supports CPU/Apple-Silicon via runs/runcpu.sh with much smaller models. Caveat for this project: its headline recipes assume datacenter GPUs; the laptop path uses its structure, not its scale.",
+      "url": "https://github.com/karpathy/nanochat",
+      "title": "karpathy/nanochat",
+      "tier": "S",
+      "date": "2025; verified 2026-07-25",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "For the theory leg, Sander Dieleman's 'Diffusion language models' (Jan 2023) is the standard expert conceptual reading on why diffusion dominates perceptual domains while autoregression dominates text; in June 2023 he highlighted a paper quantifying a ~64x compute-efficiency disadvantage for (continuous) diffusion LMs vs autoregressive ones 'across all scales... a constant factor'. Expectation-setting for the curriculum: a laptop DLLM will trail an equal-budget AR twin in quality-per-FLOP; newer masked-diffusion work (MDLM 2024, LLaDA 2025) narrowed but did not erase this gap.",
+      "url": "https://sander.ai/2023/01/09/diffusion-language.html",
+      "title": "Diffusion language models — Sander Dieleman (+ his June 2023 X post on the 64x result)",
+      "tier": "A",
+      "date": "2023-01-09 (blog), 2023-06 (64x note); verified via search 2026-07-25",
+      "confidence": "medium",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "After the nano-scale implementations, kuleshov-group/mdlm ('Simple and Effective Masked Diffusion Language Model', NeurIPS 2024) is the step-up research-grade reference codebase for the simplified masked-diffusion (Rao-Blackwellized ELBO) formulation that LLaDA-style models build on — the natural 'read the real thing' stage of the curriculum.",
+      "url": "https://github.com/kuleshov-group/mdlm",
+      "title": "kuleshov-group/mdlm: [NeurIPS 2024] Simple and Effective Masked Diffusion Language Model",
+      "tier": "S",
+      "date": "NeurIPS 2024; verified via search 2026-07-25",
+      "confidence": "medium",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "Synthesis — an assembled curriculum with every stage backed by a verified artifact: (0) training discipline: Karpathy Recipe checklist; (1) AR foundations: Zero to Hero lectures 1–7 (or Raschka's book if laptop-only/book-first); (2) tokenization: minbpe — or defer by going char-level; (3) laptop AR baseline: nanoGPT char-Shakespeare config (CPU ~3 min); (4) the diffusion flip: tiny-diffusion (char-level, has visualizer) and/or nanoLLaDA tutorial.ipynb (BPE-level, ELBO-correct, CFG + semi-AR sampling); (5) theory backfill: Dieleman blog → LLaDA paper → MDLM code; (6) specialize data to arithmetic/GSM8K and build the UI on the visualize.py pattern. No single existing course covers steps 4–6; the plan must splice them. Total prerequisite video time for the Karpathy leg is ~14.5 hours.",
+      "url": "https://karpathy.ai/zero-to-hero.html",
+      "title": "Synthesis across karpathy.ai, tiny-diffusion, nanoLLaDA, rasbt/LLMs-from-scratch",
+      "tier": "A",
+      "date": "2026-07-25 (synthesis of sources dated 2019–2025)",
+      "confidence": "high",
+      "evidenceType": "inference"
+    }
+  ],
+  "coverage": {
+    "attempted": [
+      "karpathy nanoGPT zero to hero build GPT from scratch course",
+      "karpathy minbpe BPE tokenizer from scratch",
+      "annotated transformer harvard nlp implementation tutorial",
+      "huggingface annotated diffusion model blog post tutorial",
+      "pytorch training loop best practices mixed precision bfloat16 torch.compile 2025",
+      "small transformer hyperparameters learning rate warmup weight decay AdamW defaults training from scratch",
+      "common mistakes training language model from scratch checklist debugging neural network recipe",
+      "minimal discrete diffusion language model implementation tutorial from scratch nano",
+      "Sander Dieleman blog diffusion language models explainer",
+      "LLaDA masked diffusion language model explained blog tutorial training objective cross entropy 1/t weighting",
+      "WebFetch deep-reads: karpathy.ai/zero-to-hero, build-nanogpt, nanoGPT README + train_shakespeare_char.py + train.py (raw), minbpe (via search), nanoLLaDA, tiny-diffusion repo + HN thread, Awesome-Diffusion-LLM, HF annotated-diffusion, rasbt/LLMs-from-scratch, nanochat, annotated-transformer (GitHub), PyTorch AMP recipe"
+    ],
+    "useful": [
+      "All seven assigned queries produced usable primary sources",
+      "'minimal discrete diffusion ... nano' was the highest-value extra query (surfaced nanoLLaDA, tiny-diffusion, Awesome-Diffusion-LLM, MDLM)",
+      "Raw-file fetches of nanoGPT configs yielded exact primary-source hyperparameters",
+      "HN thread fetch yielded genuine practitioner evidence"
+    ],
+    "failed": [
+      "Exa MCP tools not available in this environment (fell back to WebSearch + WebFetch)",
+      "nlp.seas.harvard.edu/annotated-transformer fetch returned truncated content (could not verify 2022-update author list; GitHub README also does not name them)",
+      "'small transformer hyperparameters' web search returned mostly C/D-tier aggregators and off-topic arXiv hits — replaced with primary-source config fetches",
+      "No A-tier independent 'LM-training mistakes checklist' beyond Karpathy's recipe was found (candidates were B/C-tier blogs)"
+    ]
+  },
+  "contradictions": [
+    "Curriculum trap: the widely recommended HF 'Annotated Diffusion' teaches continuous Gaussian DDPM (U-Net, epsilon-prediction) which does not transfer to masked discrete text diffusion — it contains zero discrete-diffusion content — yet Awesome-Diffusion-LLM deliberately sequences continuous-then-discrete notebooks as pedagogy, while tiny-diffusion and nanoLLaDA skip continuous diffusion entirely. The field disagrees on whether continuous DDPM is a prerequisite or a detour.",
+    "nanoGPT is officially deprecated (Nov 2025) in favor of nanochat, yet nanoGPT remains the best-documented CPU/laptop-scale teaching artifact; nanochat's headline recipes assume 8x H100 (conflicting with the laptop constraint) even though runs/runcpu.sh exists.",
+    "Efficiency expectations conflict by era and formulation: Dieleman-highlighted 2023 result claims ~64x compute disadvantage for diffusion LMs vs AR across scales, while 2025 minimal masked-diffusion repos train fine at toy scale with only ~2x wall-clock cost vs their GPT twin (tiny-diffusion: 20 min vs 10 min at 10.7M params). The tension resolves as quality-per-FLOP at scale (still worse) vs trainability at toy scale (fine) — but a plan must not promise AR-equivalent quality.",
+    "Hyperparameter 'defaults' contradict across scales within the same repo: nanoGPT uses lr 1e-3 / beta2 0.99 / dropout 0.2 for the 10M char model but lr 6e-4 / beta2 0.95 / dropout 0 (+warmup 2000, wd 0.1) for 124M — any single 'defaults table' in the meta-plan must be scale-conditioned.",
+    "Mixed-precision advice conflicts with the project's scale: standard 2025 practice says always use bf16 autocast, but PyTorch's own recipe warns small or CPU-bound networks gain little or nothing — on CPU-only laptops AMP is likely irrelevant, and GradScaler is only needed for fp16, not bf16."
+  ],
+  "practitionerReality": "Practitioners who actually built toy DLLMs report the flip from GPT to masked diffusion is architecturally trivial (~80% shared code; essentially is_causal=False + [MASK] token + new objective/sampler) but operationally different: training the diffusion twin cost ~2x the AR twin at equal scale in tiny-diffusion's runs, the fixed-length masked canvas is a day-1 design constraint (mitigated by confidence-aware decoding and semi-autoregressive blocks), and there is no mature inference tooling for dLLMs — you write your own unmasking sampler, which for a learning project is a feature. Component choices in these repos (e.g., ReLU^2 activation) are inherited from the nanogpt-speedrun lineage on empirical rather than theoretical grounds, so learners should not over-theorize them. The visualization the parent project wants already exists in embryo as tiny-diffusion's visualize.py step-by-step generation script. On the craft side, the consensus discipline is Karpathy's recipe: check loss at init (ln(vocab_size)), overfit one batch first, add one change at a time, and expect silent failures rather than exceptions.",
+  "gaps": [
+    "No verified end-to-end tutorial exists for a math/GSM8K-specialized diffusion LM at laptop scale — the closest artifacts are char-level Shakespeare (tiny-diffusion) and general-web pretraining (nanoLLaDA); the math-specialization leg must be assembled from other aspects' research.",
+    "CPU-only training times for the two minimal DLLM repos are unverified: tiny-diffusion quotes A100 numbers and nanoLLaDA quotes 4x L4; only nanoGPT's AR baby-GPT has verified CPU timing (~3 min). Expect but could not confirm that the 10.7M diffusion twin trains on CPU in tens of minutes to hours.",
+    "Karpathy's Zero to Hero contains no diffusion lecture, and the status/content of the fuller LLM101n course could not be verified — no single instructor-led course covers the AR-to-diffusion bridge.",
+    "Could not verify the named authors of the 2022 Annotated Transformer update (page fetch truncated; README does not list them).",
+    "Did not locate a second independent A-tier 'common mistakes training an LM' checklist to triangulate Karpathy's 2019 recipe; candidates found were B/C-tier.",
+    "The 64x efficiency-disadvantage figure was verified only via Dieleman's X post summary, not by reading the underlying paper; treat the exact multiplier as indicative, and note it predates masked-diffusion improvements (MDLM 2024, LLaDA 2025)."
+  ],
+  "bestSources": [
+    {
+      "title": "nathan-barry/tiny-diffusion (+ its Show HN thread)",
+      "url": "https://github.com/nathan-barry/tiny-diffusion",
+      "why": "Closest existing artifact to the parent goal: 10.7M-param char-level masked discrete diffusion twin of a GPT, ~80% shared code, consumer-scale, ships a step-by-step generation visualizer — simultaneously the curriculum capstone template, the feasibility proof, and the UI seed."
+    },
+    {
+      "title": "Lukas-Xue/nanoLLaDA",
+      "url": "https://github.com/Lukas-Xue/nanoLLaDA",
+      "why": "~500-line ELBO-correct masked diffusion LM with an end-to-end tutorial notebook (data → tokenizer → pretrain → generate), documenting the exact 1/t-weighted objective and confidence-based unmasking sampler with CFG and semi-AR blocks — the best single teaching implementation of the actual DLLM math."
+    },
+    {
+      "title": "Neural Networks: Zero to Hero + build-nanogpt (Karpathy)",
+      "url": "https://karpathy.ai/zero-to-hero.html",
+      "why": "The prerequisite spine: ~14.5 hours of from-scratch lectures ending in a working GPT and tokenizer, plus commit-by-commit training craft in build-nanogpt — everything before the diffusion flip."
+    },
+    {
+      "title": "nanoGPT configs and train.py (primary hyperparameter source)",
+      "url": "https://github.com/karpathy/nanoGPT",
+      "why": "S-tier, battle-tested hyperparameters at both the laptop scale (6L/384d char model; CPU baby-GPT in ~3 min) and 124M scale (6e-4/warmup-2000/wd-0.1/betas 0.9-0.95/clip 1.0/bf16), giving the meta-plan concrete scale-conditioned defaults instead of blog folklore."
+    },
+    {
+      "title": "A Recipe for Training Neural Networks (Karpathy, 2019)",
+      "url": "https://karpathy.github.io/2019/04/25/recipe/",
+      "why": "The canonical silent-failure debugging discipline (loss-at-init check, overfit-one-batch, staged complexity) that keeps a from-scratch build on rails; still the checklist practitioners cite by default."
+    }
+  ]
+}

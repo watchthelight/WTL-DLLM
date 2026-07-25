@@ -1,0 +1,266 @@
+{
+  "aspect": "Failure modes & limitations of diffusion LLMs (DLLMs/masked discrete diffusion) — lens: Failure modes, for a from-scratch laptop-scale math-specialized build",
+  "findings": [
+    {
+      "claim": "Fixed-length generation is a first-class failure mode: standard masked DLLMs denoise a pre-set canvas, so output length must be chosen before sampling. On GSM8K, LLaDA-Instruct-8B scores 48.0% with a 64-token budget vs 83.8% at the optimal 1024 tokens (35.8-point gap from under-allocation), and over-allocation also degrades (82.6% at 2048) while wasting compute — at 2048 tokens only 14.4% of generated tokens on GSM8K are real content, the rest EOS padding. A builder must either sweep length per task or implement dynamic-length tricks (DAEDAL: EOS-confidence length estimation + iterative mask insertion).",
+      "url": "https://arxiv.org/html/2508.00819v1",
+      "title": "Beyond Fixed: Training-Free Variable-Length Denoising for Diffusion Large Language Models (DAEDAL)",
+      "tier": "S",
+      "date": "2025-08-01",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "Bidirectional (non-causal) attention makes DLLMs incompatible with standard KV caching: KV states change whenever any token updates, so every denoising step recomputes attention over the full sequence. Open-source DLLMs (LLaDA 8B, Dream 7B) are therefore slower than AR models in practice despite theoretical parallelism; fixes are block-wise/approximate caches (dKV-Cache, Fast-dLLM report up to ~27.6x throughput recovery).",
+      "url": "https://arxiv.org/abs/2505.22618",
+      "title": "Fast-dLLM: Training-free Acceleration of Diffusion LLM by Enabling KV Cache and Parallel Decoding",
+      "tier": "S",
+      "date": "2025-05-28",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "LLaDA's own authors admit sampling is slower than autoregressive models due to fixed context length, no KV cache, and — critically — that 'LLaDA achieves optimal performance when the number of sampling steps equals the response length' (NFE >= AR), with quality degrading as steps are reduced. The speed advantage of diffusion is not free; at equal quality the step count budget can exceed AR token-by-token decoding.",
+      "url": "https://github.com/ML-GSAI/LLaDA",
+      "title": "ML-GSAI/LLaDA official repository README/FAQ",
+      "tier": "S",
+      "date": "2025 (repo current)",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "Parallel decoding has a fundamental (not merely engineering) failure mode: tokens unmasked in the same step are sampled conditionally independently, so joint-probability structure is violated (canonical example: 'She sell' from 'They sell'/'She sells' marginals). ParallelBench shows tasks with high conditional total correlation (e.g., Shuffle list ops, hard words-to-sentence writing) collapse from near-perfect accuracy at 1 token/step to near zero at high parallelism, while dependency-free tasks (Copy, Replace-index) survive; current DLLMs cannot adapt parallelism to task difficulty, so they fail to get meaningful speedup without quality loss.",
+      "url": "https://arxiv.org/abs/2510.04767",
+      "title": "ParallelBench: Understanding the Trade-offs of Parallel Decoding in Diffusion LLMs (ICLR 2026)",
+      "tier": "S",
+      "date": "2025-10-06 (rev. 2026-06-23)",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "Irreversibility is a core sampler limitation: in standard masked diffusion, once a token is unmasked it can never be revised, so early errors persist and accumulate ('lack of error correction... sets limits on controllable generation, sampling speed, and sample quality'). Remasking samplers (ReMDM) restore revision ability and give inference-time compute scaling, approaching AR quality at high step counts — a builder should plan for a remasking-capable sampler, not just vanilla ancestral unmasking.",
+      "url": "https://arxiv.org/abs/2503.00307",
+      "title": "Remasking Discrete Diffusion Models with Inference-Time Scaling (ReMDM)",
+      "tier": "S",
+      "date": "2025-03-01",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "A reasoning-specific sampler pathology documented by LLaDA's authors: with random remasking, intermediate reasoning steps that were already correctly predicted can get re-masked mid-generation, producing out-of-order or lost chain-of-thought; this motivates low-confidence remasking and semi-autoregressive block decoding for math tasks.",
+      "url": "https://github.com/ML-GSAI/LLaDA",
+      "title": "ML-GSAI/LLaDA repository FAQ (remasking behavior in reasoning tasks)",
+      "tier": "S",
+      "date": "2025 (repo current)",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "A likelihood gap vs AR persists but is smaller than headline numbers suggest and partly a measurement artifact: MDLM (110M) reaches <=23.00 PPL on LM1B vs 20.86 for a matched AR transformer (~10% gap; MDM PPL is an ELBO upper bound, computed under the training-time distribution). DUEL's exact test-time likelihood shrinks the measured MDM-AR gap by up to 32% in-domain and 82% zero-shot; MDLM even beats AR zero-shot on some corpora (Lambada 47.52 vs 51.28) while losing on others (PTB 95.26 vs 82.05).",
+      "url": "https://s-sahoo.com/mdlm/",
+      "title": "Simple and Effective Masked Diffusion Language Models (MDLM, NeurIPS 2024) + DUEL (arXiv:2603.01367)",
+      "tier": "S",
+      "date": "2024-06-11",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "Evaluation trap for builders: Zheng et al. (ICLR 2025) show MDM training/sampling is theoretically time-agnostic (MDMs are 'secretly masked models'), and that the standard Gumbel-based categorical sampling has a numerical flaw even at float32 that silently lowers effective temperature, reducing diversity and inflating generative-perplexity quality claims — 'raising doubts about whether MDMs can truly beat ARs in text generation.' Their First-Hitting Sampler is 20x faster and equivalent. Implication: use float64 for Gumbel or FHS, and never trust generative PPL alone.",
+      "url": "https://arxiv.org/abs/2409.02908",
+      "title": "Masked Diffusion Models are Secretly Time-Agnostic Masked Models and Exploit Inaccurate Categorical Sampling",
+      "tier": "S",
+      "date": "2024-09-04 (ICLR 2025)",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "MDM training has inherently higher gradient variance than AR training from three stacked noise sources — masking pattern, masking rate (timestep), and data — vs data noise only for AR; symptom: MDMs and ARMs that are equally strong at initialization often diverge after task-specific training with MDMs falling far behind, plus large run-to-run variability. Variance-reduction fixes (Pareto-optimal timestep sampling, antithetic masking) recover 7-8% accuracy on reasoning tasks and bring run variance near AR levels. Expect noisy loss curves as normal; MDLM-style Rao-Blackwellized objectives and low-discrepancy timestep samplers are the standard mitigations.",
+      "url": "https://arxiv.org/pdf/2511.18159",
+      "title": "Bringing Stability to Diffusion: Decomposing and Reducing Variance of Training Masked Diffusion Models",
+      "tier": "S",
+      "date": "2025-11-22 (rev. 2026-05-21)",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "At small scale on precise, structured tasks — exactly the laptop-math regime — vanilla masked diffusion can fail to train at all: standard MDMs 'fail to reliably learn linear regression' (MSE stays at random level) and show divergent seed-dependent outcomes on graph path-finding, because isotropic random masking forces the model to average over many incompatible generation orders, turning optimization into stochastic search. Injecting blockwise left-to-right structure (semi-AR within blocks) restores AR-like trainability.",
+      "url": "https://arxiv.org/html/2604.24832v1",
+      "title": "On the Trainability of Masked Diffusion Language Models via Blockwise Locality",
+      "tier": "S",
+      "date": "2026-04-27",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "Compute-efficiency gap at scale: Nie et al.'s first MDM scaling-law study frames MDMs as needing up to ~16x more pre-training compute/time than ARMs as the trade-off to match validation likelihood, though scaling rate is comparable and sampling can be faster (1.4x in their setup). For a laptop training budget this multiplier matters directly.",
+      "url": "https://arxiv.org/abs/2410.18514",
+      "title": "Scaling up Masked Diffusion Models on Text (Nie et al.)",
+      "tier": "S",
+      "date": "2024-10-24",
+      "confidence": "medium",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "Counter-evidence that conditions the 16x pessimism: in data-constrained settings (small unique dataset, many epochs — the realistic hobbyist/math-dataset regime), masked diffusion consistently beats AR in loss and downstream performance because it extracts far more value from repeated data before degrading; there is a compute/unique-data crossover below which AR wins and above which diffusion wins.",
+      "url": "https://arxiv.org/pdf/2507.15857",
+      "title": "Diffusion Beats Autoregressive in Data-Constrained Settings (CMU/Lambda)",
+      "tier": "S",
+      "date": "2025-07-21 (v7 2025-10-28)",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "Laptop-scale head-to-head (123-163M params, 50M TinyStories tokens): AR and MDLM training throughput are nearly identical (50,620 vs 48,343 tok/s on one H100, 4.5% difference), but convergence differs — AR hits best val loss at step 14K then overfits, MDLM improves monotonically without plateau; MDLM needed 31.6% more parameters, and its samples show occasional grammatical inconsistencies while AR shows severe mode collapse in openings (99.8% identical first word vs 36.1% unique for MDLM). Caveats: single seed, no downstream evals, one dataset.",
+      "url": "https://arxiv.org/html/2603.22075",
+      "title": "Autoregressive vs. Masked Diffusion Language Models: A Controlled Comparison",
+      "tier": "A",
+      "date": "2026-03-23",
+      "confidence": "medium",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "Local CPU inference of a 7B DLLM is already demonstrated but uneven: diffuse-cpp's Dream-v0-Instruct-7B GGUF (Q4_K_M ~5.0 GB) averages 11.6 tok/s on an AMD EPYC 4465P with entropy-exit + inter-step cache; trivial math prompts ('15 x 23?') finish in 2 denoising steps at 21.6 tok/s (2.5x llama.cpp Qwen2.5-7B baseline of 8.51 tok/s), but creative/long-form prompts need ~16 steps and drop to 4.5-4.9 tok/s. llama.cpp master also ships a diffusion example supporting Dream, LLaDA, and RND1 with a default of 256 diffusion steps — so consumer-hardware DLLM inference is feasible, with step count the dominant cost knob.",
+      "url": "https://huggingface.co/diffuse-cpp/Dream-v0-Instruct-7B-GGUF/blob/main/README.md",
+      "title": "diffuse-cpp Dream-v0-Instruct-7B-GGUF README (CPU benchmarks) + llama.cpp examples/diffusion",
+      "tier": "B",
+      "date": "not stated (fetched 2026-07)",
+      "confidence": "medium",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "The official LLaDA reference implementation itself is a pitfall: Issue #36 (2025-03-07) reports generate.py is too slow on GPU — unnecessary float64 ops, inefficient tensor ops, high memory use, and an excessive 128-step default — proposing fp16/mixed precision, fewer steps (32-64), and torch.compile; the issue shows no maintainer response. Builders copying reference DLLM code inherit these inefficiencies (note the float64->fp16 advice collides with Zheng et al.'s finding that low-precision Gumbel sampling silently lowers effective temperature).",
+      "url": "https://github.com/ML-GSAI/LLaDA/issues/36",
+      "title": "Performance Optimization: Significantly Speed Up LLaDA Generation in generate.py - Issue #36, ML-GSAI/LLaDA",
+      "tier": "B",
+      "date": "2025-03-07",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "Math-specialization failure mode independent of the diffusion-vs-AR choice: small transformers fail to length-generalize arithmetic beyond training digit counts. Relative position embeddings let addition generalize (5-digit training -> 15-digit sums) but fail for multiplication, which needs 'train set priming' (adding 10-50 long examples); later work (Abacus digit-position embeddings, position coupling) is required for robust digit-length extrapolation. A GSM8K-style model will silently fail on numbers longer than those in training data.",
+      "url": "https://arxiv.org/abs/2306.15400",
+      "title": "Length Generalization in Arithmetic Transformers (+ Transformers Can Do Arithmetic with the Right Embeddings, arXiv:2405.17399)",
+      "tier": "S",
+      "date": "2023-06-27",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "Building the continuous/Gaussian-embedding variant of a text diffusion model is a documented trap: discrete tokens form isolated points in embedding space, the learned density becomes multimodal with low-density gaps late in sampling (critical interval t/T in [0, 0.4]), and DDPM-style solvers get trapped between clusters producing out-of-distribution outputs the model cannot denoise; mitigation requires self-conditioning (probability up to 0.95), alternative q-sampling solvers, and MBR reranking. Related work reports embedding collapse when embeddings are trained jointly with the diffusion model (Difformer's anchor loss). For a first build, discrete masked diffusion is the safer path.",
+      "url": "https://arxiv.org/html/2604.02028",
+      "title": "Why Gaussian Diffusion Models Fail on Discrete Data?",
+      "tier": "S",
+      "date": "2026-05-26",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "Continuous-embedding diffusion LMs additionally exhibit a repetition failure mode: reported as a one-dimensional self-conditioning attractor where low perplexity manifests as repetition/looping in continuous diffusion LMs — a distinct degeneration channel from AR repetition loops.",
+      "url": "https://arxiv.org/pdf/2607.00588",
+      "title": "Low Perplexity is Repetition: A One-Dimensional Self-Conditioning Attractor in Continuous Diffusion LMs",
+      "tier": "S",
+      "date": "2026-07",
+      "confidence": "low",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "Expert secondary verdict (Raschka, 2025-11-04): the DLLM speed-quality tradeoff is real — few steps is fast but degraded, enough steps for quality can match AR cost; parallel unmasking loses sequential conditioning (his 'New York City' -> 'New City' style example); diffusion models 'cannot use tools as part of their chain because there is no chain,' limiting agentic use; near-term niche is small on-device models rather than replacing AR LLMs. Aligns with ParallelBench rather than vendor marketing.",
+      "url": "https://magazine.sebastianraschka.com/p/beyond-standard-llms",
+      "title": "Beyond Standard LLMs — Sebastian Raschka",
+      "tier": "A",
+      "date": "2025-11-04",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "Contradicting evidence that DLLMs are not strictly worse: a 1.1B-parameter masked diffusion model breaks the reversal curse that afflicts much larger AR models (outperforming Llama-2 13B and GPT-3 175B on reversal tasks), shows competitive GSM8K math reasoning with Llama-2 7B, and LLaDA 8B surpasses GPT-4o on a reversal poem completion task — bidirectional conditioning is a genuine structural advantage for some reasoning patterns, including equation-style fill-in-the-middle.",
+      "url": "https://arxiv.org/abs/2502.09992",
+      "title": "Large Language Diffusion Models (LLaDA) + Scaling up Masked Diffusion Models on Text",
+      "tier": "S",
+      "date": "2025-02-14",
+      "confidence": "high",
+      "evidenceType": "direct"
+    }
+  ],
+  "coverage": {
+    "attempted": [
+      "diffusion language model fixed length generation problem variable length limitation",
+      "LLaDA github issues inference slow generation quality problems",
+      "perplexity gap masked diffusion vs autoregressive likelihood ELBO bound",
+      "diffusion LLM parallel decoding token dependency violation incoherent output conditional independence",
+      "discrete diffusion text generation repetition degeneration mode collapse problem",
+      "masked diffusion language model training instability loss spike divergence high variance",
+      "length generalization failure arithmetic small transformer models digits addition",
+      "diffusion language model slower than autoregressive KV cache incompatible inference cost",
+      "remasking discrete diffusion ReMDM cannot revise tokens error accumulation",
+      "masked diffusion scaling laws 16x more compute autoregressive Nie",
+      "Hacker News diffusion LLM LLaDA Mercury Gemini experience",
+      "reddit LocalLLaMA LLaDA Dream 7B run locally slow quality",
+      "ParallelBench accuracy drops per-task results"
+    ],
+    "useful": [
+      "fixed length limitation (DAEDAL, exact GSM8K numbers)",
+      "LLaDA github issue #36 (practitioner slow-inference evidence)",
+      "perplexity/ELBO gap (MDLM numbers + DUEL correction)",
+      "parallel decoding dependency violation (ParallelBench + ReMDM + Fast-dLLM)",
+      "training instability (variance decomposition paper + blockwise locality trainability paper)",
+      "length generalization arithmetic (2306.15400 + Abacus)",
+      "KV cache incompatibility (Fast-dLLM, dKV-Cache, LLaDA FAQ)",
+      "remasking/irreversibility (ReMDM)",
+      "scaling compute gap + data-constrained counter-evidence (Nie 2410.18514 vs CMU 2507.15857)",
+      "small-scale controlled AR-vs-MDLM comparison (2603.22075)",
+      "CPU inference practitioner numbers (diffuse-cpp GGUF, llama.cpp diffusion example)",
+      "expert secondary analysis (Raschka)"
+    ],
+    "failed": [
+      "HN comment threads on Mercury/Gemini Diffusion (news.ycombinator.com returned HTTP 429; comments not retrieved)",
+      "OpenReview ParallelBench forum (bot-verification wall)",
+      "arxiv HTML full text of ParallelBench (404 on both version URLs; task-level numbers only via search-result synthesis)",
+      "firsthand Reddit r/LocalLLaMA threads (search surfaced only HF model cards, no genuine threads)",
+      "exact epoch-tolerance numbers from the data-constrained diffusion paper (fetch returned qualitative summary only)"
+    ]
+  },
+  "contradictions": [
+    "Compute efficiency: Nie et al. (2410.18514) frame MDMs as needing up to ~16x more pre-training compute to match AR likelihood, but CMU/Lambda (2507.15857) show diffusion BEATS AR in data-constrained/many-epoch regimes, and the 2026 controlled small-scale comparison (2603.22075) measured near-identical training throughput with MDLM simply converging slower and not overfitting. The '16x' figure is regime-dependent, not universal — and the laptop/math regime (small unique dataset, many epochs) is precisely where diffusion looks best.",
+    "Speed: vendor/frontier claims (Mercury, Gemini Diffusion, ~1000+ tok/s on datacenter GPUs) vs the reality that open-source LLaDA/Dream practical inference lags AR models (Fast-dLLM abstract; LLaDA FAQ admits slower-than-AR, steps=length for best quality). Parallelism is a potential, realized only with heavy engineering (caches, confidence decoding, custom kernels) or accepting quality loss (ParallelBench).",
+    "Perplexity gap: headline MDM-vs-AR gaps are partly evaluation artifacts — ELBO is a loose bound under the training distribution (DUEL shrinks the measured gap up to 32%/82%), while conversely Zheng et al. show some MDM generation-quality claims were inflated by a float32 Gumbel sampling flaw that secretly lowers temperature. Errors in both directions; neither AR-triumphalism nor MDM hype survives careful measurement.",
+    "Quality direction: parallel-decoding incoherence and irreversibility argue diffusion is fragile, yet MDMs break the reversal curse (1.1B MDM beating GPT-3 175B on reversal tasks; LLaDA 8B beating GPT-4o on reversal poems) and avoid AR's mode-collapse in sample diversity (99.8% identical AR openings vs 36.1% unique for MDLM at small scale). The failure modes are complementary, not one-sided.",
+    "Precision advice conflict: LLaDA issue #36 recommends dropping float64 for fp16 to speed up generation, while Zheng et al. (2409.02908) show reduced-precision categorical (Gumbel) sampling causes inaccurate sampling and hidden temperature lowering — a from-scratch builder must keep the Gumbel/categorical sampling path in high precision even if the network runs fp16."
+  ],
+  "practitionerReality": "The reference implementations are rough: LLaDA's official generate.py was reported too slow (float64 ops, 128-step default, high memory) in Issue #36 with no maintainer response; anyone building from it inherits those defaults. Local inference is nonetheless real: llama.cpp ships a diffusion example (Dream, LLaDA, RND1; default 256 steps, entropy/confidence-based unmasking), and diffuse-cpp publishes CPU GGUF benchmarks — Dream-7B Q4_K_M (~5 GB) averages ~11.6 tok/s on a 12-core EPYC, beating an AR 7B baseline (8.51 tok/s) on 5 of 8 prompts, but only because adaptive early-exit lets trivial prompts (simple arithmetic) finish in ~2 steps; long-form prompts fall to ~4.5 tok/s over ~16 steps. The dominant practical knobs are step count (quality collapses if steps << response length; LLaDA needs steps ~= length for peak quality), generation-length budget (GSM8K swings 48%→83.8% with length choice), remasking strategy (random remasking destroys already-correct reasoning steps; use low-confidence remasking + semi-AR blocks for math), and parallelism (>1-2 tokens/step visibly degrades dependent text). For training at hobby scale, expect noisy loss curves and high seed sensitivity as the norm (three stacked variance sources), plan variance reduction (Rao-Blackwellized/MDLM objective, low-discrepancy timestep sampling), and note that on tiny structured tasks vanilla random masking can fail to learn at all where AR trains fine — blockwise/semi-AR structure is the practitioner escape hatch. The silver lining for laptop builders: with a small math dataset repeated many epochs, diffusion extracts more from repeated data than AR before degrading.\"",
+  "gaps": [
+    "Exact per-task accuracy tables from ParallelBench (e.g., precise accuracy at k tokens/step for Copy/Shuffle/Writing on LLaDA vs Dream) — full text unreachable (arXiv HTML 404, OpenReview bot-walled); only the qualitative near-perfect-to-near-zero pattern and task taxonomy were verifiable.",
+    "Firsthand hobbyist reports of TRAINING a small DLLM on consumer hardware (loss curves, wandb logs, failure anecdotes at 10-100M scale) — expected to find blog posts/Reddit threads; searches surfaced papers and model cards instead. The closest is the 123-163M controlled comparison paper (single seed, TinyStories).",
+    "Exact epoch-count threshold at which repeated-data advantage saturates for diffusion in the data-constrained paper (fetch returned qualitative claims only; a specific number could not be verified).",
+    "HN practitioner commentary on Mercury/Gemini Diffusion quality (thread fetch hit HTTP 429) — could not verify claimed community skepticism or firsthand quality complaints.",
+    "GSM8K accuracy-vs-parallelism curves for Fast-dLLM (abstract-level only: 'up to 27.6x with minimal accuracy loss'; the per-benchmark degradation table was not extracted).",
+    "Documented catastrophic loss-spike/divergence incidents during MDM pre-training runs (the variance papers establish mechanism and run-to-run divergence, but no public post-mortem of a specific diverged DLLM training run was found)."
+  ],
+  "bestSources": [
+    {
+      "title": "ParallelBench: Understanding the Trade-offs of Parallel Decoding in Diffusion LLMs (arXiv:2510.04767, ICLR 2026)",
+      "url": "https://arxiv.org/abs/2510.04767",
+      "why": "The canonical failure-mode analysis for the headline DLLM feature (parallel decoding): shows quality collapse from near-perfect to near-zero on dependency-heavy tasks as parallelism rises, with a task taxonomy (conditional total correlation) that predicts WHICH outputs will break — directly informs sampler design and the visualization UI (showing per-step confidence/dependency)."
+    },
+    {
+      "title": "Beyond Fixed: Training-Free Variable-Length Denoising for Diffusion LLMs (DAEDAL, arXiv:2508.00819)",
+      "url": "https://arxiv.org/html/2508.00819v1",
+      "why": "Best quantification of the fixed-length pathology on exactly the target benchmark (GSM8K 48.0% vs 83.8% by length choice alone; 14.4% effective-token ratio at 2048) — the single most build-plan-altering failure mode for a math DLLM, with a training-free mitigation recipe."
+    },
+    {
+      "title": "Masked Diffusion Models are Secretly Time-Agnostic Masked Models and Exploit Inaccurate Categorical Sampling (arXiv:2409.02908, ICLR 2025)",
+      "url": "https://arxiv.org/abs/2409.02908",
+      "why": "Saves a from-scratch builder from two silent traps: the time variable is theoretically unnecessary (simplifies architecture — no timestep conditioning needed) and float32 Gumbel sampling secretly lowers temperature and corrupts both generation and evaluation via generative perplexity."
+    },
+    {
+      "title": "Bringing Stability to Diffusion: Decomposing and Reducing Variance of Training MDMs (arXiv:2511.18159) + On the Trainability of MDMs via Blockwise Locality (arXiv:2604.24832)",
+      "url": "https://arxiv.org/pdf/2511.18159",
+      "why": "Together these explain why small-scale MDM training runs stagnate or diverge across seeds where AR trains fine (three stacked variance sources; isotropic masking averaging incompatible orders) and give concrete mitigations (variance-reduced timestep sampling, blockwise/semi-AR locality) — the difference between a laptop training run that works and one that mysteriously fails."
+    },
+    {
+      "title": "ML-GSAI/LLaDA repository (README/FAQ + Issue #36)",
+      "url": "https://github.com/ML-GSAI/LLaDA",
+      "why": "Primary-source admissions from the flagship open DLLM team: steps must ~equal response length for peak quality, no KV cache, random remasking destroys correct reasoning steps, plus an unanswered performance issue on the reference sampler — the honest baseline any local build starts from."
+    }
+  ]
+}

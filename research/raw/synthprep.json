@@ -1,0 +1,454 @@
+{
+  "insights": [
+    {
+      "insight": "The training objective is settled and independently verified by 4+ distinct groups: masked (absorbing-state) discrete diffusion reduces exactly to BERT-style masked cross-entropy with a random mask rate t~U[0,1] and 1/t weighting, and time conditioning is provably unnecessary (concrete score factorizes into a time-independent conditional times an analytic scalar). MDLM (Cornell), MD4 (DeepMind), RADD (ML-GSAI), and Zheng et al. converged on this from different directions, and D3PM's 'BERT is a one-step diffusion model' framing seeded it in 2021. Build implication: implement the LLaDA/MDLM masked-CE recipe directly; read SEDD for theory but do NOT implement score entropy — SEDD's own issue tracker shows open NaN/instability issues the simpler objective avoids.",
+      "confidence": "high",
+      "supportingSources": [
+        "https://arxiv.org/abs/2406.07524",
+        "https://arxiv.org/abs/2406.04329",
+        "https://arxiv.org/abs/2406.03736",
+        "https://arxiv.org/abs/2409.02908",
+        "https://arxiv.org/abs/2107.03006",
+        "https://github.com/louaaron/Score-Entropy-Discrete-Diffusion/issues"
+      ]
+    },
+    {
+      "insight": "The architecture delta from a standard AR transformer is tiny and fully documented: remove the causal mask, reserve one [MASK] token, and skip time embeddings entirely. LLaDA's config.json confirms a completely vanilla LLaMA-style block (no GQA — pointless without KV cache), MDLM empirically and RADD theoretically confirm no time conditioning is needed, and tiny-diffusion demonstrates the whole conversion as exactly 5 changes to a nanoGPT-style codebase (add mask token, bidirectional attention, unmasking objective, loss on masked positions only, confidence-based parallel decoding).",
+      "confidence": "high",
+      "supportingSources": [
+        "https://huggingface.co/GSAI-ML/LLaDA-8B-Base/resolve/main/config.json",
+        "https://github.com/ML-GSAI/LLaDA/blob/main/GUIDELINES.md",
+        "https://arxiv.org/abs/2406.03736",
+        "https://arxiv.org/abs/2406.07524",
+        "https://github.com/nathan-barry/tiny-diffusion"
+      ]
+    },
+    {
+      "insight": "The cheapest validated route to a working small diffusion LM is fine-tuning an existing bidirectional encoder (BERT/RoBERTa/DistilBERT) with variable masking rates — replicated independently by at least four parties (nathan-barry RoBERTa on one H200 in 30 min, gumran DistilBERT in <80 lines, ZHZisZZ dllm's BERT-Chat, and the earlier DiffusionBERT), publicly endorsed by Karpathy. This mirrors the industry-scale consensus that AR-to-diffusion conversion (DiffuGPT/DiffuLLaMA, Dream, RND1, LLaDA2.0) beats from-scratch on cost. For the build: treat encoder-fine-tune as the guaranteed-working fallback/demo path, and from-scratch pretraining as the pedagogical main quest with real failure risk.",
+      "confidence": "high",
+      "supportingSources": [
+        "https://nathan.rs/posts/roberta-diffusion/",
+        "https://github.com/gumran/language-diffusion",
+        "https://github.com/ZHZisZZ/dllm",
+        "https://news.ycombinator.com/item?id=45644328",
+        "https://arxiv.org/abs/2410.17891"
+      ]
+    },
+    {
+      "insight": "Complete small-scale reference implementations exist and agree on the recipe: tiny-diffusion (365 lines, 10.7M params, char-level, ~20 min on A100, ships a GPT twin for A/B comparison plus visualize.py), nanoLLaDA (~500 lines, full lifecycle incl. tokenizer/SFT/eval, configs down to 20M), and LLaDA's GUIDELINES.md (directly copyable pseudocode: p_mask=(1-eps)t+eps with eps=0.001, CE on masked positions divided by p_mask, 1% random-length sequences, SFT never noises the prompt). MDLM's config supplies proven defaults (AdamW 3e-4, EMA 0.9999, loglinear schedule, SUBS parameterization, antithetic t-sampling). Known porting hazard: strip flash-attn and Mamba CUDA extensions — flash-attn does not build reliably on native Windows and MDLM's issue tracker documents exactly this friction.",
+      "confidence": "high",
+      "supportingSources": [
+        "https://github.com/nathan-barry/tiny-diffusion",
+        "https://github.com/Lukas-Xue/nanoLLaDA",
+        "https://github.com/ML-GSAI/LLaDA/blob/main/GUIDELINES.md",
+        "https://github.com/kuleshov-group/mdlm",
+        "https://github.com/kuleshov-group/mdlm/issues",
+        "https://github.com/Dao-AILab/flash-attention/issues/553"
+      ]
+    },
+    {
+      "insight": "The laptop feasibility envelope is 1-50M parameters on a narrow domain, and it rests on triangulation, not demonstration: TinyStories proves sub-10M models produce fluent text under domain restriction, tiny-diffusion trains 10.7M in 20 A100-minutes (hours on a laptop GPU), nanoGPT calibrates the CPU floor (~1M params), and Chinchilla arithmetic puts 10M/~200M-token runs in range. But the only two documented laptop from-scratch diffusion attempts both produced gibberish (Goedecke's 5-min D3PM on M4; boesch.dev's 2-hour masked diffusion on M2 Air), while the equal-budget AR baseline produced coherent text. No laptop-trained from-scratch diffusion model with nontrivial math accuracy exists anywhere in the record — plan for hours-to-days of training, absorbing-state (not raw D3PM), and treat coherent output as the first experimental milestone, not an assumption.",
+      "confidence": "medium",
+      "supportingSources": [
+        "https://arxiv.org/abs/2305.07759",
+        "https://github.com/nathan-barry/tiny-diffusion",
+        "https://www.seangoedecke.com/model-on-a-mbp/",
+        "https://boesch.dev/posts/simple-dlm/",
+        "https://github.com/karpathy/nanoGPT",
+        "https://epoch.ai/publications/chinchilla-scaling-a-replication-attempt"
+      ]
+    },
+    {
+      "insight": "Math is the single worst case for diffusion's headline speed advantage, by converging theory, benchmark, and hardware evidence: Feng et al. prove sequence-level correctness requires sampling steps scaling linearly with length; GSM8K accuracy collapses under even 2-tokens-per-step parallelism (76.95%→62.31% on LLaDA; independently the most parallelism-fragile benchmark in dependency-guided decoding tests); LLaDA needs steps≈response-length for best quality; and the CPU GGUF port runs math prompts at 0.6x llama.cpp AR speed (15-16 steps needed) while translation flies at 2-5 steps. Build implication: do not sell speed — sell the mechanism and the denoising visualization. Use adaptive samplers (entropy-gated MED, Prophet early-commit, EB-Sampler) rather than fixed aggressive parallelism, noting all were validated only at 7-8B scale.",
+      "confidence": "high",
+      "supportingSources": [
+        "https://arxiv.org/abs/2502.09622",
+        "https://arxiv.org/html/2510.19990",
+        "https://arxiv.org/html/2604.02560",
+        "https://huggingface.co/diffuse-cpp/LLaDA-8B-Instruct-GGUF",
+        "https://arxiv.org/abs/2502.09992",
+        "https://arxiv.org/abs/2508.19982"
+      ]
+    },
+    {
+      "insight": "Vanilla absorbing-state sampling has NO self-correction — a token once committed is frozen — and this is confirmed at every scale: ReMDM states it formally, r/LocalLLaMA users observed Dream 7B 'does not change a word after it's been placed', and the hr-diffuse-1-nano builder reports six different self-correction methods all failed at 288M params ('small models don't doubt; they rationalize') while a 300k-param external critic head detected errors far above chance. For the build: the self-correction the diffusion marketing story implies must be explicitly engineered — via a remasking sampler (ReMDM), hybrid mask+uniform noise (GIDD/UDLM), or an external verifier — and the UI must honestly render committed tokens as frozen unless remasking is implemented.",
+      "confidence": "high",
+      "supportingSources": [
+        "https://arxiv.org/abs/2503.00307",
+        "https://www.reddit.com/r/LocalLLaMA/comments/1jptset/",
+        "https://news.ycombinator.com/item?id=48792131",
+        "https://arxiv.org/abs/2503.04482",
+        "https://arxiv.org/abs/2412.10193"
+      ]
+    },
+    {
+      "insight": "The absorbing-vs-uniform noise choice is a real design fork that tilts unusually for this project: absorbing/[MASK] dominates general language benchmarks, but UDLM shows the gap becomes negligible or reverses for small-vocabulary domains (genomics, molecules) and uniform noise enables continuous self-editing plus much stronger guidance; GIDD's hybrid mask+uniform training independently unlocks self-correction at compute-matched quality. A math DLLM with a small arithmetic vocabulary is precisely the small-vocab regime — the build should default to absorbing (mature tooling, all reference code) but budget an experiment arm for uniform/hybrid noise, which would also make the denoising UI visibly 'edit' tokens rather than only reveal them.",
+      "confidence": "medium",
+      "supportingSources": [
+        "https://arxiv.org/abs/2412.10193",
+        "https://arxiv.org/abs/2503.04482",
+        "https://arxiv.org/abs/2107.03006"
+      ]
+    },
+    {
+      "insight": "The strongest scientific argument FOR diffusion in this build — data-constrained multi-epoch advantage (AR saturates ~4 epochs, diffusion keeps gaining to ~100; a small fixed synthetic math corpus re-epoched heavily is exactly this regime) — is real but disputed in attribution: a follow-up ablation (2510.04071) reproduces much of the gain in AR models via MLP dropout + weight decay, arguing random masking is largely generic stochastic regularization, and the original CMU paper itself concedes AR wins below a critical compute threshold that a laptop may never cross. The report must therefore mandate a regularized AR baseline trained on the identical corpus as the control; without it, any observed diffusion advantage is unattributable.",
+      "confidence": "medium",
+      "supportingSources": [
+        "https://arxiv.org/abs/2507.15857",
+        "https://arxiv.org/html/2510.04071",
+        "https://blog.ml.cmu.edu/2025/09/22/diffusion-beats-autoregressive-in-data-constrained-settings/"
+      ]
+    },
+    {
+      "insight": "Small diffusion models genuinely beat same-size AR on templated constraint/search math — but only when trained in-task, and the advantage does not transfer to open-form word problems: MGDM at 85M hits 91.5% Countdown / 100% Sudoku vs 45.8%/20.7% AR (trained on ~500k in-task problems), DoT-scratch hits 100% on 4x4/5x5 multiplication at 27x GPT-2-CoT throughput, yet the general-purpose Dream 7B scores only 16.0 on Countdown and DoT's GSM8K result (32.6%) loses to fine-tuned GPT-2-small CoT (40.7%). Build implication: scope the demo to templated symbolic tasks (multi-digit arithmetic, Countdown-style equation search, fixed-format problems) where the mechanism-level advantage is demonstrated at laptop-trainable sizes; do not promise GSM8K-style word-problem competence.",
+      "confidence": "high",
+      "supportingSources": [
+        "https://arxiv.org/abs/2410.14157",
+        "https://arxiv.org/abs/2402.07754",
+        "https://arxiv.org/abs/2508.15487"
+      ]
+    },
+    {
+      "insight": "Every dLLM math benchmark number in the corpus is an upper bound and several are inflated or wrong: GSM1K contamination checks show diffusion-family chat models dropping 2-7% and GSM-Symbolic shows small-model scores collapsing under trivial perturbations; the corpus's highest open-dLLM figure (MMaDA 'GSM8K 86.1') is actually MMaDA's POPE multimodal score, with the released checkpoint independently measuring ~48% GSM8K; LLaDA's GSM8K appears as 69.4/70.3/76.95/78.2/79.3 across entries depending on eval config; and prior 'diffusion beats GPT-2 generative perplexity' claims were partly a float32 Gumbel sampling artifact. Eval hygiene for the build: use float64 Gumbel sampling, hold out perturbed/regenerated test templates, and annotate every quoted number with its eval config.",
+      "confidence": "high",
+      "supportingSources": [
+        "https://arxiv.org/pdf/2601.22954",
+        "https://machinelearning.apple.com/research/gsm-symbolic",
+        "https://arxiv.org/pdf/2510.02880",
+        "https://arxiv.org/abs/2409.02908"
+      ]
+    },
+    {
+      "insight": "The real-time denoising UI is a solved, small problem with multiple working references: llama.cpp's merged diffusion CLI ships a built-in --diffusion-visual live terminal unmasking view, simonw ported tiny-diffusion's demo to a live curses UI, tiny-diffusion includes visualize.py, and LLaDA's Gradio app animates unmasking. Two evidence-based design constraints: render block refinement, not token streaming (there is no incremental stream; users found the no-read-along UX a regression), and expect mostly near-left-to-right commit patterns on math — decoding-order research shows confidence-ordered unmasking trends left-to-right on reasoning tasks, so the visualization's 'any-order' drama will be modest on the target domain.",
+      "confidence": "high",
+      "supportingSources": [
+        "https://github.com/ggml-org/llama.cpp/pull/14644",
+        "https://news.ycombinator.com/item?id=45876742",
+        "https://github.com/ML-GSAI/LLaDA",
+        "https://magazine.sebastianraschka.com/p/beyond-standard-llms",
+        "https://huggingface.co/papers/2601.15165",
+        "https://arxiv.org/html/2510.19990"
+      ]
+    },
+    {
+      "insight": "The sampler design space is fully mapped and portable to a tiny model: the canonical loop is MaskGIT's confidence-based parallel unmasking with a cosine schedule (commit few early, many late); LLaDA's generate.py gives the reference implementation (Gumbel-noise temperature, per-step top-k confidence commits, low-confidence remasking, semi-AR block mode, CFG); Dream enumerates the four practical orderings (random / top-1 confidence / top1-top2 margin / entropy) with temperature-0 recommended for math; Fast-dLLM contributes the threshold theorem justifying confidence-gated parallel commits. A from-scratch sampler should implement: confidence ordering within small semi-AR blocks + entropy/threshold gating + optional early-commit — every piece has published reference code.",
+      "confidence": "high",
+      "supportingSources": [
+        "https://openaccess.thecvf.com/content/CVPR2022/papers/Chang_MaskGIT_Masked_Generative_Image_Transformer_CVPR_2022_paper.pdf",
+        "https://github.com/ML-GSAI/LLaDA",
+        "https://github.com/HKUNLP/Dream",
+        "https://arxiv.org/abs/2505.22618",
+        "https://github.com/kuleshov-group/mdlm"
+      ]
+    },
+    {
+      "insight": "Training stability is a known, named risk with known fixes: MDM gradient variance decomposes into mask-pattern + mask-rate + data noise (AR has only the last), and the ecosystem's countermeasures are consistent — EMA 0.9999 adopted as a default stabilizer across official repos, antithetic/low-discrepancy t-sampling (MDLM default), eps floor on p_mask (LLaDA's 0.001), clipped/data-driven noise schedules (BD3-LM), and P-POTS/MIRROR variance reduction lifting GSM8K SFT from ~51-54% to ~59-62% with near-AR run-to-run variance. LR is the sharpest single knob: LLaDA's pretraining crashed at 1.2T tokens and resumed with LR cut 4e-4→1e-4, and Dream reports too-high LR destroys AR-initialized knowledge. A laptop build should adopt EMA + antithetic sampling + eps floor from day one.",
+      "confidence": "high",
+      "supportingSources": [
+        "https://arxiv.org/abs/2511.18159",
+        "https://arxiv.org/html/2406.07524",
+        "https://github.com/ML-GSAI/LLaDA",
+        "https://arxiv.org/abs/2503.09573",
+        "https://hkunlp.github.io/blog/2025/dream/"
+      ]
+    },
+    {
+      "insight": "Running or adapting existing 8B open dLLMs locally is a dead end for this project, by broad multi-user evidence: LLaDA SFT OOMs on a 24GB RTX 3090 even with 4-bit + gradient checkpointing, VRAM grows with prompt length until OOM, GSM8K evaluation alone was estimated at ~31 hours on an A100, Dream requires 20GB+ VRAM and users measured minutes per completion on datacenter GPUs, and llama.cpp GGUF inference costs ~1s per denoising step at 8B/Q8 on a 3090. This forces the correct architecture decision anyway: a <50M from-scratch (or <150M fine-tuned) model is the only route to the real-time, many-steps-per-second denoising animation the UI goal requires on laptop hardware.",
+      "confidence": "high",
+      "supportingSources": [
+        "https://github.com/ML-GSAI/LLaDA/issues",
+        "https://github.com/DreamLM/Dream/issues",
+        "https://www.reddit.com/r/LocalLLaMA/comments/1izfy2d/",
+        "https://github.com/ggml-org/llama.cpp/pull/14644"
+      ]
+    },
+    {
+      "insight": "A 'diffusion training tax' over AR is directionally certain but its magnitude is single-sourced: Dieleman's 2023 mechanistic analysis (diffusion gets gradient signal only at masked positions at one noise level per pass; AR gets every position) predicted the inefficiency; SMDM later measured ~16x compute to match AR validation loss (one paper, no independent replication); Plaid measured 64x for the discredited continuous-embedding route; and the N=2 laptop gibberish results are consistent with slower convergence at small budgets. Budget planning should assume roughly an order of magnitude more wall-clock than the equivalent AR model for matched general quality, partially reclaimable via the many-epoch small-corpus regime and modern efficiency tricks (Muon, etc. from the speedrun stack, which transfer to single consumer GPUs).",
+      "confidence": "medium",
+      "supportingSources": [
+        "https://sander.ai/2023/01/09/diffusion-language.html",
+        "https://arxiv.org/abs/2410.18514",
+        "https://arxiv.org/abs/2305.18619",
+        "https://www.seangoedecke.com/model-on-a-mbp/",
+        "https://github.com/Deveraux-Parker/nanoGPT_1GPU_SPEEDRUN"
+      ]
+    },
+    {
+      "insight": "Synthetic templated data is the highest-leverage axis for the math goal, with one hidden trap: TinyStories proves domain restriction substitutes for scale; TinyGSM's 12.3M synthetic problems lift a 125M model to 63.1% GSM8K — but via generated Python executed by an interpreter (plus a 1.3B verifier for the 81.5% figure), so pure-text targets must expect materially lower accuracy or the build must add a code-execution sandbox; MGDM's wins came from ~500k generated in-task problems; and grokking shows <1M params suffice for modular arithmetic but is hyperparameter-fragile (weight-decay lottery, unbounded wall-clock). Recipe: programmatically generate a large templated math corpus with fixed answer formats, re-epoch heavily, and add an external checker/verifier rather than expecting the model to self-verify.",
+      "confidence": "high",
+      "supportingSources": [
+        "https://arxiv.org/abs/2305.07759",
+        "https://arxiv.org/pdf/2312.09241",
+        "https://arxiv.org/abs/2410.14157",
+        "https://arxiv.org/abs/2201.02177",
+        "http://pair.withgoogle.com/explorables/grokking/"
+      ]
+    },
+    {
+      "insight": "Fixed-length canvas generation is vanilla masked diffusion's most user-visible handicap and block diffusion is the pragmatic middle path: LLaDA pre-commits response length (too short truncates, too long wastes compute/degrades quality; must learn EOS/PAD termination), while BD3-LM (AR across blocks, diffusion within) restores KV caching and variable-length output, with block size as an explicit AR-vs-diffusion dial and GPT-2-scale checkpoints available. For math where solutions follow step-by-step structure and confidence decoding trends left-to-right anyway, small-block semi-AR decoding costs little of the diffusion identity and fixes length, caching, and quality simultaneously — the build should support block mode from the start or use fixed short per-task canvases.",
+      "confidence": "high",
+      "supportingSources": [
+        "https://arxiv.org/abs/2503.09573",
+        "https://github.com/kuleshov-group/bd3lms",
+        "https://arxiv.org/pdf/2602.07546",
+        "https://arxiv.org/abs/2504.12216",
+        "https://arxiv.org/abs/2502.09992"
+      ]
+    }
+  ],
+  "patterns": [
+    "Simplification convergence: every major theoretical advance 2021-2025 removed machinery rather than adding it (D3PM transition matrices -> SEDD concrete scores -> MDLM/MD4/RADD time-free weighted masked cross-entropy) — the field repeatedly proved the simplest formulation equivalent or better, which is exactly why a from-scratch minimal build is viable.",
+    "Repetition mistaken for corroboration: ~152 corpus entries rest on ~85 unique URLs (1.8x fan-out); the most load-bearing numbers (16x compute gap, data-constrained crossover, LLaDA cost and GSM8K 70.3, MGDM 91.5%/100%) each trace to exactly one paper despite appearing 3-9 times.",
+    "Vendor speed claims follow one template: huge tok/s on H100/Blackwell at batch 1, benchmarked against speed-tier (not frontier) baselines, architecture/data undisclosed, verification laundered through the vendor's own release (Mercury, Mercury 2, Gemini Diffusion, Seed Diffusion, dInfer) — zero independent laptop-relevant measurements exist.",
+    "Diffusion's advantage is mechanism-shaped, not general: it wins precisely where AR structurally fails (infilling, reversal curse, constraint/search tasks, many-epoch data reuse) and evaporates or inverts on sequential chain-of-thought math — the target domain sits partly on the wrong side of this split, and task selection must respect it.",
+    "Small-scale from-scratch attempts share one outcome signature: loss decreases, samples are gibberish-to-mediocre; every quality success in the record involves at least one of datacenter compute, AR/encoder initialization, or severe domain restriction — never none.",
+    "Independence is thinner than it looks: three labs (ML-GSAI/Renmin, Kuleshov-group/Cornell, HKUNLP) author most S-tier evidence, Aaron Lou's 'expository' blog is SEDD's first author, and SEDD/MDLM academics co-founded Inception Labs — intra-cluster confirmation must not be counted as replication.",
+    "Decoding-order freedom is mostly unused or harmful for reasoning: learned and confidence-based orders trend left-to-right on math, arbitrary-order generation narrows the reasoning boundary (Flexibility Trap), and performant configs behave nearly autoregressively — 'any-order generation' is a visualization feature more than a math-accuracy feature.",
+    "Candid vendors admit the quality-for-speed trade every time disclosure happens: DiffusionGemma officially scores below Gemma 4 with Gemma 4 recommended for production; Gemini Diffusion loses to its own Flash-Lite sibling on knowledge-heavy benchmarks while winning math/code; practitioner hands-on reports (Mercury) match.",
+    "Capability numbers shrink under adversarial re-evaluation: GSM1K (-2-7%), GSM-Symbolic perturbations (up to -65% for small models), MMaDA released-checkpoint reproduction (~48% vs claimed 86.1), float32 Gumbel bug inflating early generative-perplexity wins — first-party benchmark tables are systematically optimistic.",
+    "Steps is the universal dial: every acceleration line (Prophet early-commit, MED entropy gating, EB-Sampler, dParallel distillation, Fast-dLLM thresholding, step-saturation studies) is a different answer to 'how few denoising steps can we get away with' — and math consistently tolerates the fewest shortcuts.",
+    "Old equivalences resurface as new discoveries: BERT-as-one-step-diffusion (D3PM 2021) and masked-diffusion-as-any-order-AR (ARDM 2021) were re-proven in 2024-2025 (RADD, time-agnostic, learned-order-AR) — the 2021 papers already contain the build's conceptual core."
+  ],
+  "causalChains": [
+    "Discrete tokens admit no Gaussian noise -> D3PM defines categorical corruption with an absorbing [MASK] state -> absorbing variant dominates text benchmarks -> RADD proves the score factorizes so time conditioning is removable -> MDLM/MD4 collapse the ELBO to weighted masked cross-entropy -> the entire build reduces to: BERT-style transformer + variable mask rate + 1/t-weighted CE + iterative unmasking loop.",
+    "AR training extracts signal at every position and caches KV; diffusion gets signal only at masked positions at one noise level per pass (Dieleman 2023 mechanism) -> measured ~16x compute gap at matched loss (SMDM, single source) -> but random masking acts as implicit augmentation over token orders -> diffusion overtakes AR when a fixed corpus is re-epoched heavily (CMU crossover) -> laptop plan: small synthetic templated math corpus x many epochs sits in the diffusion-favorable regime — weakened by 2510.04071 showing regularized AR reproduces much of the gain, hence the mandatory AR control.",
+    "Parallel unmasking samples a product of per-token marginals, not the joint (2512.22630) -> simultaneous commits produce incoherent combinations -> tasks with high inter-token dependency degrade first (ParallelBench conditional-total-correlation bound) -> math answers require whole-sequence correctness, so steps must scale ~linearly with length (Feng et al.) -> GSM8K collapses at 2 tokens/step and CPU math runs slower than AR -> the laptop math sampler must be adaptive (entropy/threshold-gated, early-commit) and the pitch must be mechanism+UI, not speed.",
+    "Absorbing-state reverse process never revisits committed tokens -> no self-correction in vanilla sampling (formalized by ReMDM, observed by Dream users, six methods failed at 288M in hr-diffuse-1-nano) -> early errors freeze and propagate through the remaining denoise -> remedies each change the design: ReMDM remasking sampler (inference-time), GIDD/UDLM uniform-hybrid noise (training-time, favored by small arithmetic vocab), or an external critic/verifier (system-level, the only one proven at sub-300M scale).",
+    "Commercial speed race (Mercury -> Gemini Diffusion -> Seed -> dInfer -> Nemotron) runs on idle datacenter GPU compute at batch 1 -> serving analyses show dLLM block decoding saturates compute at tiny batch and loses to AR as batch grows -> a laptop GPU is compute-bound from step one, so 1,000+ tok/s is structurally unreachable locally (llama.cpp measures ~1s/step for 8B Q8 on a 3090) -> only a <50M model can denoise fast enough for a real-time visualization -> model size is dictated by the UI requirement, not just training budget.",
+    "8B open weights exist (LLaDA/Dream, MIT/Apache) -> local SFT OOMs on 24GB and eval takes days (multi-user issue-tracker evidence) -> laptop work must go tiny -> TinyStories/TinyGSM show domain restriction substitutes for scale -> demonstrated small-diffusion wins are all templated symbolic tasks trained in-task (DoT multiplication 100%, MGDM Countdown 91.5% at 85M) -> the build's task scope (templated arithmetic/equation search, fixed answer formats) follows directly from the evidence chain."
+  ],
+  "claimSourceMatrix": [
+    {
+      "claim": "Masked diffusion training reduces to time-weighted masked cross-entropy and needs no time conditioning (train it like a generative BERT)",
+      "sources": [
+        "https://arxiv.org/abs/2406.07524 (MDLM, Cornell)",
+        "https://arxiv.org/abs/2406.04329 (MD4, DeepMind)",
+        "https://arxiv.org/abs/2406.03736 (RADD, ML-GSAI)",
+        "https://arxiv.org/abs/2409.02908 (Zheng et al.)",
+        "https://arxiv.org/abs/2107.03006 (D3PM origin)"
+      ],
+      "weak": false
+    },
+    {
+      "claim": "Only structural change vs an AR transformer is removing the causal mask + reserving a mask token (full recipe in copyable pseudocode)",
+      "sources": [
+        "https://github.com/ML-GSAI/LLaDA/blob/main/GUIDELINES.md",
+        "https://huggingface.co/GSAI-ML/LLaDA-8B-Base/resolve/main/config.json",
+        "https://github.com/nathan-barry/tiny-diffusion",
+        "https://arxiv.org/abs/2502.09992"
+      ],
+      "weak": false
+    },
+    {
+      "claim": "Encoder-fine-tune path (BERT/RoBERTa/DistilBERT + variable mask rate) yields a working small diffusion LM cheaply",
+      "sources": [
+        "https://nathan.rs/posts/roberta-diffusion/",
+        "https://github.com/gumran/language-diffusion",
+        "https://github.com/ZHZisZZ/dllm (BERT-Chat)",
+        "https://news.ycombinator.com/item?id=45644328 (multiple replications + DiffusionBERT prior art)"
+      ],
+      "weak": false
+    },
+    {
+      "claim": "MDMs require ~16x more compute than AR to match validation loss (identical scaling rate)",
+      "sources": [
+        "https://arxiv.org/abs/2410.18514 (SMDM — sole source despite 5+ corpus entries)"
+      ],
+      "weak": true
+    },
+    {
+      "claim": "Diffusion beats AR when a fixed dataset is repeated many epochs (AR saturates ~4 epochs, diffusion ~100; closed-form crossover)",
+      "sources": [
+        "https://arxiv.org/abs/2507.15857 (sole primary)",
+        "https://arxiv.org/html/2510.04071 (disputes attribution: generic regularization reproduces much of it in AR)"
+      ],
+      "weak": true
+    },
+    {
+      "claim": "LLaDA 8B: 2.3T tokens / 0.13M H800-hours, GSM8K 70.3 Base (beats LLaMA3-8B Base 48.7)",
+      "sources": [
+        "https://arxiv.org/abs/2502.09992 (self-reported, single paper; GSM8K varies 69.4-79.3 across configs; contamination unprobed)"
+      ],
+      "weak": true
+    },
+    {
+      "claim": "Small from-scratch diffusion beats AR on constraint/search math: Countdown 91.5% vs 45.8%, Sudoku 100% vs 20.7% at 85M",
+      "sources": [
+        "https://arxiv.org/abs/2410.14157 (sole source; in-task training on ~500k generated problems)",
+        "https://arxiv.org/abs/2508.15487 (Dream 7B general model scores only 16.0 Countdown — scopes the claim)"
+      ],
+      "weak": true
+    },
+    {
+      "claim": "Tiny diffusion model achieves 100% on 4x4/5x5 digit multiplication at ~27x GPT-2-CoT throughput; but diffusion GSM8K (32.6%) loses to GPT-2-small CoT (40.7%)",
+      "sources": [
+        "https://arxiv.org/abs/2402.07754 (DoT, single paper for both halves)"
+      ],
+      "weak": true
+    },
+    {
+      "claim": "Sequence-level correctness (whole-answer math) requires denoising steps scaling ~linearly with length, erasing the parallel-decoding advantage",
+      "sources": [
+        "https://arxiv.org/abs/2502.09622 (theory)",
+        "https://arxiv.org/abs/2502.09992 (LLaDA empirical: best quality at steps≈length)",
+        "https://arxiv.org/html/2510.19990 (GSM8K 76.95->62.31 at 2 tok/step)",
+        "https://arxiv.org/html/2604.02560 (GSM8K most parallelism-fragile)",
+        "https://huggingface.co/diffuse-cpp/LLaDA-8B-Instruct-GGUF (CPU math 0.6x AR speed)"
+      ],
+      "weak": false
+    },
+    {
+      "claim": "Vanilla absorbing-state sampling never revises committed tokens; self-correction fails below ~300M but an external critic works",
+      "sources": [
+        "https://arxiv.org/abs/2503.00307 (ReMDM formalization)",
+        "https://www.reddit.com/r/LocalLLaMA/comments/1jptset/ (user observation on Dream)",
+        "https://news.ycombinator.com/item?id=48792131 (hr-diffuse-1-nano, N=1 for the critic-head result)"
+      ],
+      "weak": false
+    },
+    {
+      "claim": "Absorbing-vs-uniform noise gap becomes negligible or reverses on small vocabularies; uniform/hybrid enables self-editing and stronger guidance",
+      "sources": [
+        "https://arxiv.org/abs/2412.10193 (UDLM, sole primary for small-vocab reversal)",
+        "https://arxiv.org/abs/2503.04482 (GIDD, supports hybrid self-correction direction)"
+      ],
+      "weak": true
+    },
+    {
+      "claim": "Both documented laptop from-scratch diffusion training attempts produced gibberish (5-min M4 D3PM; 2-hour M2 masked diffusion)",
+      "sources": [
+        "https://www.seangoedecke.com/model-on-a-mbp/",
+        "https://boesch.dev/posts/simple-dlm/ (two independent practitioners, both short-budget anecdotes)"
+      ],
+      "weak": false
+    },
+    {
+      "claim": "TinyGSM: 125M model reaches 63.1% GSM8K (81.5% with 1.3B verifier) — via generated Python executed by an interpreter, not pure text",
+      "sources": [
+        "https://arxiv.org/pdf/2312.09241 (single paper; executor dependency limits transfer to a pure-text laptop dLLM)"
+      ],
+      "weak": true
+    },
+    {
+      "claim": "MMaDA GSM8K 86.1 — RETRACTED: 86.1 is the POPE multimodal score; released checkpoint independently measures ~48% GSM8K",
+      "sources": [
+        "https://arxiv.org/pdf/2510.02880 (independent reproduction)",
+        "https://proceedings.neurips.cc/paper_files/paper/2025/file/caa934a507a952698d54efb24845fc4b-Paper-Conference.pdf (camera-ready showing 86.1=POPE)"
+      ],
+      "weak": true
+    },
+    {
+      "claim": "Mercury 1,109 tok/s; Mercury 2 >1,000 tok/s reasoning at 1.7s latency; Seed Diffusion 2,146 tok/s; dInfer 1,011 tok/s",
+      "sources": [
+        "https://arxiv.org/abs/2506.17298 (vendor tech report)",
+        "https://www.businesswire.com/news/home/20260224034496/en/ (paid PR)",
+        "https://seed.bytedance.com/en/blog/ (vendor blog)",
+        "https://www.scmp.com/tech/big-tech/article/3329138/ (Alibaba-owned outlet on Ant affiliate; mismatches primary)"
+      ],
+      "weak": true
+    },
+    {
+      "claim": "Gemini Diffusion ~1,479 tok/s official; independent hands-on measured 857 tok/s; never shipped as production API through mid-2026",
+      "sources": [
+        "https://deepmind.google/models/gemini-diffusion/ (vendor page)",
+        "https://simonwillison.net/2025/May/21/gemini-diffusion/ (independent measurement, 42% below claim)"
+      ],
+      "weak": true
+    },
+    {
+      "claim": "dLLM speed advantages evaporate at batch scale and on weak GPUs (compute-bound full-sequence forwards per step)",
+      "sources": [
+        "https://arxiv.org/pdf/2607.04206 (Sangam serving analysis)",
+        "https://github.com/ggml-org/llama.cpp/pull/14644 (~1s/step 8B Q8 on RTX 3090)",
+        "https://arxiv.org/abs/2506.06295 (6.95 tok/s LLaDA baseline on 4090)",
+        "https://arxiv.org/abs/2505.22618 (6.7 tok/s baseline on A100)"
+      ],
+      "weak": false
+    },
+    {
+      "claim": "Fast-dLLM 8.1x / dLLM-Cache 4.28x acceleration at ~equal accuracy on GSM8K",
+      "sources": [
+        "https://arxiv.org/abs/2505.22618 + https://github.com/NVlabs/Fast-dLLM (NVIDIA self-benchmark)",
+        "https://arxiv.org/abs/2506.06295 (single paper; corroborate each other only directionally)"
+      ],
+      "weak": true
+    },
+    {
+      "claim": "Masked diffusion mitigates the reversal curse (SMDM 92% vs 0% for Llama-2-13B; LLaDA beats GPT-4o on reversal poems; mechanism proven for 1-layer models)",
+      "sources": [
+        "https://arxiv.org/abs/2410.18514 (SMDM, ML-GSAI)",
+        "https://arxiv.org/abs/2502.09992 (LLaDA, same lab — not independent)",
+        "https://arxiv.org/abs/2602.02133 (independent theory, verified on LLaDA/Dream)"
+      ],
+      "weak": false
+    },
+    {
+      "claim": "Live denoising visualization is already shipped tooling (llama.cpp --diffusion-visual; curses port; visualize.py; Gradio animation)",
+      "sources": [
+        "https://github.com/ggml-org/llama.cpp/pull/14644",
+        "https://news.ycombinator.com/item?id=45876742",
+        "https://github.com/nathan-barry/tiny-diffusion",
+        "https://github.com/ML-GSAI/LLaDA (app.py)"
+      ],
+      "weak": false
+    },
+    {
+      "claim": "Confidence/learned unmasking orders trend left-to-right on math; arbitrary-order freedom narrows reasoning ('Flexibility Trap')",
+      "sources": [
+        "https://huggingface.co/papers/2601.15165 (mirror of single ICML 2026 paper, venue unverified)",
+        "https://arxiv.org/html/2510.19990 (leftmost position sampled ~50% at block 32)",
+        "https://arxiv.org/abs/2510.09544 (Parallel-Sequential Contradiction)"
+      ],
+      "weak": false
+    },
+    {
+      "claim": "Grokking makes sub-1M-param arithmetic 'trivially CPU-trainable'",
+      "sources": [
+        "https://arxiv.org/abs/2201.02177 (phenomenon real)",
+        "http://pair.withgoogle.com/explorables/grokking/ + https://arxiv.org/pdf/2605.20441 (hyperparameter-fragile, tuning lottery — 'trivially' is overstated)"
+      ],
+      "weak": true
+    },
+    {
+      "claim": "LoopMDM adds +8.5 GSM8K points at 125M on TinyGSM and a 125M MDM architecture is laptop-class",
+      "sources": [
+        "https://arxiv.org/abs/2605.26106 (single 2026 preprint; relative gains only, no absolute GSM8K disclosed, trained on 4xA100)"
+      ],
+      "weak": true
+    },
+    {
+      "claim": "Step-quality saturation lands around 16-32 steps for typical tasks (adaptive budgets viable)",
+      "sources": [
+        "https://arxiv.org/html/2604.02340v2 (corpus admits thresholds from not-fully-fetched summaries)",
+        "https://arxiv.org/abs/2508.19982 (Prophet early-convergence, corroborates direction only)"
+      ],
+      "weak": true
+    },
+    {
+      "claim": "Windows-native toolchain breaks the reference stacks (flash-attn won't build; Mamba CUDA extensions; MPS gives no compile/fp16 benefit)",
+      "sources": [
+        "https://github.com/Dao-AILab/flash-attention/issues/553",
+        "https://github.com/kuleshov-group/mdlm/issues",
+        "https://www.seangoedecke.com/model-on-a-mbp/"
+      ],
+      "weak": false
+    }
+  ],
+  "caveats": [
+    "No laptop-trained from-scratch diffusion LM with nontrivial math ability has ever been documented; the report may present the build as an evidence-guided experiment with a real gibberish-output risk, never as a validated recipe — all feasibility numbers are extrapolated from A100/H100/L4 runs.",
+    "The report must not claim diffusion will be faster than AR for math on laptop hardware; theory (steps scaling with length), benchmarks (GSM8K parallelism fragility), and the one CPU measurement (0.6x llama.cpp AR on math prompts) all point the other way — speed claims are limited to 'per-step visualization is real-time for a sufficiently small model'.",
+    "The 16x diffusion-vs-AR compute gap is a single-paper estimate (SMDM) with no independent replication; cite as 'one scaling study estimates ~16x', never as established consensus, and note the 64x figure applies only to the abandoned continuous-embedding route.",
+    "The data-constrained diffusion advantage cannot be stated as diffusion-specific: a follow-up attributes much of it to generic stochastic regularization reproducible in AR with dropout + weight decay, and the crossover requires compute a laptop may never reach — any experimental claim requires a tuned, regularized AR baseline on the identical corpus as control.",
+    "MMaDA's 'GSM8K 86.1' must not appear anywhere (it is a POPE score; the released checkpoint measures ~48%), and all LLaDA/Dream GSM8K figures must carry eval-config annotations and a contamination caveat (GSM1K -2-7%, GSM-Symbolic collapse, undisclosed 2.3T/580B-token training mixes).",
+    "Small-scale diffusion 'math wins' are scoped to templated, in-task-trained symbolic problems (multiplication, Countdown, Sudoku); the report may not extrapolate them to GSM8K-style word problems — the corpus's own evidence shows that transfer failing (DoT 32.6% < GPT-2-CoT 40.7%; Dream-7B Countdown 16.0).",
+    "TinyGSM-derived accuracy anchors assume an external Python interpreter (and a second verifier model for the top figure); a pure-text laptop dLLM must expect materially lower numbers, or the plan must explicitly add a code-execution sandbox, which changes the product architecture.",
+    "Self-correction may not be promised or visualized as an inherent property: vanilla absorbing-state sampling never revises a committed token, six self-correction methods failed at 288M in the only small-scale attempt, and remasking/hybrid-noise remedies are unvalidated below ~1B — the honest small-scale error-detection story is an external critic/verifier.",
+    "All commercial speed/quality figures (Mercury, Mercury 2, Gemini Diffusion, Seed, dInfer, Nemotron) are vendor-originated, measured on datacenter hardware at batch 1, partly via paid press releases; they may contextualize the field but must never anchor local performance expectations or appear without a vendor-source label.",
+    "Independence inflation must be corrected in prose: ~152 corpus entries rest on ~85 URLs, three labs author most S-tier evidence, Aaron Lou's blog is SEDD's own first author, and SEDD/MDLM academics co-founded Inception Labs — agreement within these clusters is not replication.",
+    "2026-dated venue claims (ICML 2026, ICLR 2026, EurIPS 2025 workshop) and several 2026 arXiv IDs are unverified preprint-level evidence; the Flexibility Trap, LoopMDM, discreteness-analysis, and step-saturation findings must be labeled as such, with exact step-count thresholds (16-32) treated as indicative only.",
+    "Arithmetic length generalization beyond trained operand lengths is an open problem whose known fixes (Abacus embeddings, position coupling) were developed on AR models and are unvalidated for bidirectional masked diffusion; the report cannot claim the model will handle longer numbers than it was trained on.",
+    "Reference repos will not run as-is on a Windows laptop (flash-attn build failures, Mamba CUDA extensions, bf16 requiring Ampere+, no tested MPS/DirectML training paths); the plan must budget a dependency-stripping port, and thermal/VRAM-spill behavior on thin laptops measurably slows sustained training.",
+    "Evaluation of the built model must use float64 Gumbel categorical sampling and perturbed/held-out problem templates; prior diffusion-LM 'wins' were partly float32 sampling artifacts and pattern-matching on contaminated benchmarks, and reproducing that mistake locally would invalidate the project's headline result.",
+    "Point-in-time facts (GitHub stars, 'largest/strongest open dLLM' superlatives, cloud pricing, Gemini Diffusion's non-shipped status) require as-of-2026-07 timestamps; several were already superseded inside the corpus's own window."
+  ]
+}

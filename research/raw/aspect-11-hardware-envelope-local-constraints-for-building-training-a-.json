@@ -1,0 +1,268 @@
+{
+  "aspect": "Hardware envelope & local constraints for building/training a small diffusion LLM on a consumer laptop — Economics / how",
+  "findings": [
+    {
+      "claim": "Canonical training-memory formula: mixed-precision AdamW training needs ~16 bytes/parameter before activations — 2 B/param fp16/bf16 weights + 4 B/param gradients (fp32) or 2 B (fp16) + 12 B/param AdamW optimizer states (fp32 master copy 4 + momentum 4 + variance 4). 8-bit optimizers cut optimizer states to 6 B/param; SGD+momentum is 8 B/param. Inference is ~1.2x model weights. So a 124M-param model trains in roughly 2-2.5 GB + activations — comfortably inside an 8 GB laptop GPU.",
+      "url": "https://blog.eleuther.ai/transformer-math/",
+      "title": "Transformer Math 101 — EleutherAI blog",
+      "tier": "S",
+      "date": "2023-04 (blog; math is not time-sensitive)",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "Compute budgeting formula: total training FLOPs C ≈ 6PD (2PD forward + 4PD backward), and activation memory with full recomputation collapses to 2·s·b·h·L bytes (vs sbhL(10+24/t+5as/ht) without recomputation). This lets you size a laptop run: params x tokens fixes the FLOPs bill regardless of hardware.",
+      "url": "https://blog.eleuther.ai/transformer-math/",
+      "title": "Transformer Math 101 — EleutherAI blog",
+      "tier": "S",
+      "date": "2023-04",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "Best recent single-consumer-GPU pretraining anchor: a 163M-param GPT-2-small-class model was trained from scratch on one RTX 3090 (24 GB) in ~44-48 h on 3.2B FineWeb tokens at ~19,921 tokens/s using AMP + TF32 (22% speedup over fp32), reaching val loss 3.69-3.94; weights ~670 MB, optimizer state ~1.3 GB in checkpoints; total ~3.2e18 FLOPs. Extrapolating a laptop 4060/4070 as roughly 2-4x slower (memory-bandwidth- and TGP-bound) puts the same run at ~4-8 days; that extrapolation is my inference, the measured numbers are direct.",
+      "url": "https://www.gilesthomas.com/2025/12/llm-from-scratch-28-training-a-base-model-from-scratch",
+      "title": "Writing an LLM from scratch, part 28 — training a base model from scratch on an RTX 3090 (Giles Thomas)",
+      "tier": "A",
+      "date": "2025-12-02",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "nanoGPT's hardware ladder defines the consumer envelope: shakespeare-char toy (6-layer, 384-dim) trains in ~3 min on an A100; a shrunk config (4 layers, 4 heads, 128 embd, block 64, batch 12) trains on CPU-only in ~3 min to loss 1.88 with --device=cpu --compile=False; Apple Silicon --device=mps gives '2-3X' over CPU; full GPT-2 124M reproduction needs 'at least an 8X A100 40GB node' for ~4 days; Windows users must pass --compile=False.",
+      "url": "https://github.com/karpathy/nanoGPT",
+      "title": "karpathy/nanoGPT README",
+      "tier": "S",
+      "date": "repo, 2022-2024",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "Naive worst-case single-GPU anchor: a user training nanoGPT GPT-2 124M on one RTX 4090 (PyTorch 2.0 nightly, batch 12, grad-accum 5, block 1024) measured ~5 s/iteration, i.e. ~35 days for the full 600k-iteration run, while noting the config seemed suboptimal. Modern tuned runs (see Giles Thomas finding) are ~15-20x faster per token, so treat 35 days as an untuned floor, not an expectation.",
+      "url": "https://github.com/karpathy/nanoGPT/issues/179",
+      "title": "Training Time for 1x 4090 GPU — nanoGPT issue #179",
+      "tier": "B",
+      "date": "2023 (early PyTorch 2.0 era)",
+      "confidence": "medium",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "On a Windows laptop with an 8 GB RTX 4060, the usable AI VRAM budget is realistically ~6.5-7.2 GB, not 8 GB, because Windows 11, browsers, and drivers hold GPU memory; and 'a smaller model fully on GPU is usually better than a larger model half offloaded'. Mobile 4060s are additionally limited by laptop power, cooling, memory bandwidth, and vendor tuning, so sustained performance varies between machines.",
+      "url": "https://knightli.com/en/2026/05/08/laptop-rtx-4060-8gb-local-ai-models/",
+      "title": "Laptop RTX 4060 8GB Local AI Guide (knightli.com)",
+      "tier": "B",
+      "date": "2026-05-08",
+      "confidence": "medium",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "Laptop GPU wattage (TGP) dominates real performance: the RTX 4070 Laptop is configurable 35-115 W (+15-25 W Dynamic Boost), boost clock 1230-2175 MHz depending on TGP, and a 140 W variant is only ~36% faster than a 65 W variant in 3DMark Time Spy (105 W vs 120 W differ ~1%). Two laptops with the same GPU name can differ 30-50% in throughput — training-time estimates must be per-machine, not per-GPU-name.",
+      "url": "https://laptopmedia.com/analysis/comparing-all-rtx-4070s-whats-the-real-difference-between-65w-105w-120w-and-140w-tgp-and-should-you-invest-more-money/",
+      "title": "Comparing all RTX 4070s: 65W/105W/120W/140W TGP — LaptopMedia (specs corroborated by Notebookcheck)",
+      "tier": "B",
+      "date": "undated (RTX 40 laptop era, 2023-2024)",
+      "confidence": "medium",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "Windows-specific VRAM-overflow trap: since driver 536.40 NVIDIA enables 'CUDA Sysmem Fallback', which spills GPU allocations into system RAM instead of OOM-ing. Training that exceeds VRAM silently slows to a crawl (VRAM ~hundreds of GB/s vs PCIe gen4 x16 ~25 GB/s per direction); the fix is NVIDIA Control Panel -> 'CUDA - Sysmem Fallback Policy' -> 'Prefer No Sysmem Fallback' so jobs fail fast instead of running 10-50x slow.",
+      "url": "https://nvidia.custhelp.com/app/answers/detail/a_id/5490/~/system-memory-fallback-for-stable-diffusion",
+      "title": "NVIDIA support: System Memory Fallback for Stable Diffusion (plus PyTorch forums 'Documented fix: Slow execution, Pytorch using GPU shared memory')",
+      "tier": "S",
+      "date": "2023 (driver 536.40+), still current behavior",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "Precision choice on consumer hardware: bf16 has fp32's dynamic range and needs no loss scaling — the 2025/2026 default on Ampere+ (all RTX 30/40 laptop GPUs) — while fp16 requires GradScaler-style loss scaling to avoid underflow (values <~6e-5) / overflow (>65504) and is mainly needed on pre-Ampere cards. Nuance: fp16 carries more mantissa precision than bf16, which one 2025 paper exploits to fix training-inference mismatch; for a small math-focused model either works, but bf16 is the low-friction default.",
+      "url": "https://arxiv.org/abs/2510.26788",
+      "title": "Defeating the Training-Inference Mismatch via FP16 (arXiv 2510.26788) + zeroentropy.dev mixed-precision concepts",
+      "tier": "S",
+      "date": "2025-10",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "Gradient/activation checkpointing trades ~one extra forward pass for large activation-memory savings: measured slowdowns across sources span ~22-33% for 50-80% activation-memory reduction (the exact percentage is workload-dependent and no single official number exists). PyTorch's Memory Budget API for torch.compile (experimental in 2.4) shows '50% memory reduction by recomputing only pointwise ops', and Selective Activation Checkpointing landed as prototype in 2.5. On an 8 GB laptop GPU this is the main lever to afford longer sequences/bigger batches.",
+      "url": "https://pytorch.org/blog/activation-checkpointing-techniques/",
+      "title": "Current and New Activation Checkpointing Techniques in PyTorch (pytorch.org blog)",
+      "tier": "S",
+      "date": "2025-03-05",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "8-bit Adam (bitsandbytes) cuts optimizer-state memory 75% (8 B/param -> 2 B/param) 'without losing any accuracy' and with no hyperparameter retuning; it helps parameter-heavy memory budgets but not activation-dominated ones. Integrated in HF Trainer via optim='paged_adamw_8bit'. Caveat for this project: bitsandbytes is Linux/CUDA-first and Windows support has historically lagged (medium confidence on that caveat).",
+      "url": "https://huggingface.co/docs/bitsandbytes/main/en/optimizers",
+      "title": "8-bit optimizers — bitsandbytes documentation (Hugging Face)",
+      "tier": "S",
+      "date": "current docs (2024-2026)",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "CPU-only training is viable only at toy scale: nanoGPT's CPU path trains a ~1M-param char-level model in minutes, but a GSM8K-capable model (tens of millions of params, billions of tokens) is off the table — a single A100 needs ~10 h for even a 1-layer LM on real data, and CPUs are 1-2 orders of magnitude slower than that. Practical CPU-only ceiling for this project: <10M params, char/digit-level arithmetic tasks, hours-to-days timescale.",
+      "url": "https://github.com/karpathy/nanoGPT",
+      "title": "karpathy/nanoGPT README (CPU config) + corroborating training-time data points",
+      "tier": "S",
+      "date": "2022-2024",
+      "confidence": "medium",
+      "evidenceType": "inference"
+    },
+    {
+      "claim": "The 'Cramming' study (Geiping & Goldstein) showed a BERT-class masked language model can be trained from scratch to near-BERT performance on a single consumer GPU in 24 hours, and that 'performance closely follows scaling laws observed in large-compute settings' even at this scale — evidence that one-GPU-day budgets produce genuinely useful masked-objective models (directly relevant since masked diffusion LM training is a masked-prediction objective).",
+      "url": "https://arxiv.org/abs/2212.14034",
+      "title": "Cramming: Training a Language Model on a Single GPU in One Day (arXiv 2212.14034)",
+      "tier": "S",
+      "date": "2022-12-28",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "The diffusion tax, quantified: masked diffusion models (MDMs) follow scaling laws with rates comparable to autoregressive models but need ~16x more pre-training compute to match ARM likelihood/generation performance ('MDMs with 16 times more pre-training time offer a flexible trade-off against ARMs'). Encouraging for this project: their 1.1B MDM was competitive with 7B Llama-2 on GSM8K math reasoning — masked diffusion punches above its weight on math benchmarks specifically.",
+      "url": "https://arxiv.org/abs/2410.18514",
+      "title": "Scaling up Masked Diffusion Models on Text (Nie et al., arXiv 2410.18514)",
+      "tier": "S",
+      "date": "2024-10-24 (rev. 2025-02-28)",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "The diffusion tax reverses in exactly the laptop regime: in data-constrained settings with repeated epochs over limited data, masked diffusion 'significantly outperform[s] AR models when compute is abundant but data is scarce', because randomized masking acts as implicit data augmentation over token orderings; the paper derives new scaling laws and 'a closed-form expression for the critical compute threshold' where diffusion becomes preferable. A small fixed math corpus (GSM8K + synthetic arithmetic) trained for many epochs is precisely this regime.",
+      "url": "https://arxiv.org/abs/2507.15857",
+      "title": "Diffusion Beats Autoregressive in Data-Constrained Settings (Prabhudesai et al., CMU/Lambda, arXiv 2507.15857)",
+      "tier": "S",
+      "date": "2025-07-21 (v7 2025-10-26)",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "Windows toolchain friction #1: torch.compile is unsupported on native Windows because official Triton wheels don't exist for Windows; options are (a) run with compile disabled (slower but works), (b) the community triton-windows fork (bundles TinyCC since 3.2.0.post13; PyTorch now points at it as fallback), or (c) WSL2. Plan for a 1.2-2x throughput loss if you skip compilation.",
+      "url": "https://github.com/woct0rdho/triton-windows",
+      "title": "woct0rdho/triton-windows + pytorch/pytorch issue #122094 'Investigate torch.compile Windows support'",
+      "tier": "S",
+      "date": "2024-2025, actively maintained",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "Windows toolchain friction #2: pip install flash-attn routinely fails to build on Windows (hours-long compiles, C++ toolchain and CUDA/PyTorch version mismatch errors; Windows support only 'might work' since v2.3.2). The reliable consumer-hardware path is PyTorch's built-in F.scaled_dot_product_attention (SDPA), which needs no compilation and has fused kernels on RTX 30/40; community-prebuilt Windows wheels exist as a secondary option.",
+      "url": "https://github.com/Dao-AILab/flash-attention/issues/1469",
+      "title": "How to get Flash-Attention under Windows 11 CUDA — Dao-AILab/flash-attention issue #1469 (plus issue #1421)",
+      "tier": "S",
+      "date": "2024-2025",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "WSL2 is the lower-friction Windows path for CUDA training (full Linux toolchain: triton, bitsandbytes, flash-attn), with one architecture rule — the NVIDIA driver lives on Windows; never install a driver inside WSL2 (apt driver installs are the #1 breakage). Known tradeoff: WSL2 CUDA does not respect the 'Sysmem Fallback Policy', so over-VRAM allocations hard-OOM in WSL2 rather than spilling — arguably better for training (fail fast) but a behavioral difference to know.",
+      "url": "https://github.com/microsoft/WSL/issues/11050",
+      "title": "WSL2 CUDA Does Not Respect 'CUDA - Sysmem Fallback Policy' — microsoft/WSL issue #11050 (plus WSL2 CUDA setup guides)",
+      "tier": "B",
+      "date": "2024",
+      "confidence": "medium",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "Apple Silicon (MPS) works for small-model training (~2-3x over CPU per nanoGPT) with unified memory removing the discrete-VRAM ceiling, but carries hazards: unsupported ops need PYTORCH_ENABLE_MPS_FALLBACK=1; AMP/mixed-precision support is limited with no tensor-core-style speedup; memory pressure causes SSD-swap collapse; and MPS had a silent-corruption class of bug — addcmul_/addcdiv_ silently not writing to non-contiguous tensors, which froze Adam updates entirely (fixed in PyTorch >=2.4; macOS 15+ adds native non-contiguous Metal support). Minimum safe stack: PyTorch >=2.4 + macOS 15.",
+      "url": "https://elanapearl.github.io/blog/2025/the-bug-that-taught-me-pytorch/",
+      "title": "The bug that taught me more about PyTorch than years of using it — Elana Simon (plus Lightning MPS docs, tillcode.com MPS guide)",
+      "tier": "A",
+      "date": "2025",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "Economics of local vs rented: cloud RTX 4090s rent for ~$0.29-0.69/hr typical (market range $0.17-1.61/hr across 14+ providers; Vast.ai spot from ~$0.29, RunPod secure ~$0.34-0.69). A 48-hour GPT-2-small-class pretraining run therefore costs ~$15-35 rented — versus roughly $1-2 of electricity but 2-5x the wall-clock (4-10 days) on a 60-115 W laptop GPU (prices are direct from the aggregator; the laptop wall-clock multiple and electricity figure are my arithmetic from TGP specs). Rational split: prototype + UI + final finetune locally; rent one 4090-day (~$10) only if from-scratch pretraining stalls.",
+      "url": "https://getdeploying.com/gpus/nvidia-rtx-4090",
+      "title": "RTX 4090 Cloud Pricing: Compare 14+ Providers (getdeploying.com)",
+      "tier": "C",
+      "date": "2026 (live-updated aggregator)",
+      "confidence": "medium",
+      "evidenceType": "inference"
+    }
+  ],
+  "coverage": {
+    "attempted": [
+      "transformer training memory formula parameters gradients optimizer states activations VRAM estimate",
+      "RTX 4060 laptop GPU 8GB pytorch training small language model benchmark",
+      "nanoGPT train on single consumer GPU how long small model",
+      "bf16 vs fp16 mixed precision training stability loss scaling small transformer",
+      "gradient checkpointing activation memory savings 30% slower pytorch",
+      "CPU-only training small transformer language model how slow practical hours",
+      "PyTorch MPS backend training slow issues Apple Silicon M1 M2 fallback CPU operations",
+      "pytorch CUDA Windows native vs WSL2 2025 setup pitfalls performance",
+      "masked diffusion language models scaling laws 16x compute autoregressive same likelihood",
+      "torch.compile Windows not supported triton-windows workaround 2025",
+      "bitsandbytes 8-bit Adam optimizer 75% memory reduction training",
+      "RTX 4090 cloud rental price per hour vast.ai runpod 2026",
+      "RTX 4070 laptop GPU TGP 35W to 140W performance difference notebookcheck",
+      "NVIDIA driver CUDA sysmem fallback policy shared GPU memory slow training Windows",
+      "reddit trained GPT-2 from scratch laptop GPU 4060 how long overnight",
+      "flash-attn pip install Windows fails build pytorch sdpa alternative",
+      "fetched: EleutherAI transformer-math, nanoGPT README, nanoGPT issue #179, arXiv 2410.18514, arXiv 2507.15857, arXiv 2212.14034, pytorch.org AC blog, HF bitsandbytes docs, elanapearl MPS bug post, knightli 4060 guide, marketcalls 4060 benchmark, gilesthomas part 28, bitrifttech chatbot-tutorial"
+    ],
+    "useful": [
+      "transformer memory formula (led to EleutherAI Transformer Math 101 — canonical)",
+      "nanoGPT consumer GPU (README + issue #179 + gilesthomas RTX 3090 anchor)",
+      "masked diffusion 16x compute (Nie et al. + Prabhudesai et al. — both primary)",
+      "sysmem fallback policy (NVIDIA official + PyTorch forums)",
+      "torch.compile/triton Windows (primary GitHub repos/issues)",
+      "laptop TGP variance (LaptopMedia measured comparison)",
+      "MPS issues (Elana Simon practitioner post, Lightning docs)",
+      "bitsandbytes 8-bit Adam (official docs)",
+      "cloud 4090 pricing (aggregators)"
+    ],
+    "failed": [
+      "No rigorous published transformer-TRAINING throughput benchmark specifically for laptop RTX 4060/4070 (search surfaced inference-only benchmarks and SEO listicles; closest usable anchors are desktop 3090/4090 practitioner numbers)",
+      "Reddit-style firsthand 'trained GPT-2 overnight on laptop 4060' anecdotes — search returned mostly repos and blogs, not direct laptop wall-clock reports",
+      "CPU-only training query returned mostly irrelevant arXiv papers; had to reconstruct the CPU ceiling from nanoGPT's own CPU config",
+      "HF perf_train_gpu_one docs fetch returned only a version-redirect page (claims sourced elsewhere instead)"
+    ]
+  },
+  "contradictions": [
+    "Diffusion compute penalty: Nie et al. (2410.18514) quantify ~16x more pretraining compute for MDM-vs-AR parity, but Prabhudesai et al. (2507.15857) show diffusion BEATS AR under data-constrained multi-epoch training, and a 2025 GIDD scaling study (alphaXiv summary of 2512.10858) argues the 'up to 16x' estimates were methodologically limited and that a simple cross-entropy objective makes MDMs ~12% more FLOPs-efficient. Resolution for this project: the 16x tax applies to single-epoch web-scale likelihood parity; a small fixed math corpus trained many epochs is the regime where the tax shrinks or reverses.",
+    "Single-GPU GPT-2 training time: nanoGPT issue #179 implies ~35 days on a 4090 (5 s/iter, early PyTorch 2.0 nightly, self-described suboptimal), while Giles Thomas (Dec 2025) trained a comparable 163M model on a slower RTX 3090 in ~44-48 h at ~20k tok/s. The 15-20x gap is tuning + AMP/TF32 + modern PyTorch, not hardware — old anecdotes systematically overstate consumer training times.",
+    "Gradient checkpointing cost: sources disagree on the slowdown — ~22% (one measured case), ~30% ('throughput tax'), ~33% (one extra forward) — and the official PyTorch blog declines to give a single number; treat it as 20-35% workload-dependent.",
+    "8 GB VRAM adequacy: desktop RTX 4060 benchmarking (marketcalls.in, Jan 2025) concludes 8 GB is 'plenty' for small-model work (~5 GB peak in their tests), while the laptop-focused guide (knightli) says only 6.5-7.2 GB is actually usable on Windows laptops — both true; the delta is Windows compositor/browser overhead plus laptop vendor tuning.",
+    "WSL2 vs native Windows: WSL2 gives the full Linux ML toolchain (triton, flash-attn, bitsandbytes) and is broadly recommended, yet WSL2 ignores the NVIDIA sysmem-fallback setting (microsoft/WSL #11050), so behavior at the VRAM ceiling differs: native Windows silently slows (spill), WSL2 hard-OOMs. Neither is strictly better; the plan must handle both.",
+    "FP16 vs BF16: consensus says bf16 is the stability default on Ampere+, but arXiv 2510.26788 argues fp16's extra mantissa precision fixes training-inference mismatch in RL fine-tuning — a reminder that 'bf16 always' is a default, not a law."
+  ],
+  "practitionerReality": "What practitioners actually hit, in order: (1) The VRAM ceiling arrives before the compute ceiling — a 124-163M-param model in bf16+AdamW is only ~2-2.6 GB of states, so on 8 GB the real budget fight is activations, solved with micro-batch 2-12 + gradient accumulation + activation checkpointing rather than exotic tricks (a ~355M model fits a 16 GB 4060-class card at seq 1024, batch 2, accum 16, bf16 per the bitrifttech chatbot-tutorial repo). (2) Laptop numbers are per-machine, not per-GPU: TGP (35-140 W) and cooling cause 30-50% throughput spread between two laptops with identical GPU names, and sustained training throttles further; desktop-GPU benchmarks overestimate laptops by roughly 2x. (3) Windows is the pitfall zone: silent sysmem spill makes runs mysteriously 10-50x slower (set 'Prefer No Sysmem Fallback'), torch.compile needs triton-windows or must be disabled, flash-attn rarely builds — practitioners either accept plain SDPA without compile or move to WSL2. (4) On Macs, MPS is fine for the small models this project needs but has a history of silent numerical bugs (frozen Adam updates on non-contiguous tensors, fixed in torch 2.4) — pin PyTorch >=2.4, watch for parameters that stop moving, and expect swap-collapse if model + OS exceed unified memory. (5) Economically, nobody should suffer a marginal local run: a rented 4090 at ~$0.35/hr does a laptop-week of training for ~$10-30, so the rational local envelope is prototyping, the visualization UI, small (5-60M param) diffusion models trained hours-to-overnight, and GSM8K-style finetunes — with cloud as a pressure valve, not a requirement.",
+  "gaps": [
+    "No published transformer-TRAINING (not inference) tokens/sec benchmark specifically for laptop RTX 4060/4070 GPUs — the plan must extrapolate from desktop 3090/4090 anchors with a 2-4x derating, and should include an early empirical throughput probe on the actual machine.",
+    "No verified wall-clock report of anyone training a small DIFFUSION language model on a laptop — MDLM/SEDD/LLaDA-class repos assume A100+ clusters; the 16x-compute and data-constrained findings let us reason about it, but the exact laptop cost of a masked-diffusion objective vs AR at 10-100M params is unverified territory.",
+    "Cramming paper abstract does not name the exact GPU used; I did not verify the GPU model from the paper body, so it is cited only for the one-GPU-one-day feasibility and scaling-law claims.",
+    "Prabhudesai et al.'s exact numeric epoch thresholds (e.g., how many epochs of data reuse before diffusion overtakes AR, the decay constant) were not visible on the abstract page — the closed-form critical-compute expression exists but its constants need extraction from the PDF during planning.",
+    "Publication date of EleutherAI's Transformer Math 101 (April 2023) and of the LaptopMedia TGP comparison were not independently confirmed on-page.",
+    "MPS bf16/AMP current status (2026) not verified against official PyTorch release notes — only secondary guides saying support is 'limited/evolving'.",
+    "Electricity-cost claim (~$1-2 for a multi-day laptop run) is arithmetic from TGP specs, not a sourced measurement."
+  ],
+  "bestSources": [
+    {
+      "title": "Transformer Math 101 — EleutherAI",
+      "url": "https://blog.eleuther.ai/transformer-math/",
+      "why": "The single load-bearing source for the whole hardware envelope: exact bytes-per-parameter for weights/gradients/optimizer states under every precision regime, activation-memory formulas with/without recomputation, and C≈6PD compute budgeting — everything needed to size a model to 6-8 GB of laptop VRAM on paper before writing code."
+    },
+    {
+      "title": "Scaling up Masked Diffusion Models on Text (arXiv 2410.18514)",
+      "url": "https://arxiv.org/abs/2410.18514",
+      "why": "Quantifies the economics of choosing diffusion: ~16x pretraining-compute tax vs AR for parity, MDM scaling laws, and — critically for this project — evidence that a 1.1B MDM matches 7B Llama-2 on GSM8K, showing math reasoning is a relative strength of masked diffusion."
+    },
+    {
+      "title": "Diffusion Beats Autoregressive in Data-Constrained Settings (arXiv 2507.15857)",
+      "url": "https://arxiv.org/abs/2507.15857",
+      "why": "Flips the 16x tax in the laptop's favor: with limited data and many epochs (exactly a local math-corpus build), randomized masking acts as implicit data augmentation and diffusion overtakes AR — including a closed-form critical-compute threshold to plan against."
+    },
+    {
+      "title": "Writing an LLM from scratch, part 28 (gilesthomas.com)",
+      "url": "https://www.gilesthomas.com/2025/12/llm-from-scratch-28-training-a-base-model-from-scratch",
+      "why": "The most concrete, recent, end-to-end consumer-GPU pretraining datapoint found: 163M params, one RTX 3090, ~20k tok/s, 3.2B tokens in ~48 h, with memory and FLOPs accounting — the calibration anchor for scaling expectations down to laptop GPUs."
+    },
+    {
+      "title": "karpathy/nanoGPT",
+      "url": "https://github.com/karpathy/nanoGPT",
+      "why": "Canonical reference codebase whose README doubles as a hardware-ladder map: working CPU-only config (~3 min toy run), MPS guidance (2-3x), Windows --compile=False caveat, and the 8xA100 upper anchor — the de facto template the DLLM build will mirror."
+    }
+  ]
+}

@@ -1,0 +1,286 @@
+{
+  "aspect": "Math & reasoning specialization for diffusion LLMs — evidence and implications for a laptop-scale, math-specialized DLLM build",
+  "findings": [
+    {
+      "claim": "LLaDA 8B (first competitive from-scratch masked diffusion LLM) reports GSM8K 70.3 / MATH 31.4 for Base and GSM8K 69.4 / MATH 31.9 for Instruct in its own eval tables, beating LLaMA3 8B Base (48.7/16.0 as reported in the same tables); the authors explicitly flag math as a relative strength and attribute it partly to training-data composition, not architecture alone.",
+      "url": "https://arxiv.org/abs/2502.09992",
+      "title": "Large Language Diffusion Models (LLaDA), arXiv:2502.09992",
+      "tier": "S",
+      "date": "2025-02 (v1)",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "LLaDA 8B pre-training cost was 2.3T tokens and ~0.13 million H800 GPU-hours plus SFT on 4.5M pairs — establishing that LLaDA-class math scores (~70 GSM8K) are 5-6 orders of magnitude beyond laptop training budgets; a laptop build must target a different point on the curve entirely.",
+      "url": "https://arxiv.org/abs/2502.09992",
+      "title": "Large Language Diffusion Models (LLaDA), arXiv:2502.09992",
+      "tier": "S",
+      "date": "2025-02",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "LLaDA 8B Instruct beats GPT-4o on reversal poem completion (45.6% vs 34.3%; forward: 51.8% vs 82.7%), showing masked diffusion's bidirectional training yields balanced forward/backward performance where AR models collapse — the flagship 'reversal curse' evidence for diffusion.",
+      "url": "https://arxiv.org/abs/2502.09992",
+      "title": "Large Language Diffusion Models (LLaDA), arXiv:2502.09992",
+      "tier": "S",
+      "date": "2025-02",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "Diffusion-of-Thought (NeurIPS 2024): a tiny from-scratch diffusion model (DoT-scratch) hits 100% on 4x4 and 5x5 multi-digit multiplication at ~62 it/s vs GPT-2 CoT fine-tuned at 0.8 it/s — accuracy parity with >27x throughput — direct proof that small, cheap diffusion models can master structured arithmetic, the most laptop-feasible demo in the literature.",
+      "url": "https://arxiv.org/abs/2402.07754",
+      "title": "Diffusion of Thoughts: Chain-of-Thought Reasoning in Diffusion Language Models, arXiv:2402.07754",
+      "tier": "S",
+      "date": "2024-02 (v3 2024-12, NeurIPS 2024)",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "DoT on GSM8K is a reality check: fine-tuned Plaid 1B reaches 32.6% (36.3% with self-consistency; multi-pass DoT-MP 37.7% → 40.3% with SC) vs GPT-2-small CoT fine-tuned 40.7% and ChatGPT 62.5% — natural-language math word problems do NOT automatically favor diffusion at ~1B scale; authors cite immature diffusion pretraining and need for task-specific fine-tuning as limitations.",
+      "url": "https://arxiv.org/abs/2402.07754",
+      "title": "Diffusion of Thoughts (ar5iv full text), arXiv:2402.07754",
+      "tier": "S",
+      "date": "2024-02",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "Beyond Autoregression (MGDM): from-scratch masked diffusion models at 6M/85M/303M params crush AR on search/constraint math tasks — Countdown-4: 91.5% vs 45.8% (85M GPT-2), Countdown-5: 46.6% vs 5.1%, Sudoku: 100% vs 20.7% AR (fine-tuned LLaMA-13B only 32.9%), Game-of-24: 76.0% vs 18.8%. Mechanism: 'subgoal imbalance' — left-to-right AR must emit hard tokens that depend on future context first; MGDM adds token-level loss reweighting v(x_t,n)=α(1−exp(−u))^β emphasizing hard tokens. Trained on ~500k generated Countdown problems. This is the strongest evidence that a laptop-trainable (<100M) diffusion model can visibly beat AR on math-adjacent tasks.",
+      "url": "https://arxiv.org/abs/2410.14157",
+      "title": "Beyond Autoregression: Discrete Diffusion for Complex Reasoning and Planning, arXiv:2410.14157",
+      "tier": "S",
+      "date": "2024-10",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "d1 (Table 1, extracted from PDF): post-training LLaDA-8B-Instruct with SFT (s1K, 1000 examples, 20 epochs) + diffu-GRPO RL lifts GSM8K 78.2→82.1, MATH500 36.2→40.2, Countdown 20.7→42.2, Sudoku 11.7→22.1 (best sequence length per task); diffu-GRPO alone (81.9 GSM8K) beats SFT alone (81.1); gains from generation length 128→256 (~7.1%) exceed 256→512 (~2.5%). RL rollouts were capped at length 256 due to compute cost.",
+      "url": "https://arxiv.org/abs/2504.12216",
+      "title": "d1: Scaling Reasoning in Diffusion Large Language Models via Reinforcement Learning, arXiv:2504.12216",
+      "tier": "S",
+      "date": "2025-04 (v2 2025-06)",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "d1 hardware truth (appendix, extracted from PDF): diffu-GRPO ran on 8x NVIDIA A100-80GB with LoRA r=128, batch 6/GPU; SFT used LoRA on 2x A6000, seq len 4096. The RL uses a one-step mean-field log-probability estimator (per-token independence) plus random prompt masking as regularization. Implication: RL post-training of 8B dLLMs is far outside laptop scope; LoRA-SFT of an 8B dLLM sits at workstation scale, and only <150M from-scratch training is genuinely laptop-plausible.",
+      "url": "https://arxiv.org/abs/2504.12216",
+      "title": "d1: Scaling Reasoning in Diffusion Large Language Models via Reinforcement Learning (Appendix D), arXiv:2504.12216",
+      "tier": "S",
+      "date": "2025-04",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "SMDM (ICLR 2025) established the first MDM scaling law: masked diffusion needs ~16x more compute than AR to reach the same validation loss (models 220M-1.1B, 6e18-1e20 FLOPs, SlimPajama 627B tokens), but the scaling *rate* is comparable; the 1.1B MDM beats TinyLlama 1.1B (same data) on 4/8 zero-shot benchmarks and the abstract claims math reasoning on GSM8K competitive with Llama-2 7B.",
+      "url": "https://arxiv.org/abs/2410.18514",
+      "title": "Scaling up Masked Diffusion Models on Text, arXiv:2410.18514 (ICLR 2025)",
+      "tier": "S",
+      "date": "2024-10",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "SMDM reversal experiment: a 1.1B MDM scores 92% on reverse queries (Berglund et al. fictitious name-description dataset) vs 0% for Llama-2 13B and GPT-3 175B, using ~10% of Llama-2's parameters/data and ~1% of its compute — quantitatively the strongest 'small diffusion beats giant AR on bidirectional recall' result.",
+      "url": "https://arxiv.org/abs/2410.18514",
+      "title": "Scaling up Masked Diffusion Models on Text, arXiv:2410.18514",
+      "tier": "S",
+      "date": "2024-10",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "Diffusion beats AR in data-constrained settings (NeurIPS 2025): with repeated data, AR models extract value for only ~4 epochs while diffusion keeps improving up to ~100 epochs (best loss at ~500 epochs vs ~50 for AR), because random masking exposes diverse token orderings/prediction tasks; decision rule stated by authors: compute-constrained → AR, data-constrained → diffusion. Follow-up (arXiv 2510.04071) attributes most of the effect to random masking acting as stochastic regularization. Directly relevant: a laptop math build has a tiny unique corpus (GSM8K train = ~7.5k problems) that must be re-epoched heavily — the regime where diffusion wins.",
+      "url": "https://arxiv.org/abs/2507.15857",
+      "title": "Diffusion Beats Autoregressive in Data-Constrained Settings, arXiv:2507.15857 (NeurIPS 2025)",
+      "tier": "S",
+      "date": "2025-07",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "Dream 7B (AR-initialized from Qwen2.5 with ~1/4 of LLaDA's training data) reports GSM8K 77.2 (vs LLaDA 70.9) and much stronger planning: Countdown 16.0 and Sudoku 81.0 vs Qwen2.5-7B's 6.2 and 21.0, occasionally matching DeepSeek V3 on planning despite orders of magnitude fewer parameters — evidence that (a) diffusion's edge concentrates in constraint/planning tasks and (b) AR-initialization is a cheap route to a capable dLLM.",
+      "url": "https://arxiv.org/abs/2508.15487",
+      "title": "Dream 7B: Diffusion Large Language Models, arXiv:2508.15487",
+      "tier": "S",
+      "date": "2025-08 (blog 2025-04)",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "'Beyond Surface Reasoning' identifies the Parallel-Sequential Contradiction (PSC): dLLMs are genuinely parallel only for directly decidable outputs; as math/reasoning difficulty rises they revert to autoregressive-like sequential decoding, and autoregressive-style prompting nearly doubles decoding steps via remasking without quality gains. PSC restricts self-reflection, reasoning depth, and exploratory breadth; suggested mitigations are parallel-oriented prompting, diffusion early stopping, and parallel (best-of-n) scaling. This is the core contradiction to 'diffusion = better reasoner' claims for GSM8K-style sequential chain-of-thought.",
+      "url": "https://arxiv.org/abs/2510.09544",
+      "title": "Beyond Surface Reasoning: Unveiling the True Long Chain-of-Thought Capacity of Diffusion Large Language Models, arXiv:2510.09544",
+      "tier": "S",
+      "date": "2025-10",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "Fixed-length canvas is a real, documented handicap for math CoT: masked dLLMs must pre-commit generation length (too short truncates solutions; too long wastes compute and can degrade quality); d1's appendix notes LLaDA must take loss on PAD/EOS tokens to learn to terminate, and RL was locked to length 256. A 2026 line of work (length regularization arXiv 2602.07546; training-free bidirectional EOS control ρ-EOS arXiv 2601.22527; iLLaDA arXiv 2606.25331; Block Diffusion) exists specifically to fix variable-length generation — a laptop build should either use block/semi-AR decoding or fixed short canvases per task.",
+      "url": "https://arxiv.org/pdf/2602.07546",
+      "title": "Improving Variable-Length Generation in Diffusion Language Models via Length Regularization, arXiv:2602.07546",
+      "tier": "S",
+      "date": "2026-02",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "TinyGSM (AR-side calibration): a 1.3B generator + 1.3B verifier fine-tuned on 12.3M GPT-3.5-synthesized GSM8K-style problems with Python solutions reaches 81.5% GSM8K, beating its GPT-3.5 teacher (77.4%) — the decisive lever at small scale is high-quality synthetic data plus verification, not parameter count; the TinyGSM corpus (11.8M problems) is public and reusable for a diffusion math model.",
+      "url": "https://arxiv.org/abs/2312.09241",
+      "title": "TinyGSM: achieving >80% on GSM8K with small language models, arXiv:2312.09241",
+      "tier": "S",
+      "date": "2023-12",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "A concrete laptop-adjacent recipe exists (extracted from PDF): 2026 work trains a 125M masked diffusion model (Qwen2-style attention, hidden 512, 14 layers, 8 heads, seq len 512) on TinyGSM (11.8M problems) and evaluates GSM8K with Top-2/Top-3 confidence unmasking; LoopMDM (looping 2 early-middle layers, Smax=8) adds up to +8.5 GSM8K points over the same-size MDM and matches its accuracy with 43% of training FLOPs, with accuracy improving monotonically as inference-time loop count rises (test-time compute scaling knob). Baseline setup: 900k iterations, batch 32/GPU on 4 A100s, AdamW lr 3e-4, EMA 0.9999 — the architecture is exactly laptop-class even though the reference training run is not; the underlying protocol comes from PUMA (arXiv 2602.10314), which reports ~2.5x pretraining speedup at 125M scale and open-sources its codebase.",
+      "url": "https://arxiv.org/abs/2605.26106",
+      "title": "Looped Diffusion Language Models, arXiv:2605.26106",
+      "tier": "S",
+      "date": "2026-05",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "Industry frontier data point: Google's Gemini Diffusion beats its size-matched AR sibling Gemini 2.0 Flash-Lite on math AIME 2025 (23.3% vs 20.0%) and MBPP (76.0 vs 75.8) while losing on GPQA Diamond (40.4 vs 56.5), Global MMLU (69.1 vs 79.0) and BIG-Bench Extra Hard (15.0 vs 21.0), at 1479 tokens/sec — the win pattern (math/code yes, broad knowledge/reasoning no) matches the academic evidence that iterative refinement helps math specifically.",
+      "url": "https://deepmind.google/models/gemini-diffusion/",
+      "title": "Gemini Diffusion — Google DeepMind (official model page)",
+      "tier": "S",
+      "date": "2025-05 (announced; page accessed 2026-07)",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "RL for diffusion math is getting cheaper fast: wd1 (weighted policy optimization, ratio-free) outperforms d1 on LLaDA-8B with no SFT stage and up to +59% accuracy improvement over the base model; extended wd1++ reports 84.5% GSM8K after only 20 RL steps — evidence that dLLM math post-training recipes are immature and compute floors are dropping, though still multi-GPU.",
+      "url": "https://arxiv.org/abs/2507.08838",
+      "title": "wd1: Weighted Policy Optimization for Reasoning in Diffusion Language Models, arXiv:2507.08838",
+      "tier": "S",
+      "date": "2025-07",
+      "confidence": "medium",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "MMaDA-8B (NeurIPS 2025) applies mixed long-CoT fine-tuning + UniGRPO (unified policy-gradient RL for diffusion) and claims to surpass LLaMA-3-7B and Qwen2-7B on textual reasoning; secondary sources report GSM8K 86.1 for MMaDA — the highest GSM8K figure attached to an open 8B dLLM found in this research, but the exact number was only verified in secondary coverage, not primary tables.",
+      "url": "https://arxiv.org/abs/2505.15809",
+      "title": "MMaDA: Multimodal Large Diffusion Language Models, arXiv:2505.15809",
+      "tier": "S",
+      "date": "2025-05",
+      "confidence": "medium",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "Theory has caught up to the reversal-curse observation: a Feb 2026 analysis proves for one-layer masked diffusion models that forward masked training reduces reverse-direction loss to first order via parameter-level coupling of forward/reverse positional conditionals (shared parameters store token-pair evidence; relative positional encodings route attention), with signatures verified in controlled experiments and on LLaDA/Dream — the bidirectional advantage is mechanistic, not a benchmarking artifact.",
+      "url": "https://arxiv.org/abs/2602.02133",
+      "title": "A Theoretical Analysis of Why Masked Diffusion Models Mitigate the Reversal Curse, arXiv:2602.02133",
+      "tier": "S",
+      "date": "2026-02 (rev. 2026-05)",
+      "confidence": "medium",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "Practitioner reality check (Hacker News, Mercury 2 diffusion reasoning model launch thread): hands-on users prize diffusion speed ('intelligence is not the bottleneck anymore but speed') but one tester reports Mercury 2 failed a basic logical-reasoning scenario even at maximum reasoning effort; community tone is cautious interest with no systematic user-side math benchmarks — vendor reasoning claims are not yet validated by practitioners.",
+      "url": "https://news.ycombinator.com/item?id=47137731",
+      "title": "Mercury 2: Diffusion Reasoning Model | Hacker News",
+      "tier": "B",
+      "date": "Mercury 2 release-era thread (exact date not verified)",
+      "confidence": "medium",
+      "evidenceType": "direct"
+    }
+  ],
+  "contradictions": [
+    "Diffusion's reasoning advantage is task-structure dependent, and the literature contains both halves: enormous wins on any-order constraint/search tasks (MGDM: Sudoku 100% vs 20.7%, Countdown-4 91.5% vs 45.8% at <100M params; Dream 7B Sudoku 81 vs Qwen2.5's 21) versus no automatic win on sequential natural-language math — DoT's Plaid-1B trails a fine-tuned GPT-2-small on GSM8K (40.3 vs 40.7), the PSC paper shows dLLMs revert to AR-like decoding as difficulty rises, and Gemini Diffusion loses most reasoning benchmarks to its AR sibling except AIME/MBPP.",
+    "Compute vs data efficiency pulls in opposite directions: SMDM measures a ~16x compute penalty for MDMs to match AR validation loss, while Prabhudesai et al. show diffusion decisively beats AR when a small dataset is re-epoched (up to ~100 useful epochs vs ~4 for AR). A consumer laptop is BOTH compute-poor and data-poor; the build must exploit the data-constrained regime (small math corpus, many epochs) to land on the diffusion-favorable side.",
+    "Cross-paper benchmark numbers for the same model disagree wildly due to protocol: LLaDA-8B-Instruct GSM8K is 69.4 in the LLaDA paper (4-shot), 78.2 under d1's protocol at length 512, and ~78.6 with block-style sampling in community evals; LLaDA Sudoku is 11.7 in d1 but Dream reports 46.0 for LLaDA under its own setup. Any target score for the build must fix decoding protocol (length, steps, remasking rule, shots) first.",
+    "MMaDA's reported 86.1 GSM8K (secondary source) vs LLaDA's 69-78 range suggests post-training recipes dominate architecture effects, but the number could reflect protocol differences or contamination; it was not verifiable in the primary abstract/README during this research.",
+    "Vendor claims of 'diffusion reasoning models' (Mercury 2, Gemini Diffusion speed+math framing) vs practitioner anecdotes of failures on simple logic tests at max reasoning effort — the marketing narrative runs ahead of user-validated evidence."
+  ],
+  "coverage": {
+    "attempted": [
+      "LLaDA GSM8K math benchmark score (WebSearch + arXiv HTML fetch)",
+      "Diffusion of Thought arXiv 2402.07754 (search + abs + PDF + ar5iv + GitHub)",
+      "discrete diffusion sudoku countdown planning vs autoregressive (search + arXiv HTML fetch)",
+      "d1 / diffu-GRPO GSM8K MATH500 (search + 5 fetch attempts + local PDF text extraction via pypdf)",
+      "Beyond Surface Reasoning long CoT limitation (search)",
+      "variable length generation limitation LLaDA math CoT (search)",
+      "TinyGSM small model GSM8K fine-tuning (search)",
+      "Scaling up Masked Diffusion Models 16x compute reversal (search + HTML fetch)",
+      "wd1 weighted policy optimization d1 baselines (search + OpenReview fetch)",
+      "Diffusion beats autoregressive data-constrained (search)",
+      "MMaDA UniGRPO math (search + abs fetch + GitHub fetch)",
+      "Dream 7B math planning benchmarks (search)",
+      "Gemini Diffusion AIME benchmarks (search + official DeepMind page fetch)",
+      "reversal curse theory paper 2602.02133 (abs fetch)",
+      "What makes DLMs super data learners 2510.04071 (abs fetch)",
+      "Looped Diffusion 125M TinyGSM MDM (PDF fetch + local pypdf extraction)",
+      "PUMA 2602.10314 progressive unmasking (abs fetch)",
+      "HN practitioner threads Mercury/diffusion math (site search + thread fetch)",
+      "Reddit LocalLLaMA diffusion math experience (site:reddit.com search)",
+      "tiny diffusion LM from scratch GSM8K hobbyist (search)"
+    ],
+    "useful": [
+      "LLaDA arXiv HTML (full benchmark + compute + reversal tables)",
+      "d1 PDF local text extraction (full Table 1 + appendix hardware)",
+      "ar5iv DoT full text (all multiplication/GSM8K/throughput numbers)",
+      "MGDM arXiv HTML (model sizes 6M-303M + all task accuracies + mechanism)",
+      "SMDM HTML (16x gap, reversal 92% vs 0%, scaling-law details)",
+      "Looped Diffusion PDF extraction (exact 125M TinyGSM MDM config + GSM8K deltas)",
+      "Dream 7B search synthesis (GSM8K/Countdown/Sudoku numbers)",
+      "Gemini Diffusion official page (full benchmark table)",
+      "TinyGSM search (81.5% result + dataset size)",
+      "Beyond Surface Reasoning search (PSC findings)",
+      "data-constrained diffusion search (epoch crossover numbers)",
+      "wd1 search (84.5% GSM8K, 20 RL steps)",
+      "HN Mercury 2 thread (practitioner sentiment)"
+    ],
+    "failed": [
+      "arxiv.org/abs pages alone (abstracts lack tables — needed HTML/PDF/ar5iv routes)",
+      "arxiv HTML 404s for 2402.07754v3, 2504.12216 v1/v2; ar5iv 2504.12216 fatal conversion error",
+      "OpenReview wd1 PDF (bot-verification wall)",
+      "techxplore d1 article (no numbers, no author quotes)",
+      "site:reddit.com searches (returned no Reddit threads at all)",
+      "MMaDA GitHub + abstract (no GSM8K number in primary sources checked; 86.1 remains secondary)",
+      "Read tool on saved PDFs (pdftoppm missing on host — worked around with python/pypdf)"
+    ]
+  },
+  "gaps": [
+    "No published CPU-only or consumer-laptop training/inference benchmark for any math-specialized dLLM was found; the smallest documented reference configs are 4x A100 for a 125M MDM on TinyGSM (900k iters) and 2x A6000 for LoRA-SFT of an 8B dLLM. Laptop feasibility for a ~5-50M model on a subset of TinyGSM/Countdown data is an extrapolation (well-supported by MGDM's 6M results), not a measured datapoint.",
+    "Absolute GSM8K accuracy of the 125M TinyGSM masked-diffusion baseline is shown only in figure images (LoopMDM Fig. 3) and could not be extracted as text; only deltas (+8.5) and FLOP ratios (43%) are verified.",
+    "SMDM's exact GSM8K number for its 1.1B MDM was not present in the v1 HTML render (abstract-level claim of 'competitive with Llama-2 7B' only; camera-ready ICLR PDF not parsed).",
+    "MMaDA's GSM8K 86.1 could not be confirmed in the primary abstract or GitHub README — only in secondary coverage.",
+    "No substantive firsthand Reddit/LocalLLaMA reports of running/fine-tuning dLLMs on math were surfaced by search (searches returned arXiv papers instead); practitioner evidence rests on one HN thread.",
+    "DoT's GSM8K evaluation used the augmented GSM8K from the Implicit-CoT repo; comparability with standard 8-shot GSM8K protocols is unclear.",
+    "No study was found that trains a diffusion vs AR model head-to-head from scratch on GSM8K-style word problems (as opposed to Countdown/Sudoku/multiplication) at <150M scale — the exact experiment the laptop build would perform."
+  ],
+  "practitionerReality": "Hardware floors in the primary literature are unambiguous: every math-capable dLLM result above ~70 GSM8K rides on an 8B model pretrained with ~130k H800 GPU-hours (LLaDA), post-trained with 8x A100-80GB for RL (d1) or 2x A6000 for LoRA-SFT; even the 'small' 125M TinyGSM masked-diffusion recipe used 4x A100 for 900k iterations. Nothing in the record demonstrates laptop training of a GSM8K-competent dLLM. What IS demonstrated at laptop-compatible scale: (1) MGDM's 6M-85M from-scratch masked diffusion models beating GPT-2 and even fine-tuned LLaMA-13B on Countdown (91.5%), Sudoku (100%), and Game-of-24 (76%) using ~500k generated training problems; (2) DoT-scratch tiny models hitting 100% on 4x4/5x5 multiplication with 27x AR throughput. The honest laptop envelope for the math specialization is therefore: from-scratch 5-125M masked diffusion on synthetic arithmetic/Countdown/Sudoku plus a TinyGSM subset, expecting strong results on structured tasks and modest GSM8K (a fine-tuned 1B diffusion model only reached 32-40%; GPT-2-small AR reached 40.7%); running a quantized LLaDA/Dream-8B locally for inference-only demos is plausible on a mid-range laptop GPU but training/RL of that class is not. Practitioner sentiment (HN Mercury 2 thread) matches the academic contradiction: speed gains are real and loved, reasoning-quality claims fail casual hands-on logic tests, and nobody outside labs has published user-side math benchmarks. Decoding protocol dominates reported scores (same model swings 69→82 GSM8K across papers via length/steps/remasking choices), so the build's evaluation harness must pin generation length, unmasking rule (e.g., Top-2 max-confidence), and step count before quoting any number — and the fixed-length canvas problem means short per-task canvases or block/semi-AR decoding are near-mandatory for math CoT.",
+  "bestSources": [
+    {
+      "title": "Beyond Autoregression: Discrete Diffusion for Complex Reasoning and Planning (MGDM), arXiv:2410.14157",
+      "url": "https://arxiv.org/abs/2410.14157",
+      "why": "The single most build-relevant paper: from-scratch 6M/85M masked diffusion models with exact accuracies crushing AR on Countdown/Sudoku/Game-of-24, a mechanistic explanation (subgoal imbalance), a concrete loss-reweighting trick (MGDM), dataset sizes (~500k problems), and open code (HKUNLP/diffusion-vs-ar) — this is the laptop-scale existence proof plus recipe."
+    },
+    {
+      "title": "Diffusion of Thoughts: Chain-of-Thought Reasoning in Diffusion Language Models, arXiv:2402.07754 (NeurIPS 2024)",
+      "url": "https://arxiv.org/abs/2402.07754",
+      "why": "Founding math-CoT-in-diffusion work with brutally honest small-scale numbers on both sides: 100% multiplication at 27x speedup for tiny models, but only 32-40% GSM8K for a fine-tuned 1B diffusion model vs 40.7% for GPT-2-small AR — plus open training/eval code (Plaid/SEDD) that maps directly onto a hobby-scale reimplementation."
+    },
+    {
+      "title": "d1: Scaling Reasoning in Diffusion Large Language Models via Reinforcement Learning, arXiv:2504.12216",
+      "url": "https://arxiv.org/abs/2504.12216",
+      "why": "Canonical post-training recipe with the complete GSM8K/MATH500/Countdown/Sudoku table across sequence lengths, s1K SFT details, diffu-GRPO log-prob estimator, and exact hardware (8x A100 RL, 2x A6000 SFT) — the ground truth for both achievable scores and the compute wall the laptop build must design around."
+    },
+    {
+      "title": "Beyond Surface Reasoning: Unveiling the True Long CoT Capacity of Diffusion LLMs, arXiv:2510.09544",
+      "url": "https://arxiv.org/abs/2510.09544",
+      "why": "The sharpest contradicting evidence: identifies the Parallel-Sequential Contradiction showing dLLMs revert to AR-like decoding on hard reasoning, quantifies the cost of AR-style prompting, and offers mitigations — essential for setting honest expectations in the Master Meta Plan."
+    },
+    {
+      "title": "Looped Diffusion Language Models, arXiv:2605.26106 (with PUMA, arXiv:2602.10314)",
+      "url": "https://arxiv.org/abs/2605.26106",
+      "why": "Freshest (2026) and closest architectural template to the target build: a fully specified 125M masked diffusion model (hidden 512, 14 layers, seq 512, Top-2/Top-3 confidence unmasking) trained on TinyGSM for GSM8K, plus two compute-efficiency levers (layer looping +8.5 pts / 43% FLOPs; PUMA 2.5x pretrain speedup with open code) that matter most under laptop constraints."
+    }
+  ]
+}

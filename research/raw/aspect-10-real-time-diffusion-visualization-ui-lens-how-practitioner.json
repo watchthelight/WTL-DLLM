@@ -1,0 +1,237 @@
+{
+  "aspect": "Real-time diffusion visualization UI — lens: How / practitioner",
+  "findings": [
+    {
+      "claim": "The official LLaDA Gradio demo (app.py, contributed by apolinário/multimodalart) is the canonical reference implementation for denoising visualization: a generator function collects per-step visualization states, then yields them into a gr.HighlightedText component ('Denoising Process Visualization', combine_adjacent=False) as lists of (token, color) tuples. Color scheme: masked tokens #444444 dark gray; newly revealed tokens colored by confidence (#FF6666 red <0.3, #FFAA33 orange <0.7, #66CC66 green >=0.7); previously revealed tokens #6699CC blue.",
+      "url": "https://github.com/ML-GSAI/LLaDA",
+      "title": "ML-GSAI/LLaDA — Official PyTorch implementation for 'Large Language Diffusion Models' (app.py)",
+      "tier": "S",
+      "date": "2025-02 (repo/demo added Feb-Mar 2025)",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "The LLaDA demo decouples generation from display: states are captured first, then replayed with an artificial pause — 'yield history, vis_states[0], response_text; for state in vis_states[1:]: time.sleep(delay); yield ...' — governed by a visualization_delay slider (0.0-1.0s, default 0.1s). The animation users watch is a paced replay, not the live compute cadence. Exposed sampling params map directly to UI controls: gen_length 16-128 (default 64), steps 8-64 (default 32), block_length 8-128 (default 32, semi-autoregressive blocks), remasking 'low_confidence' or 'random', temperature 0-1, cfg_scale 0-2, plus positional word constraints ('0:Once, 5:upon, 10:time').",
+      "url": "https://github.com/ML-GSAI/LLaDA",
+      "title": "ML-GSAI/LLaDA app.py — visualization_delay and sampling parameters",
+      "tier": "S",
+      "date": "2025-02",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "Dream 7B's Gradio demo implements the same visualization via a cleaner architecture: a per-step hook ('def my_generation_tokens_hook(step, x, logits): visualization_token_states.append(x[0].clone().cpu())') passed as generation_tokens_hook_func to diffusion_generate(). Rendering again uses gr.HighlightedText with 3-state coloring (#444444 masked, #66CC66 newly decoded, #6699CC already decoded) and a 'Visualization Delay (seconds)' slider 0.0-0.5, default 0.02s. Exposed params: max tokens 16-512, steps 8-512, temperature, top-p, top-k, and remasking algorithm selector (origin, maskgit_plus, topk_margin, entropy).",
+      "url": "https://github.com/DreamLM/Dream",
+      "title": "DreamLM/Dream — Dream 7B app.py Gradio demo",
+      "tier": "S",
+      "date": "2025-04 (Dream 7B release; paper arXiv:2508.15487)",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "Dream's generation API bakes visualization support into the model interface itself, so a UI never needs to hack the sampler: output_history=True returns 'the output at each intermediate step'; generation_tokens_hook_func 'can be user-defined to control the tokens at each intermediate step, e.g., print, infill, or other token control strategies' (demo_token_control.py); generation_logits_hook_func exposes per-step logits (enables confidence/entropy heatmaps). This hook pattern is the recommended design for a from-scratch build: emit (step, full_token_sequence, logits) events from the sampling loop.",
+      "url": "https://github.com/DreamLM/Dream",
+      "title": "DreamLM/Dream — output_history and generation hook API",
+      "tier": "S",
+      "date": "2025-04",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "Inception's production Mercury API has a first-class 'diffusing' (bool) parameter documented as 'stream intermediate denoising steps' — the only commercial precedent for streaming diffusion states over an OpenAI-compatible SSE endpoint (example payload: {\"model\": \"mercury-coder-small\", \"stream\": True, \"diffusing\": True}). Official docs live at docs.inceptionlabs.ai/capabilities/streaming ('Streaming & Diffusion'); the page returned HTTP 403 to automated fetch, so exact chunk schema is unverified here, but the LiteLLM provider docs list the parameter and description verbatim.",
+      "url": "https://docs.litellm.ai/docs/providers/inception",
+      "title": "LiteLLM provider docs — Inception (diffusing parameter)",
+      "tier": "S",
+      "date": "2025-2026 (Inception API launched Mar 2025)",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "Practitioner evidence on consuming a diffusing stream: intermediate states must be rendered as full replacements, not appended deltas. A hands-on writeup parses 'json.loads(line[6:])[\"choices\"][0][\"delta\"][\"content\"]' and re-renders each frame with clear_output(wait=True) + display(text) in a notebook because 'diffusion streaming fills in the blanks'; the author also observed failure modes where 'streaming produced blank content' on complex tasks. Downstream tools default to diffusing:false (an openclaw feature request asks for passthrough support), showing OpenAI delta-append client assumptions break on diffusion streams.",
+      "url": "https://medium.com/@mrsirsh/quickly-trying-out-inception-mercury-e503d836753d",
+      "title": "Quickly trying out Inception Mercury — Sirsh Amarteifio (Medium)",
+      "tier": "B",
+      "date": "undated (Mercury API era, 2025-2026)",
+      "confidence": "medium",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "Gradio's streaming model is generator functions that yield successive values, with a queue required ('demo.queue() ... required for generators'); the official guide itself suggests time.sleep() between yields 'so that you are able to observe the steps'. This is the exact mechanism both LLaDA and Dream demos use, making Gradio the lowest-effort path to a working denoising visualizer.",
+      "url": "https://www.gradio.app/guides/streaming-outputs",
+      "title": "Gradio Guides — Streaming Outputs",
+      "tier": "S",
+      "date": "current docs (fetched 2026-07)",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "Browser rendering, not model speed, is the binding constraint on 'real-time' visualization frame rate in Gradio: after migrating from WebSockets to SSE in Gradio 4, streaming updates 'would stack up in the browser's event stack and be prioritized over any browser repaint', causing lag; the fix (PR #7084) throttles pushes 'to a maximum rate of 20/sec'. Any Gradio-based denoising UI is therefore capped at ~20 visual frames/sec regardless of how fast denoising steps complete — plan step-to-frame mapping accordingly.",
+      "url": "https://huggingface.co/posts/abidlabs/528535313265224",
+      "title": "abidlabs (Gradio founder) — 'How we made Gradio faster by slowing it down'",
+      "tier": "A",
+      "date": "2024 (Gradio 4 era)",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "Measured Gradio UI streaming ceiling from a bug report: the frontend could not sustain more than ~100 tokens/sec even when the backend was faster ('I easily see the backend finish twice as soon as UI even for only a single line of about 100 characters'), with Chrome pegging 100% of one CPU core during streaming; lag scaled with the number of static UI elements (300 unused elements added ~0.001-0.003s per update; workaround: minimize elements). Gradio 3.47.1. Implication for a denoising visualizer: keep the DOM minimal and expect frame drops if you push every step of a fast sampler.",
+      "url": "https://github.com/gradio-app/gradio/issues/5914",
+      "title": "gradio-app/gradio issue #5914 — Slow chatbot streaming in UI",
+      "tier": "S",
+      "date": "2023-10",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "At production dLLM speeds there is essentially nothing to watch without artificial slowdown: Simon Willison measured Google's Gemini Diffusion demo at 857 tokens/second ('Build a simulated chat app' returned in single-digit seconds); his post describes output arriving as a finished artifact, with no mention of visible intermediate denoising states in the demo UI. Google's own model page claims 1479 tokens/sec average sampling (excluding 0.84s overhead) and describes generation as 'refining noise, step-by-step' that 'generates entire blocks of tokens at once'.",
+      "url": "https://simonwillison.net/2025/May/21/gemini-diffusion/",
+      "title": "Simon Willison — Gemini Diffusion (with speed video); cross-ref deepmind.google/models/gemini-diffusion/",
+      "tier": "A",
+      "date": "2025-05-21",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "The research behind Gemini Diffusion shipped as an open-weight model in June 2026 — google/diffusiongemma-26B-A4B-it (Apache 2), free-hosted on NVIDIA NIM; Willison generated 2,409 tokens in 4.4s (~500+ tok/s) via a simple generate.py script. For a visualization project this provides a current, openly licensed diffusion LM whose sampling loop can be instrumented, though 26B-A4B is beyond consumer-laptop training scale.",
+      "url": "https://simonwillison.net/2026/Jun/10/diffusiongemma/",
+      "title": "Simon Willison — DiffusionGemma",
+      "tier": "A",
+      "date": "2026-06-10",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "The canonical explanatory visualization of masked-diffusion sampling (the LLaDA README GIF) distinguishes two layers a good UI should also separate: 'the non-white background represents the model's generation process, while the white-background boxes indicate the predictions made by the mask predictor at each step' — i.e., committed tokens vs the predictor's provisional guesses (which may be remasked). The README also states 'LLaDA achieves optimal performance when the number of sampling steps equals the response length', meaning a quality-first local run of length L yields L animation frames (one full forward pass each), which naturally paces the visualization by compute.",
+      "url": "https://github.com/ML-GSAI/LLaDA",
+      "title": "ML-GSAI/LLaDA README — sampling GIF semantics and steps=length guidance",
+      "tier": "S",
+      "date": "2025-02",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "ZHZisZZ/dllm ('dLLM: Simple Diffusion Language Modeling', arXiv:2602.22661) is a unified train/infer/eval library with built-in decoding visualization: examples/llada/chat.py provides 'visualized multi-turn dialogue' in the terminal (works for LLaDA, LLaDA-MoE, Dream, BERT-chat, Edit Flows), plus MDLMTrainer (masked diffusion) and BD3LM (block diffusion) training recipes and Fast-dLLM accelerated inference (cache + confidence-threshold decoding). This is the closest existing 'build one and watch it denoise' codebase for a from-scratch project.",
+      "url": "https://github.com/ZHZisZZ/dllm",
+      "title": "ZHZisZZ/dllm — Simple Diffusion Language Modeling",
+      "tier": "S",
+      "date": "2026-02 (paper arXiv:2602.22661)",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "Laptop-adjacent scale precedent with visualization: the HF blog 'BERTs that chat' turns ModernBERT-base/large into diffusion chatbots via dLLM by training 'across the entire range of mask rates (0-100%)', states 'training can be completed on a single GPU', and shows the denoising generation as an animated GIF demo. Separately, nathan-barry/RoBERTaDiffusion finetunes RoBERTa as a text diffusion model (blog: 'BERT is just a Single Text Diffusion Step', nathan.rs/posts/roberta-diffusion/) and ships a --animation flag ('uv run inference.py \"Your prompt\" --animation') producing step-by-step reveal animations with confidence-threshold parallel decoding; training was ~1-2 hours on an H200 (so expect multi-day or reduced scale on consumer hardware).",
+      "url": "https://huggingface.co/blog/OnAnOrange/dllm-bert-chat",
+      "title": "BERTs that chat: turn any BERT into a chatbot with dLLM (HF blog); cross-ref github.com/nathan-barry/RoBERTaDiffusion",
+      "tier": "A",
+      "date": "2025-2026 (undated in fetch); RoBERTaDiffusion undated (2025 era)",
+      "confidence": "medium",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "Honest-visualization caveat from theory: analysis of order-agnostic/diffusion LMs finds that although confidence-first decoding is order-agnostic in principle, 'its reveal orders are close to left-to-right (L2R) on content tokens' ('Decoding in Order-Agnostic Language Models: Chain-Rule Deviation and Uniform Spreading'). A faithful visualizer of a masked-diffusion math solver should be expected to show mostly near-left-to-right filling with occasional out-of-order commits — not the dramatic random-scatter resolution seen in marketing animations. Related: 'Train for the Worst, Plan for the Best' (ICML 2025) studies adaptive token-ordering strategies the UI could surface.",
+      "url": "https://arxiv.org/html/2606.00997",
+      "title": "Decoding in Order-Agnostic Language Models: Chain-Rule Deviation and Uniform Spreading (arXiv 2606.00997)",
+      "tier": "S",
+      "date": "2026-06",
+      "confidence": "medium",
+      "evidenceType": "inference"
+    },
+    {
+      "claim": "Marketing framing vs mechanics tension: Inception's launch blog describes output 'refined from pure noise over a few denoising steps' in a coarse-to-fine video, with no disclaimer about whether the animation depicts literal intermediate states; masked (absorbing-state) models like LLaDA/Dream never pass through 'noisy text' — intermediate states are mask tokens plus committed text. The expected public criticism that vendor animations are fake/illustrative could NOT be verified: HN threads for Mercury Coder (43187518), Gemini Diffusion (44057820), and LLaDA (43110317) contain no comments challenging animation authenticity (checked via Algolia full comment trees).",
+      "url": "https://www.inceptionlabs.ai/blog/introducing-mercury",
+      "title": "Inception — Introducing Mercury (launch blog); cross-ref HN threads via hn.algolia.com",
+      "tier": "A",
+      "date": "2025-02-26",
+      "confidence": "medium",
+      "evidenceType": "inference"
+    },
+    {
+      "claim": "Karpathy's Mercury reaction frames why the denoising visualization is the differentiating product surface: 'This is interesting as a first large diffusion-based LLM... Most of the LLMs you've been seeing are ~clones... They're all trained autoregressively... Diffusion is different — it doesn't go left to right'; he called it a mystery 'why text generation has resisted diffusion' and said the model 'could reveal new strengths and weaknesses'. For a demo app, the visualization is the main way users perceive that difference at all.",
+      "url": "https://x.com/karpathy/status/1894923254864978091",
+      "title": "Andrej Karpathy on X — Mercury diffusion LLM comment",
+      "tier": "A",
+      "date": "2025-02 (Mercury launch week)",
+      "confidence": "high",
+      "evidenceType": "direct"
+    }
+  ],
+  "coverage": {
+    "attempted": [
+      "LLaDA gradio demo visualize denoising unmasking (WebSearch + GitHub fetch + raw app.py fetch)",
+      "multimodalart LLaDA HF space",
+      "Gemini Diffusion demo visualization Simon Willison (both 2025 and 2026 posts fetched)",
+      "DeepMind gemini-diffusion model page fetch",
+      "Mercury Inception playground animation + HN threads (43187518 via HN direct = 429, retried via Algolia; 44057820; 43110317)",
+      "Dream 7B demo visualization (repo + raw app.py fetch)",
+      "dllm library gradio/terminal visualization (ZHZisZZ/dllm fetch)",
+      "Inception API 'diffusing' parameter (docs.inceptionlabs.ai = 403; LiteLLM docs fetch; Medium practitioner post; openclaw issue fetch)",
+      "gradio streaming latency (official guide fetch, abidlabs throttling post fetch, issue #5914 fetch)",
+      "websocket web UI stream intermediate diffusion states (skewed to image diffusion)",
+      "BERT-as-chatbot diffusion visualization (HF blog + RoBERTaDiffusion fetch)",
+      "masked diffusion decode order left-to-right papers",
+      "diffusion demo visualization misleading/fake/illustrative criticism (multiple query phrasings + HN comment trees)",
+      "transformers.js WebGPU in-browser text diffusion demo"
+    ],
+    "useful": [
+      "LLaDA app.py raw fetch (complete UI blueprint)",
+      "Dream app.py raw fetch (hook architecture)",
+      "abidlabs Gradio throttling post (20 updates/sec)",
+      "gradio issue #5914 (~100 tok/s UI ceiling)",
+      "LiteLLM Inception docs + Medium post (diffusing param semantics)",
+      "ZHZisZZ/dllm fetch",
+      "HF BERT-chat blog + RoBERTaDiffusion",
+      "Simon Willison Gemini Diffusion + DiffusionGemma",
+      "arXiv 2606.00997 decode-order analysis",
+      "HN Algolia comment-tree fetches (negative results, still informative)"
+    ],
+    "failed": [
+      "docs.inceptionlabs.ai/capabilities/streaming (HTTP 403 — exact diffusing chunk schema unverified)",
+      "news.ycombinator.com direct fetch (HTTP 429, worked around via Algolia)",
+      "'misleading/fake demo animation' criticism searches (no verifiable source found)",
+      "in-browser (transformers.js/WebGPU) text diffusion visualizer search (nothing confirmed for text dLLMs)",
+      "reddit r/LocalLLaMA firsthand reports of running LLaDA demo locally with VRAM numbers (search did not surface usable threads)"
+    ]
+  },
+  "contradictions": [
+    "Speed vs watchability: vendors sell 700-1500 tok/s as the headline feature, but every real visualization (LLaDA 0.1s delay, Dream 0.02s delay, Mercury notebook clients, Gradio's own docs suggesting time.sleep) must artificially slow or replay the process to make it visible — the 'real-time denoising view' is by construction a paced replay, while the browser stack caps updates at ~20 frames/sec (Gradio throttling) and ~100 tok/s effective UI streaming (issue #5914).",
+    "Marketing language vs mechanics: Inception and Google describe 'refining pure noise into text', but absorbing-state masked diffusion (LLaDA, Dream — the architecture a laptop build will use) never has 'noisy text' intermediate states; states are [MASK] placeholders plus committed tokens. The LLaDA README GIF's own legend distinguishes provisional mask-predictor guesses from committed output — a distinction the noise-flicker animations blur. Note Mercury's internal parameterization is not public, so its animation cannot be proven illustrative; the expected public 'fake demo' criticism could not be found in any checked HN thread.",
+    "Any-order story vs actual decode order: the parallel/any-order narrative implies dramatic scattered unmasking, but arXiv 2606.00997 finds confidence-first reveal orders are close to left-to-right on content tokens — an honest visualizer will mostly look like slightly-jumpy left-to-right filling.",
+    "Delta-append vs full-replacement streaming: OpenAI-compatible clients assume delta.content appends; Mercury's diffusing stream requires in-place replacement of the whole answer per event (practitioners use clear_output + redisplay), and downstream tools default diffusing:false because they cannot handle it — a from-scratch UI must choose replacement semantics from day one."
+  ],
+  "practitionerReality": "Every working text-diffusion visualizer found converges on one pattern: (1) instrument the sampling loop to snapshot the full token sequence per step (Dream formalizes this as generation_tokens_hook_func / output_history=True; LLaDA's demo collects vis_states inline); (2) render each snapshot as a full replacement frame — a list of (token, color) tuples into gr.HighlightedText in Gradio, or clear-and-redisplay in notebooks/terminal (dllm chat.py, Mercury clients); (3) color-code token state: dark gray for [MASK], confidence-graded red/orange/green for newly committed tokens, blue for previously committed — confidence comes from the softmax probs already computed for remasking decisions, so it is free; (4) pace playback with a user-tunable delay slider (defaults 0.02-0.1s) because generation outruns both perception and the browser. Gradio generator + queue is the proven fastest path (both flagship demos use it, built by one HF engineer); its known limits are ~20 UI updates/sec (deliberate throttle) and degradation with DOM size, so for a custom 'wow' UI use SSE/WebSocket with replacement semantics and client-side animation interpolation instead. On a laptop, compute paces the animation for you: quality-first sampling wants steps ≈ generated length (LLaDA README), i.e., one full forward pass per frame — for a small from-scratch model at GSM8K answer lengths this lands naturally in watchable 5-30 fps territory, and the delay slider handles the rest.",
+  "gaps": [
+    "Exact wire format of Inception's diffusing SSE chunks (delta vs snapshot field naming) — official docs page 403'd; inferred from client code only.",
+    "No verified in-browser text-diffusion demo (transformers.js/WebGPU/ONNX) — appears to be genuinely unbuilt territory, which is an opportunity for this project but means no reference code.",
+    "No sourced CPU-only per-step latency numbers for small masked-diffusion models (needed to predict natural animation frame rate on a no-GPU laptop).",
+    "Whether Google's gated Gemini Diffusion demo UI offers a 'show the process' view — no public account describes intermediate states in that UI.",
+    "Expected public criticism that vendor denoising animations are illustrative/fake could not be verified anywhere credible — treat that meme as unproven either way.",
+    "No firsthand reports found of running the LLaDA/Dream Gradio demos on consumer laptops (VRAM, step latency, visualization smoothness)."
+  ],
+  "bestSources": [
+    {
+      "title": "ML-GSAI/LLaDA — app.py Gradio demo",
+      "url": "https://github.com/ML-GSAI/LLaDA",
+      "why": "Complete, copyable blueprint of exactly the UI to build: per-step state capture, HighlightedText rendering, confidence color scheme, delay slider, and every sampling parameter worth exposing as a control."
+    },
+    {
+      "title": "DreamLM/Dream — Dream 7B (app.py + generation hooks)",
+      "url": "https://github.com/DreamLM/Dream",
+      "why": "Best architectural pattern: visualization via first-class generation_tokens_hook_func / generation_logits_hook_func / output_history API, cleanly separating sampler from UI — the right design for a from-scratch build."
+    },
+    {
+      "title": "abidlabs — 'How we made Gradio faster by slowing it down'",
+      "url": "https://huggingface.co/posts/abidlabs/528535313265224",
+      "why": "The single most load-bearing constraint for 'real-time' claims: browser event-stack behavior forces throttling to ~20 updates/sec; explains why every demo replays with artificial delay."
+    },
+    {
+      "title": "ZHZisZZ/dllm — Simple Diffusion Language Modeling",
+      "url": "https://github.com/ZHZisZZ/dllm",
+      "why": "Only codebase that spans the whole project scope — train (MDLM/BD3LM) small models incl. BERT-scale on one GPU AND watch visualized decoding — making it the top reference repo for the Master Meta Plan."
+    },
+    {
+      "title": "LiteLLM Inception provider docs (diffusing parameter)",
+      "url": "https://docs.litellm.ai/docs/providers/inception",
+      "why": "Documents the production API pattern for streaming intermediate denoising steps (diffusing: true) and, with practitioner clients, establishes replacement-not-append streaming semantics for any custom backend protocol."
+    }
+  ]
+}

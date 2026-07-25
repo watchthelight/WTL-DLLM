@@ -1,0 +1,270 @@
+{
+  "aspect": "Training objective & pretraining recipe for discrete diffusion language models — lens: How (what loss to implement, how to weight it, what schedule, what hyperparameters, what it costs, how to keep it stable)",
+  "findings": [
+    {
+      "claim": "The modern canonical training objective (MDLM) is dead simple: a continuous-time NELBO that reduces to a weighted average of classical masked-LM cross-entropy losses, L = E_q ∫ (alpha'_t/(1-alpha_t)) * sum_l log<x_theta(z_t), x_l> dt, computed only on masked positions. It is derived via the SUBS parameterization: (1) zero masking probabilities — substitute the [MASK] logit with -infinity so the model never predicts MASK, and (2) carry-over unmasking — already-unmasked tokens are copied through (x_theta(z_t)=z_t at those positions). These two constraints Rao-Blackwellize the ELBO (drop stochastic terms), tightening the bound and improving perplexity.",
+      "url": "https://arxiv.org/abs/2406.07524",
+      "title": "Simple and Effective Masked Diffusion Language Models (MDLM), Sahoo et al., NeurIPS 2024",
+      "tier": "S",
+      "date": "2024-06-11 (NeurIPS 2024)",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "The continuous-time masked-diffusion ELBO is provably invariant to the functional form of the noise schedule alpha_t (change of variables gamma = log(1-alpha_t) in MDLM; MD4 shows only the endpoint SNR values matter). Practical consequence: for training the objective you can just use the log-linear/linear schedule alpha_t = 1-t (which makes the weight alpha'_t/(1-alpha_t) = -1/t, i.e. the familiar '1/t weighting'); schedule choice affects estimator variance and sampling behavior, not the loss in expectation.",
+      "url": "https://arxiv.org/abs/2406.04329",
+      "title": "Simplified and Generalized Masked Diffusion for Discrete Data (MD4), Shi et al., NeurIPS 2024",
+      "tier": "S",
+      "date": "2024-06-06 (NeurIPS 2024)",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "Although the ELBO is schedule-invariant in expectation, schedule DOES matter for sampling and variance: MD4 reports switching from linear to cosine schedule improved ImageNet 64x64 FID from 70 to 17 at T=256 steps (cosine slows unmasking early, reducing conflicting simultaneous unmasking); MD4 also generalizes to state-dependent (per-token-value) schedules (GenMD4). Schedules tested: linear alpha_t=1-t, geometric, cosine alpha_t=cos(pi*t/2).",
+      "url": "https://arxiv.org/abs/2406.04329",
+      "title": "Simplified and Generalized Masked Diffusion for Discrete Data (MD4) — schedule ablations",
+      "tier": "S",
+      "date": "2024-06-06",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "MDLM's exact verified default recipe (from the official repo config.yaml): Adam lr 3e-4 (beta1 0.9, beta2 0.999), weight_decay 0, global_batch_size 512, max_steps 1,000,000, gradient_clip_val 1.0, EMA 0.9999, precision bf16, noise: loglinear, diffusion: absorbing_state, parameterization: subs, time_conditioning: False, antithetic_sampling: True, sampling steps 128 with ddpm_cache predictor; sequence length 1024 (OpenWebText, GPT-2 tokenizer) or 128 (LM1B, bert-base-uncased tokenizer).",
+      "url": "https://github.com/kuleshov-group/mdlm",
+      "title": "kuleshov-group/mdlm official repo (configs/config.yaml)",
+      "tier": "S",
+      "date": "2024 (repo, master branch as of 2026-07)",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "MDLM scale/results reference points: OpenWebText 1M steps ≈ 262B tokens gives test PPL <=23.21 vs AR transformer 17.54 and SEDD <=24.10 (a ~17% improvement in perplexity bound over SEDD at matched training); LM1B 1M steps ≈ 33B tokens (10M steps ≈ 327B) gives MDLM <=23.00 vs AR 20.86. The residual AR-vs-diffusion perplexity gap at matched tokens is visible and persistent.",
+      "url": "https://arxiv.org/html/2406.07524",
+      "title": "MDLM paper, Tables 1-2 (LM1B, OpenWebText perplexities)",
+      "tier": "S",
+      "date": "2024-06-11",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "Variance reduction over the timestep t is a built-in, load-bearing part of the recipe: MDLM implements a low-discrepancy sampler drawing correlated (antithetic/stratified) t samples across the batch instead of i.i.d. uniform, 'similar to Kingma et al. (2021)', to reduce ELBO variance — enabled by default (antithetic_sampling: True). Naive i.i.d. t-sampling with the 1/t weight is high variance.",
+      "url": "https://arxiv.org/html/2406.07524",
+      "title": "MDLM paper, Suppl. D.3 low-discrepancy sampler + repo config",
+      "tier": "S",
+      "date": "2024-06-11",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "LLaDA 8B is the only fully-documented from-scratch pretraining recipe at LLaMA scale: 2.3T tokens, 0.13M H800 GPU-hours, fixed sequence length 4096, per-sequence t ~ U[0,1] with each token independently masked with probability t, and 1% of sequences given random length U[1,4096] for variable-length robustness. LR schedule (Warmup-Stable-Decay): linear warmup 0 -> 4e-4 over first 2000 iterations, hold 4e-4 until 1.2T tokens, drop to 1e-4 for next 0.8T tokens, then linear decay 1e-4 -> 1e-5 over final 0.3T tokens. AdamW weight decay 0.1, global batch 1280 (local 44/GPU).",
+      "url": "https://arxiv.org/abs/2502.09992",
+      "title": "Large Language Diffusion Models (LLaDA), Nie et al.",
+      "tier": "S",
+      "date": "2025-02-14",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "LLaDA's official implementation of the loss (GUIDELINES.md) shows the exact code to copy: t = torch.rand(b); p_mask = (1-eps)*t + eps (eps avoids division blow-up at t->0); loss = F.cross_entropy(logits[masked], input_ids[masked]) / p_mask[masked] — i.e. the 1/t weighting is implemented as division by per-token masking probability. SFT variant: never noise the prompt, mask only response tokens, divide token loss by answer length, pad responses with multiple EOS tokens counted in answer length. Mask token id 126336, encoder Transformer with causal mask removed.",
+      "url": "https://github.com/ML-GSAI/LLaDA/blob/main/GUIDELINES.md",
+      "title": "ML-GSAI/LLaDA GUIDELINES.md (official training/sampling guidance with code)",
+      "tier": "S",
+      "date": "2025 (repo)",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "LLaDA SFT recipe and math capability proof point: SFT on 4.5M pairs, 3 epochs, batch 256 (local 22/GPU), LR warmup 50 iters to 2.5e-5, constant, then linear decay to 2.5e-6 in final 10%, weight decay 0.1. Resulting LLaDA 8B Base scores GSM8K 70.3 (4-shot) and MATH 31.4 — direct evidence that the plain masked-diffusion objective + SFT learns grade-school math at scale.",
+      "url": "https://arxiv.org/html/2502.09992",
+      "title": "LLaDA paper — SFT hyperparameters and benchmark table",
+      "tier": "S",
+      "date": "2025-02-14",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "RADD proves the concrete score of absorbing-state diffusion factorizes as e^{-sigma_bar(t)}/(1-e^{-sigma_bar(t)}) * p_0(x_i | x_t^unmasked) — a time-dependent scalar times a time-independent conditional of clean data. Consequences: (1) the denoiser network needs NO time conditioning at all ('a form similar to the standard GPT model, with softmax as the final activation'); (2) four objectives — denoising score entropy (SEDD-style), t-DCE, lambda-DCE, and any-order autoregressive loss — are proven equivalent as total noise -> infinity (Theorem 2); (3) time-independence enables caching, with expected NFEs = n(1-(1-1/n)^l). Trained 400K iters on OpenWebText at GPT-2 scale, all RADD losses beat SEDD on 5 zero-shot benchmarks.",
+      "url": "https://arxiv.org/abs/2406.03736",
+      "title": "Your Absorbing Discrete Diffusion Secretly Models the Conditional Distributions of Clean Data (RADD), ICLR 2025",
+      "tier": "S",
+      "date": "2024-06-06 (ICLR 2025)",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "Independent confirmation that time conditioning is unnecessary: 'Masked Diffusion Models are Secretly Time-Agnostic Masked Models' (ICLR 2025) shows both training and sampling of MDMs are theoretically free of the time variable (equivalent to order-agnostic masked models), proposes a first-hitting sampler with ~20x speedup, and exposes a numerical landmine: 32-bit Gumbel categorical sampling is inaccurate and silently lowers effective sampling temperature, making prior generative-perplexity comparisons (e.g., SEDD-era 'better than GPT-2' claims) partly an artifact. Use float64 for Gumbel sampling when evaluating.",
+      "url": "https://arxiv.org/abs/2409.02908",
+      "title": "Masked Diffusion Models are Secretly Time-Agnostic Masked Models and Exploit Inaccurate Categorical Sampling, ICLR 2025",
+      "tier": "S",
+      "date": "2024-09-04 (ICLR 2025)",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "The honest compute-efficiency gap: in IsoFLOP scaling experiments (6e18 to 1e20 FLOPs, up to 1.1B params, SlimPajama 627B tokens, linear schedule alpha_t = 1-t, context 2048), masked diffusion models require approximately 16x more compute than autoregressive models to reach comparable validation loss — but the power-law scaling RATE matches AR, and MDMs win where AR structurally fails: 92% vs 0% (Llama-2 13B) on reverse-curse tasks and better temporal robustness (PPL 24.06 vs 27.01 on 2024 data).",
+      "url": "https://arxiv.org/abs/2410.18514",
+      "title": "Scaling up Masked Diffusion Models on Text (SMDM), Nie et al., ICLR 2025",
+      "tier": "S",
+      "date": "2024-10-24 (ICLR 2025)",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "The counterweight to the 16x gap, and the most important fact for a laptop-scale build: in data-constrained settings (small unique corpus, many epochs), diffusion BEATS AR. Critical compute crossover C_crit(U) = 2.12x10^1.956 * U^2.174; data-reuse half-life RD* ≈ 512.85 epochs for diffusion vs 31.93 for AR — AR gains saturate around ~4 epochs of repetition while diffusion keeps matching the fresh-data curve up to ~100 epochs. Mechanism: random masking ratios/orders act as implicit data augmentation (AR trained with 16 random orderings approaches diffusion). Decision rule stated by authors: compute-constrained -> AR; data-constrained -> diffusion. Setup: 7M-2.5B params, C4, U in {25M, 50M, 100M, 500M} unique tokens, up to 800 epochs.",
+      "url": "https://arxiv.org/abs/2507.15857",
+      "title": "Diffusion Beats Autoregressive in Data-Constrained Settings, Prabhudesai et al. (CMU)",
+      "tier": "S",
+      "date": "2025-07-21",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "The cheapest validated path to a capable diffusion LM is NOT from-scratch pretraining but adapting an existing AR checkpoint (DiffuGPT/DiffuLLaMA, ICLR 2025): keep the AR shift operation (position n-1 predicts token n), anneal the attention mask from causal to bidirectional (10K-step annealing for GPT-2; the 7B model skipped annealing), add no time embedding, and continually pretrain with the 1/t-weighted masked cross-entropy: L = (1/t) E[-sum delta(x_t^n, m) x_0^T log f_theta(x_t)]. Token budgets: GPT-2 (127M-355M) adapted with 30B FineWeb tokens; LLaMA-2-7B with 65B tokens (SlimPajama 70% + Starcoder 30%), bf16 + flash-attention-2. Discrete diffusion loss adapts better than continuous-diffusion loss; fine-tuning from adapted DiffuGPT-Small beats direct DD-loss fine-tuning of GPT-2 on GSM8K-symbolic (50.2% vs 45.4%).",
+      "url": "https://arxiv.org/abs/2410.17891",
+      "title": "Scaling Diffusion Language Models via Adaptation from Autoregressive Models (DiffuGPT/DiffuLLaMA), ICLR 2025",
+      "tier": "S",
+      "date": "2024-10-23 (ICLR 2025)",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "Dream 7B (strongest open diffusion LM of its generation) confirms the adaptation recipe at scale: initialized from Qwen2.5-7B weights, then 580B tokens of diffusion training. The authors state AR initialization 'significantly reduc[es] the tokens and computation required' vs from-scratch (validated in a LLaMA3.2-1B ablation where AR-init loss stays lower throughout). Learning rate is THE critical hyperparameter: too high 'can quickly wash away the left-to-right knowledge in the initial weights', too low hinders diffusion training; they report no unrecoverable loss spikes. They also introduce context-adaptive token-level noise rescheduling because with discrete masking the effective per-token noise level does not match the sequence-level t.",
+      "url": "https://hkunlp.github.io/blog/2025/dream/",
+      "title": "Dream 7B — HKU NLP official blog (Ye, Xie, Gao et al.)",
+      "tier": "S",
+      "date": "2025-04-02",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "Training instability is a real, quantified problem with named fixes: MDM training variance decomposes into (A) mask-pattern noise, (B) mask-rate (t) noise, (C) data noise — AR suffers only (C). Proposed fixes: P-POTS (Pareto-optimal parametric t-sampling: sample harder mask rates more often with smaller updates) and MIRROR (complementary/antithetic mask pairs), plus stratified t-sampling and bin-wise EMA control variates. Measured effect on GSM8K SFT of an MDM: standard training lands 50.6-53.7% across runs; P-POTS+MIRROR lands 58.6-62.0%, with run-to-run variability reduced to near-AR levels. Also notes official MDM repos adopt EMA by default as a necessary stabilizer.",
+      "url": "https://arxiv.org/abs/2511.18159",
+      "title": "Bringing Stability to Diffusion: Decomposing and Reducing Variance of Training Masked Diffusion Models",
+      "tier": "S",
+      "date": "2025-11 (~8 months old)",
+      "confidence": "medium",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "Block diffusion (BD3-LMs, ICLR 2025 Oral) interpolates the two paradigms: autoregressive over blocks, masked diffusion within each block — recovering KV caching and arbitrary-length generation while keeping parallel in-block sampling. The paper explicitly identifies high gradient variance as the reason diffusion lags AR in likelihood, and derives data-driven 'clipped' noise schedules (narrower mask-rate intervals) that minimize this variance, achieving state-of-the-art perplexity among diffusion models. For a laptop build wanting streaming UI + KV cache, this is the objective variant to consider.",
+      "url": "https://arxiv.org/abs/2503.09573",
+      "title": "Block Diffusion: Interpolating Between Autoregressive and Diffusion Language Models (BD3-LMs), Arriola et al., ICLR 2025 Oral",
+      "tier": "S",
+      "date": "2025-03-12 (v3 2025-05-17)",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "SEDD (ICML 2024 oral) is the historical predecessor objective — 'score entropy' learns data-distribution ratios p(y)/p(x) via a tractable denoising variant, cut perplexity 25-75% vs earlier diffusion LMs and beat GPT-2 zero-shot at matched size. But it is now superseded for implementation purposes: MDLM/RADD/MD4 show the simple time-independent masked cross-entropy form matches or beats it (MDLM ~17% better PPL bound; all four RADD losses beat SEDD) with far less machinery. Build advice: read SEDD for theory, implement MDLM/RADD-style masked CE.",
+      "url": "https://arxiv.org/abs/2310.16834",
+      "title": "Discrete Diffusion Modeling by Estimating the Ratios of the Data Distribution (SEDD), Lou, Meng, Ermon",
+      "tier": "S",
+      "date": "2023-10-25 (ICML 2024)",
+      "confidence": "high",
+      "evidenceType": "inference"
+    },
+    {
+      "claim": "The mechanistic explanation of the compute gap (expert analysis, pre-dating the measurements): AR training extracts learning signal at EVERY sequence position per forward-backward pass, while diffusion training gets signal only at masked positions at one sampled noise level per pass, making it 'significantly less statistically efficient'; AR additionally benefits from KV caching at inference while diffusion needs full forward passes per step. Written January 2023 by Sander Dieleman (DeepMind), it correctly predicted why diffusion LMs would struggle to displace AR — the 2024 16x measurement is the empirical confirmation.",
+      "url": "https://sander.ai/2023/01/09/diffusion-language.html",
+      "title": "Diffusion language models — Sander Dieleman (blog)",
+      "tier": "A",
+      "date": "2023-01-09 (historical relevance explicit)",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "Tiny/minimal implementations demonstrate the recipe works at laptop scale: nanoLLaDA (~500 lines, full pipeline: data download, tokenizer, train, generate, inspired by nanochat); nathan-barry/tiny-diffusion (character-level masked diffusion on Tiny Shakespeare, 10,000 iterations in ~20 minutes on a single A100 — proportionally hours on a mid-range laptop GPU); gumran/language-diffusion (<80-line training script fine-tuning DistilBERT into a LLaDA-style masked diffusion model on TinyStories, following Nie et al.'s objective, with an untested single-GPU non-accelerate path). These validate that the masked-CE + random-t recipe trains stably at toy scale without datacenter tricks.",
+      "url": "https://github.com/Lukas-Xue/nanoLLaDA",
+      "title": "nanoLLaDA / nathan-barry/tiny-diffusion / gumran/language-diffusion (minimal masked-diffusion LM repos)",
+      "tier": "B",
+      "date": "2025 (repos; exact dates unverified)",
+      "confidence": "medium",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "The recipe frontier keeps moving but the objective does not: iLLaDA (June 2026, same RUC/GSAI group) scales the SAME masked diffusion objective to 12T pretraining tokens with fully bidirectional attention plus a 25B-token instruction corpus for 12 epochs (note: many-epoch SFT, consistent with diffusion's data-reuse advantage), gaining +14.5 MATH and +16.5 HumanEval for the instruct model and claiming competitiveness with Qwen2.5 7B — evidence that from-scratch bidirectional diffusion training is a viable path and that recipe (data/epochs/annealing), not a new loss, is where gains come from.",
+      "url": "https://arxiv.org/abs/2606.25331",
+      "title": "Improved Large Language Diffusion Models (iLLaDA), Nie et al.",
+      "tier": "S",
+      "date": "2026-06-24",
+      "confidence": "medium",
+      "evidenceType": "direct"
+    }
+  ],
+  "coverage": {
+    "attempted": [
+      "MDLM masked diffusion language models NeurIPS 2024 training objective Rao-Blackwellized (WebSearch)",
+      "LLaDA 8B pretraining recipe 2.3T tokens LR schedule masking ratio (WebSearch)",
+      "RADD reparameterized absorbing discrete diffusion unified objectives (WebSearch)",
+      "arxiv.org/abs + /html fetches: 2406.07524 (MDLM), 2502.09992 (LLaDA), 2406.03736 (RADD), 2406.04329 (MD4), 2410.18514 (SMDM 16x), 2507.15857 (data-constrained), 2410.17891 (DiffuGPT), 2409.02908 (time-agnostic), 2511.18159 (variance decomposition), 2503.09573 (BD3-LM), 2310.16834 (SEDD), 2606.25331 (iLLaDA)",
+      "github.com/kuleshov-group/mdlm README + raw configs/config.yaml",
+      "github.com/ML-GSAI/LLaDA GUIDELINES.md",
+      "hkunlp.github.io/blog/2025/dream (Dream 7B)",
+      "sander.ai site-restricted search + 2023 diffusion-language post fetch",
+      "tiny masked diffusion LM from scratch minimal implementation GitHub (WebSearch)",
+      "discrete diffusion training tips practitioner instability blog (WebSearch)",
+      "Hacker News LLaDA / super data learners discussion (WebSearch + thread fetch)",
+      "github.com/gumran/language-diffusion README fetch"
+    ],
+    "useful": [
+      "All arXiv HTML fetches except two 404s",
+      "MDLM raw config.yaml (exact hyperparameters)",
+      "LLaDA GUIDELINES.md (loss code)",
+      "Dream 7B blog",
+      "Sander Dieleman 2023 post",
+      "HN thread 44856101 (practitioner compute skepticism)",
+      "minimal-implementation repo search",
+      "variance/instability search (surfaced 2511.18159 and BD3-LM)"
+    ],
+    "failed": [
+      "arxiv.org/html/2503.09573 and /v2 (404 — fell back to abs page, so exact clipped-schedule interval numbers not extracted)",
+      "arxiv.org/html/2406.07524v5 (404 — appendix D.4 exact per-dataset hyperparameter table not extracted; recovered via repo config.yaml)",
+      "abs-page-only fetches of 2406.07524 and 2502.09992 returned abstract-level content (recovered via /html versions)",
+      "search for true practitioner blogs on discrete-diffusion training instability returned mostly papers, not firsthand blog posts — genuine practitioner instability writeups outside papers are scarce"
+    ]
+  },
+  "contradictions": [
+    "Compute efficiency: SMDM (2410.18514) measures MDMs needing ~16x more compute than AR for equal validation loss, while Prabhudesai et al. (2507.15857) and the 'super data learners' line show diffusion overtaking AR under many-epoch data repetition. These are compatible (different regimes: compute-constrained vs data-constrained), but a consumer laptop is BOTH compute- and data-constrained, so which regime dominates a small local build is genuinely unresolved; HN practitioners (thesz) additionally dispute that the data-constrained comparisons were compute-matched rather than parameter-matched.",
+    "Schedule invariance vs schedule mattering: MDLM/MD4 prove the continuous-time ELBO is invariant to the noise schedule's functional form, yet MD4 (cosine FID 70->17), BD3-LM (clipped data-driven schedules to cut gradient variance), and Dream (context-adaptive token-level noise rescheduling) all show the schedule materially affects estimator variance, training stability, and sample quality. Resolution: invariance holds in expectation only — the schedule is a variance/sampling knob, not a likelihood knob.",
+    "Generative-perplexity claims from the SEDD era (e.g., '6-8x better generative perplexity than un-annealed GPT-2') are partly undermined by arXiv 2409.02908: 32-bit Gumbel categorical sampling silently lowers effective temperature, deflating generative PPL; ICLR 2025 accepted this correction. Likelihood (bound) comparisons and downstream accuracy are the trustworthy metrics.",
+    "Time conditioning: D3PM/SEDD-style implementations condition the network on t, but RADD (factorization theorem), the time-agnostic paper, and MDLM's own default config (time_conditioning: False) agree it is unnecessary for absorbing-state masked diffusion. Older tutorials that add time embeddings are adding dead weight.",
+    "AR-init adaptation (DiffuGPT, Dream) vs from-scratch purity (LLaDA, iLLaDA): adaptation gets capable models with 30-580B tokens instead of 2.3-12T, but DiffuGPT authors admit 30-70B tokens 'may be insufficient to preserve the general knowledge in the original LMs', and Dream warns the wrong LR destroys the inherited AR knowledge — adaptation is cheaper but fragile, and iLLaDA argues from-scratch bidirectional training remains competitive at sufficient scale."
+  ],
+  "practitionerReality": "Everything that actually works converges on one loss: cross-entropy on masked tokens, weighted by 1/t (implemented as division by per-token mask probability p_mask=(1-eps)*t+eps, eps~1e-3 for numerical safety), with t drawn per sequence from U[0,1], linear/log-linear schedule, no time embedding, bidirectional encoder. The non-negotiable stabilizers in real repos are: bf16, gradient clip 1.0, EMA ~0.9999, and correlated/antithetic t-sampling across the batch (MDLM ships antithetic_sampling: True by default) — loss curves are intrinsically noisier than AR because you only get signal on masked positions at one sampled noise level, and run-to-run downstream variance is large (a documented 50.6-53.7% GSM8K spread across identical SFT runs). Scale reality: LLaDA-class from-scratch pretraining is 2.3T tokens and 0.13M H800 GPU-hours (out of reach by ~6 orders of magnitude on a laptop); GPT-2-scale from-scratch reference runs are 33-262B tokens on clusters; the laptop-feasible tiers demonstrated in the wild are (a) char-level/TinyStories-scale from-scratch models (~500-line repos, 10K iters ≈ 20 min on one A100, so hours on a mid-range laptop GPU, days on CPU), and (b) adapting a small AR checkpoint (GPT-2/DistilBERT/Qwen-small) with the DiffuGPT recipe — shift operation, optional attention-mask annealing, 1/t-weighted masked CE — which is the best capability-per-FLOP route and the one practitioners use. Diffusion's ~100-epoch data-reuse tolerance is a gift at laptop scale: a small math corpus (GSM8K-style) can be repeated far past where AR would overfit. Watch out for: LR sensitivity when adapting (too high erases the AR prior), and float32 Gumbel sampling silently sharpening outputs during evaluation.",
+  "gaps": [
+    "MDLM paper's Suppl. D.4 exact per-dataset hyperparameter table (dropout value, exact warmup step count for LM1B vs OWT) could not be extracted from the HTML fetch; the repo config.yaml defaults (lr 3e-4, batch 512, 1M steps, EMA 0.9999) are verified but the paper-table cross-check is missing.",
+    "BD3-LM's exact clipped mask-rate interval values [beta, omega] and the quantitative variance/perplexity numbers from its ablations (HTML 404; only abstract-level claims verified).",
+    "No verified firsthand account of training any discrete diffusion LM on CPU-only or on a specific named consumer laptop GPU — all small-scale evidence is single datacenter GPU (A100); laptop feasibility is a scaling inference, not documented practice.",
+    "Dream 7B's exact GSM8K/MATH numbers were not in the blog fetch (charts without values); its paper (arXiv 2508.15487) was not fetched for the table.",
+    "A clean per-token training-FLOPs comparison (diffusion vs AR at equal tokens) stated numerically in one source — the 16x figure is at equal validation loss (statistical efficiency), and the mechanism is in Dieleman's blog, but no source was found that cleanly decomposes the gap into signal-fraction vs other factors.",
+    "Which of RADD's equivalent losses (t-DCE vs lambda-DCE vs AO) is preferable beyond GPT-2 scale — RADD reports minor empirical differences from gradient-estimation variance but no larger-scale guidance.",
+    "The Jinjie Ni 'Diffusion Language Models are Super Data Learners' blog itself (Notion page) was not directly fetched — its claims reached me only via the HN discussion and the CMU paper; the reported EMA/methodology dispute between the two teams is therefore secondhand."
+  ],
+  "bestSources": [
+    {
+      "title": "Simple and Effective Masked Diffusion Language Models (MDLM) — paper + kuleshov-group/mdlm repo",
+      "url": "https://arxiv.org/abs/2406.07524",
+      "why": "The single best blueprint for a from-scratch build: the simplified Rao-Blackwellized weighted-masked-CE objective, SUBS parameterization, schedule invariance proof, AND a maintained repo whose config.yaml gives every verified hyperparameter (lr 3e-4, batch 512, EMA 0.9999, loglinear, antithetic sampling, no time conditioning)."
+    },
+    {
+      "title": "LLaDA paper + ML-GSAI/LLaDA GUIDELINES.md",
+      "url": "https://arxiv.org/abs/2502.09992",
+      "why": "The only fully documented large-scale from-scratch recipe (2.3T tokens, complete WSD LR schedule, batch sizes, 1% variable-length trick) plus official copy-pasteable loss code for both pretraining and SFT — the SFT loss form (mask response only, normalize by answer length) is exactly what a math-solver build needs."
+    },
+    {
+      "title": "Diffusion Beats Autoregressive in Data-Constrained Settings (Prabhudesai et al.)",
+      "url": "https://arxiv.org/abs/2507.15857",
+      "why": "Most decision-relevant result for a laptop build: quantifies the crossover where diffusion beats AR (C_crit ∝ U^2.174, ~100-epoch data reuse vs AR's ~4), justifying diffusion for small repeated math corpora and setting honest expectations against the 16x compute gap of SMDM (2410.18514)."
+    },
+    {
+      "title": "Scaling Diffusion Language Models via Adaptation from Autoregressive Models (DiffuGPT/DiffuLLaMA)",
+      "url": "https://arxiv.org/abs/2410.17891",
+      "why": "The cheapest validated path to a capable model: concrete adaptation recipe (shift op, attention-mask annealing, 1/t masked CE) with token budgets (30B for GPT-2, 65B for 7B), ablations showing DD-loss superiority for adaptation, and GSM8K-symbolic evidence — the realistic route if the laptop build wants more than toy quality."
+    },
+    {
+      "title": "Bringing Stability to Diffusion: Decomposing and Reducing Variance of Training MDMs",
+      "url": "https://arxiv.org/abs/2511.18159",
+      "why": "The most actionable stability source: names the three variance components, shows AR has only one of them, and gives measured fixes (P-POTS, MIRROR, stratified t, EMA control variates) with GSM8K deltas (50.6-53.7% -> 58.6-62.0%) — directly transferable to a small math-specialized training run."
+    }
+  ]
+}

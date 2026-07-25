@@ -1,0 +1,270 @@
+{
+  "aspect": "Sampling & inference algorithms for diffusion LLMs (how denoising/unmasking decoding actually works, how to accelerate it, and what it costs in quality)",
+  "findings": [
+    {
+      "claim": "The canonical LLaDA reference sampler (generate.py) works as follows: start from a fully masked response region; each step runs one full forward pass predicting all masked tokens; Gumbel-noise sampling implements temperature (logits.exp()/gumbel_noise, temperature=0 returns argmax); confidence = softmax probability of the sampled token; per step the top-k highest-confidence tokens are committed (k from get_num_transfer_tokens, which distributes mask_num evenly across steps — a linear commit schedule); remasking='low_confidence' keeps the rest masked; semi-autoregressive mode splits gen_length into blocks (num_blocks = gen_length // block_length) decoded left-to-right with full diffusion within each block; classifier-free guidance duplicates input with masked prompt and applies logits = un_logits + (cfg_scale + 1) * (logits - un_logits). Defaults: steps=128, gen_length=128, block_length=128, temperature=0, cfg_scale=0, mask_id=126336.",
+      "url": "https://github.com/ML-GSAI/LLaDA",
+      "title": "ML-GSAI/LLaDA GitHub repository (generate.py)",
+      "tier": "S",
+      "date": "2025 (repo active through 2025-2026)",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "LLaDA achieves optimal quality when the number of sampling steps equals the response length (i.e., ~1 token committed per step on average); reducing steps degrades performance. The model runs with a fixed context length during sampling and recomputes full bidirectional attention every step, which is why vanilla dLLM inference is slower than autoregressive inference. Low-confidence remasking substantially improves over random remasking, and the instruct model works best with semi-autoregressive block decoding + low-confidence remasking. Accuracy consistently improves with more sampling steps, making steps the primary speed/quality knob.",
+      "url": "https://arxiv.org/abs/2502.09992",
+      "title": "Large Language Diffusion Models (LLaDA paper)",
+      "tier": "S",
+      "date": "2025-02 (v2 later in 2025)",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "Dream 7B exposes four unmasking-order strategies via its diffusion_generate() alg parameter: 'origin' (random order), 'maskgit_plus' (highest top-1 confidence first), 'topk_margin' (largest top1−top2 margin first), and 'entropy' (lowest-entropy token distributions first); alg_temp injects randomness into confidence-based orders; steps controls timesteps with max_new_tokens/steps tokens generated per step; temperature 0 is recommended for math/coding accuracy and higher temperature fixes repetition. This is the cleanest enumeration of practical unmasking heuristics to implement in a from-scratch sampler.",
+      "url": "https://github.com/HKUNLP/Dream",
+      "title": "HKUNLP/Dream GitHub repository",
+      "tier": "S",
+      "date": "2025",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "Fast-dLLM (NVIDIA) proves a threshold theorem justifying confidence-aware parallel decoding: greedy parallel decoding of n tokens equals sequential greedy decoding when each token's marginal probability exceeds 1−ε with (n+1)ε ≤ 1. Practical recipe: decode all masked tokens whose confidence exceeds a threshold (default 0.9) in one step, plus block-wise approximate KV cache for bidirectional models — PrefixCache (cache prompt KV, refresh per block) and DualCache (also cache the masked suffix). Cache alone gives 2-3.6x, parallel decoding alone 4-6x.",
+      "url": "https://arxiv.org/abs/2505.22618",
+      "title": "Fast-dLLM: Training-free Acceleration of Diffusion LLM by Enabling KV Cache and Parallel Decoding",
+      "tier": "S",
+      "date": "2025-05 (v3 later)",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "Fast-dLLM measured on LLaDA-8B, GSM8K (256-token generation), A100 80GB, batch size 1: baseline 6.7 tok/s at 79.3% accuracy; +KV cache 21.2 tok/s (79.5%); +confidence-parallel 16.5 tok/s (79.2%); both combined 54.4 tok/s at 78.5% (8.1x speedup, 0.8-point accuracy drop). Up to 27.6x end-to-end at generation length 1024 (8-shot). Cache block size 32 (optimal range 4-32). Repo (Apache 2.0) exposes --threshold, --block_size, --use_cache, --alg confidence_threshold for LLaDA and Dream, including a GSM8K eval path.",
+      "url": "https://github.com/NVlabs/Fast-dLLM",
+      "title": "NVlabs/Fast-dLLM GitHub (official implementation + project page numbers)",
+      "tier": "S",
+      "date": "2025",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "dLLM-Cache (adaptive caching, ICML 2026): dLLM inference has a static prompt and mostly-stable response tokens across adjacent denoising steps, so it caches prompt features on a long interval (Kp ≈ 25-100 steps) and response features on a short interval (Kr ≈ 4-10), with 'V-verify' selecting only the ρ ≈ 0.25 fraction of response tokens whose value-vector cosine similarity changed most for recomputation. Measured on an RTX 4090: LLaDA-8B-Instruct GSM8K throughput 6.95 → 29.75 tok/s (4.28x) with accuracy 77.48% → 78.54%; Dream-7B GPQA 5.80 → 30.95 tok/s (5.33x); up to 9.1x FLOPs reduction on LongBench-HotpotQA; ~1GB (~5%) extra GPU memory.",
+      "url": "https://arxiv.org/abs/2506.06295",
+      "title": "dLLM-Cache: Accelerating Diffusion Large Language Models with Adaptive Caching",
+      "tier": "S",
+      "date": "2025-06; ICML 2026",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "Vanilla dLLM decoding is roughly an order of magnitude slower than same-size autoregressive models on the same hardware: two independent papers measured LLaDA-8B baseline at 6.7 tok/s (A100, Fast-dLLM) and 6.95 tok/s (RTX 4090, dLLM-Cache), while a typical 8B AR model at Q4 reaches ~90-140 tok/s on an RTX 4090. Every denoising step is a full-sequence bidirectional forward pass with no KV cache, so total compute scales as steps × full-sequence attention. Conclusion for a laptop build: caching + adaptive parallel unmasking are mandatory design features of the sampler, not optional optimizations.",
+      "url": "https://arxiv.org/abs/2506.06295",
+      "title": "dLLM-Cache baseline measurements (corroborated by Fast-dLLM baselines)",
+      "tier": "S",
+      "date": "2025",
+      "confidence": "high",
+      "evidenceType": "inference"
+    },
+    {
+      "claim": "ParallelBench (ICLR 2026; 17 tasks: 10 'Waiting Line' list-manipulation tasks, 5 text-writing tasks, 2 puzzles) shows parallel decoding quality collapse is governed by conditional total correlation C(Y|X): copy-like tasks (C=0) survive aggressive parallelism, shuffle-like tasks (unbounded C growing with length) degrade dramatically; the distributional error of T-step parallel decoding is lower-bounded by an information-theoretic term summing conditional total correlations. No decoding strategy was universally superior — random top-k sometimes beats confidence top-k on high-dependency tasks, and current adaptive (threshold) methods fail to adapt parallelism to task difficulty, leaving a large gap to oracle parallelism.",
+      "url": "https://arxiv.org/abs/2510.04767",
+      "title": "ParallelBench: Understanding the Trade-offs of Parallel Decoding in Diffusion LLMs",
+      "tier": "S",
+      "date": "2025-10; ICLR 2026",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "For math specifically, aggressive parallelism is dangerous but adaptive entropy gating works: on LLaDA, fixed 2-tokens-per-step parallel decoding drops GSM8K accuracy from 76.95% to 62.31%, and full any-order entropy decoding scores 53.44% vs 75.96% for left-to-right; performant configurations behave nearly left-to-right anyway (leftmost position sampled ~50% of the time at block size 32). The paper's Multi-token Entropy Decoding (MED) — unmask extra positions only when their conditional entropy is below a threshold — recovers 2.7x speedup on GSM8K and 2.2x on HumanEval at baseline accuracy.",
+      "url": "https://arxiv.org/html/2510.19990",
+      "title": "No Compute Left Behind: Rethinking Reasoning and Sampling with Masked Diffusion Models",
+      "tier": "S",
+      "date": "2025-10",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "Decoding-order research converges on the same conclusion: learned/confidence-based unmasking orders trend left-to-right in practice, AR-like order achieves the best pass@k on GSM8K/MATH500 because solutions follow step-by-step structure, and 'The Flexibility Trap' (ICML 2026) argues arbitrary-order generation actively narrows the reasoning boundary because models exploit order freedom to dodge high-uncertainty tokens that are crucial for exploration. Build implication: a math-specialized dLLM should default to semi-AR small blocks with confidence ordering inside blocks, and the visualization should expect mostly near-left-to-right commit patterns on math problems.",
+      "url": "https://huggingface.co/papers/2601.15165",
+      "title": "The Flexibility Trap: Why Arbitrary Order Limits Reasoning Potential in Diffusion Language Models",
+      "tier": "S",
+      "date": "2026-01; ICML 2026",
+      "confidence": "medium",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "Prophet ('DLMs know the answer before decoding'): on GSM8K up to 97% and on MMLU up to 99% of instances can already be decoded correctly using only half the refinement steps; Prophet monitors the top-1 vs top-2 confidence gap and, when stable, commits all remaining tokens at once ('early commit decoding'), reducing decoding steps by up to 3.4x on LLaDA-8B and Dream-7B, training-free with negligible overhead. Reframes dLLM inference as a 'when to stop sampling' problem — a cheap, high-yield trick for a math-solver where final answers converge early.",
+      "url": "https://arxiv.org/abs/2508.19982",
+      "title": "Diffusion Language Models Know the Answer Before Decoding (Prophet)",
+      "tier": "S",
+      "date": "2025-08",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "EB-Sampler (Meta FAIR, NeurIPS 2025): partially masked sequences often determine several unknown tokens near-deterministically, so a single forward pass carries unused information; the sampler adaptively unmasks a variable-size set of tokens per step whose cumulative entropy stays under a predefined error tolerance, acting as a drop-in replacement for standard MDM samplers and delivering ~2-3x acceleration on coding and math reasoning benchmarks without performance loss.",
+      "url": "https://arxiv.org/abs/2505.24857",
+      "title": "Accelerated Sampling from Masked Diffusion Models via Entropy Bounded Unmasking (EB-Sampler)",
+      "tier": "S",
+      "date": "2025-05; NeurIPS 2025",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "Standard masked diffusion samplers can never revise a token once committed — an error made early is frozen. ReMDM derives a principled remasking backward process for pretrained MDMs that stochastically remasks already-decoded tokens, giving discrete diffusion true inference-time compute scaling: with more sampling steps output quality approaches autoregressive models, and under limited budgets it degrades more gracefully than vanilla samplers. Relevant as the 'self-correction' component the marketing story of diffusion LLMs usually implies but base samplers lack.",
+      "url": "https://arxiv.org/abs/2503.00307",
+      "title": "Remasking Discrete Diffusion Models with Inference-Time Scaling (ReMDM)",
+      "tier": "S",
+      "date": "2025-03",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "MaskGIT (CVPR 2022) is the origin of confidence-based parallel unmasking: predict all tokens, keep the most confident, remask the rest, with the fraction kept governed by a cosine mask schedule γ = cos(π/2·τ) (commit few tokens early, many late); it completes generation in 8 iterations vs 256 sequential steps. The cosine schedule and max-softmax confidence selection are the direct ancestors of every dLLM decoder above, and a from-scratch implementation can start with exactly this loop.",
+      "url": "https://openaccess.thecvf.com/content/CVPR2022/papers/Chang_MaskGIT_Masked_Generative_Image_Transformer_CVPR_2022_paper.pdf",
+      "title": "MaskGIT: Masked Generative Image Transformer (CVPR 2022)",
+      "tier": "S",
+      "date": "2022 (historical foundation, explicitly relevant)",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "For a from-scratch small-scale build, MDLM (NeurIPS 2024) ships the most reusable sampler code: its ddpm_cache sampler caches the forward output and skips recomputation on steps where no token changes, making sampling ~3-4x faster than SEDD/D3PM samplers (measured: 64 samples at T=5000 in 40.1s vs SEDD's 127.1s on a single A5000; T=10000 in 60.4s vs 229.3s), plus semi-autoregressive mode (sampling.semi_ar, stride_length, num_strides) for arbitrary-length generation that is 25-30x faster than SSD-LM. Config knobs: sampling.predictor ∈ {ddpm_cache, ddpm, analytic}, sampling.steps.",
+      "url": "https://github.com/kuleshov-group/mdlm",
+      "title": "kuleshov-group/mdlm (Simple and Effective Masked Diffusion Language Model, NeurIPS 2024)",
+      "tier": "S",
+      "date": "2024 (still-canonical small-scale codebase)",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "Headline dLLM speed numbers come from datacenter hardware and custom stacks, not laptops: Mercury Coder Mini/Small hit 1109/737 tok/s on NVIDIA H100 (Inception Labs tech report); Google's Gemini Diffusion reports 1479 tok/s average sampling speed explicitly 'excluding overhead of 0.84 seconds', and its own eval table shows it losing to Gemini 2.0 Flash-Lite on GPQA Diamond (40.4% vs 56.5%) while winning AIME 2025 (23.3% vs 20.0%). dInfer (inclusionAI) reaches 1100+ tok/s batch-1 for LLaDA-MoE but on 8×H800 GPUs, claiming 10x over Fast-dLLM. These validate the parallel-decoding ceiling but are not evidence of laptop-class speed.",
+      "url": "https://deepmind.google/models/gemini-diffusion/",
+      "title": "Gemini Diffusion (Google DeepMind official page); Mercury arXiv 2506.17298; inclusionAI/dInfer",
+      "tier": "S",
+      "date": "2025 (Gemini/Mercury), dInfer 2025-10",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "NVIDIA Nemotron-Labs-Diffusion (2026) unifies three decoding modes in one open-weights model (3B/8B/14B): pure AR, diffusion ('fills in a 32-token block at a time by iteratively denoising, a confidence threshold decides which tokens commit each step', 2.6x tokens-per-forward), and self-speculation (diffusion drafts a block bidirectionally, AR pathway verifies causally, longest matching prefix commits — 6-6.4x tokens-per-forward, ~865 tok/s on B200, 'lossless versus AR at temperature 0'). Secondary reporting adds ~112 tok/s vs 41.8 AR baseline (2.7x) on a DGX Spark consumer-class box. Self-speculation is the strongest quality-safe parallel decoding pattern surfaced, and is implementable at small scale.",
+      "url": "https://huggingface.co/blog/nvidia/nemotron-labs-diffusion",
+      "title": "Towards Speed-of-Light Text Generation with Nemotron-Labs Diffusion Language Models (NVIDIA on Hugging Face)",
+      "tier": "S",
+      "date": "2026-05",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "CPU-only dLLM inference exists and is task-dependent in exactly the way that hurts a math specialist: the diffuse-cpp GGUF port of LLaDA-8B-Instruct (Q4_K_M ~5.1GB, Q8_0 ~8.4GB, F16 ~14.9GB) reports 27.7 tok/s on a 12-core AMD EPYC CPU for translation-style prompts (3.3x llama.cpp's 8.51 tok/s) using only 2-5 denoising steps, an inter-step cache worth 1.6x, and an 'entropy_exit' remasking mode — but complex reasoning/arithmetic prompts need 15-16 steps and run at ~0.6x llama.cpp speed, i.e. slower than an AR model on CPU. Math is the worst case for step-count reduction.",
+      "url": "https://huggingface.co/diffuse-cpp/LLaDA-8B-Instruct-GGUF",
+      "title": "diffuse-cpp/LLaDA-8B-Instruct-GGUF (Hugging Face model card benchmarks)",
+      "tier": "B",
+      "date": "2026 (recent commits)",
+      "confidence": "medium",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "Sebastian Raschka's practitioner analysis of text diffusion models flags the deployment realities a builder must plan around: the steps knob is a raw speed/quality dial ('a low number of diffusion steps... may produce an answer with degraded quality'); parallel unmasking can produce incoherent combinations (the 'New' + 'City' failure mode) because tokens in one step are sampled independently; no token-streaming UX (output appears as a refining block — which is exactly what the requested denoising-visualization UI should render instead of a stream); and open questions remain on tool calling and chain-of-thought compatibility.",
+      "url": "https://magazine.sebastianraschka.com/p/beyond-standard-llms",
+      "title": "Beyond Standard LLMs — Sebastian Raschka",
+      "tier": "A",
+      "date": "2025",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "Step-count saturation is consistently observed across the masked-diffusion literature: quality gains from more denoising steps are largest going from 1-2 to 4-8 steps, and task-average performance goes nearly flat around 16-32 steps in model-scheduling studies — meaning a small local model can budget steps per difficulty (few for easy arithmetic, up to steps≈length for multi-step word problems) rather than always paying steps=length. This is corroborated by Prophet's early-convergence measurements but the specific 8-32-step numbers come from search-level summaries of newer (2026) papers not fully fetched, so treat exact thresholds as indicative.",
+      "url": "https://arxiv.org/html/2604.02340v2",
+      "title": "Not All Denoising Steps Are Equal: Model Scheduling for Faster Masked Diffusion Language Models",
+      "tier": "S",
+      "date": "2026-04",
+      "confidence": "medium",
+      "evidenceType": "inference"
+    }
+  ],
+  "coverage": {
+    "attempted": [
+      "LLaDA inference low-confidence remasking semi-autoregressive block decoding",
+      "Fast-dLLM training-free KV cache parallel decoding arXiv",
+      "dLLM-cache adaptive caching diffusion language model",
+      "diffusion language model number of denoising steps vs quality tradeoff NFE",
+      "confidence-based parallel unmasking dependency violations conditional independence",
+      "diffusion LLM tokens per second benchmark vs autoregressive measured",
+      "ParallelBench trade-offs parallel decoding",
+      "ReMDM remasking discrete diffusion sampler",
+      "MaskGIT confidence-based parallel decoding cosine schedule",
+      "Mercury Inception Labs 1109 tokens per second H100",
+      "NVIDIA Nemotron diffusion self-speculation",
+      "entropy bounded unmasking EB-sampler",
+      "MDLM sampler caching ddpm_cache",
+      "LLaDA 8B inference slow GitHub issue consumer GPU",
+      "reddit LocalLLaMA diffusion LLM local speed experience",
+      "diffuse-cpp C++ inference engine GitHub",
+      "diffusion LLM decoding order left-to-right math reasoning",
+      "direct fetches: LLaDA generate.py raw, Fast-dLLM arXiv HTML v3, dLLM-Cache HTML v2, Dream repo, ParallelBench (arXiv abs + alphaXiv + project page), Prophet abs, Gemini Diffusion official page, Nemotron HF blog, dInfer repo, MDLM README, diffuse-cpp GGUF model card, No Compute Left Behind HTML, mobile-NPU dLLM PDF"
+    ],
+    "useful": [
+      "All seven assigned queries produced primary sources",
+      "LLaDA generate.py raw fetch (full sampler logic)",
+      "Fast-dLLM HTML (theorem, thresholds, GSM8K tok/s table)",
+      "dLLM-Cache HTML (V-verify, RTX 4090 numbers)",
+      "Dream repo (alg strategy enumeration)",
+      "No Compute Left Behind (quantified parallel-decoding damage on GSM8K + MED sampler)",
+      "diffuse-cpp GGUF card (CPU-only practitioner numbers)",
+      "Nemotron HF blog (self-speculation mode)",
+      "MDLM README (ddpm_cache timings)",
+      "Gemini Diffusion official page (1479 tok/s with caveat)"
+    ],
+    "failed": [
+      "ParallelBench arXiv HTML 404 (recovered via alphaXiv overview; exact per-task accuracy tables still missing)",
+      "Dream 7B arXiv PDF text extraction returned little (recovered via GitHub repo)",
+      "No direct Reddit/HN practitioner thread on local dLLM speed found via search",
+      "diffuse-cpp GitHub repo could not be located to independently verify HF benchmark claims",
+      "Mobile NPU paper (2606.13740) PDF extraction did not yield concrete tok/s numbers"
+    ]
+  },
+  "contradictions": [
+    "Marketing vs open-model reality: Mercury (1109 tok/s), Gemini Diffusion (1479 tok/s) and Nemotron (4-6x AR) present dLLMs as much faster than AR, but open LLaDA-8B baselines measure 6.7-6.95 tok/s on A100/RTX 4090 — roughly 10x SLOWER than same-size AR models — until caching + parallel decoding are added. Speed is an engineering outcome, not an intrinsic property.",
+    "'Minimal accuracy loss' (Fast-dLLM, threshold 0.9, GSM8K −0.8pt at 8.1x) vs ParallelBench's 'dramatic quality degradation in real-world scenarios' — reconciled by task dependency structure: GSM8K-style tasks tolerate confidence-gated parallelism, high-token-dependency tasks (shuffling, constrained writing) collapse; benchmark choice hides the failure mode.",
+    "Confidence-based unmasking is best (LLaDA paper: low-confidence remasking >> random) vs ParallelBench finding random top-k sometimes beats confidence top-k on high-dependency tasks and no strategy is universally superior.",
+    "Any-order generation as the selling point of diffusion vs evidence that on GSM8K/MATH left-to-right decoding wins decisively (75.96% vs 53.44% on LLaDA) and 'The Flexibility Trap' showing arbitrary order narrows reasoning; the models' theoretical flexibility is mostly unused (and slightly harmful) for math.",
+    "Parallel-decoding speed claims vs the CPU port's finding that arithmetic prompts need 15-16 denoising steps and run ~0.6x llama.cpp speed — for the project's target domain (math), diffusion decoding is at its weakest speed advantage precisely where quality demands more steps.",
+    "Prophet ('97% of GSM8K instances correct at half the steps — stop early') vs LLaDA's own guidance that best quality needs steps = generation length — both true: full-step schedules are conservative worst-case budgets, and adaptive early-commit recovers most of the slack on easy instances."
+  ],
+  "practitionerReality": "For a consumer laptop, plan around these measured anchors: an 8B dLLM runs ~7 tok/s vanilla on an RTX 4090 (a card faster than any laptop GPU), ~30 tok/s with adaptive caching (dLLM-Cache), ~54 tok/s with cache + confidence-parallel decoding (Fast-dLLM, A100) — so a mid-range laptop GPU with a small custom model (10-150M params) is entirely workable, but an 8B-class model is not pleasant without quantization + every acceleration trick. CPU-only is possible (diffuse-cpp GGUF: 27.7 tok/s on a 12-core CPU for easy prompts) but math prompts force high step counts and can be slower than llama.cpp AR. The practical sampler recipe that emerges across all sources for a from-scratch math dLLM: (1) MaskGIT-style loop — predict all masked, commit top-confidence, remask rest; (2) semi-AR blocks (block 32) decoded left-to-right, since math wants near-AR order; (3) per-step commit count from a linear (LLaDA get_num_transfer_tokens) or cosine (MaskGIT) schedule; (4) dynamic parallelism via confidence threshold ~0.9 (Fast-dLLM) or entropy budget (EB-Sampler/MED) instead of fixed k — fixed 2-per-step already costs ~15 GSM8K points; (5) early-commit stop when top1−top2 gap stabilizes (Prophet); (6) cache prompt KV per block and skip recomputing unchanged response features (MDLM ddpm_cache at small scale, dLLM-Cache V-verify at large scale); (7) temperature 0 for math. For the visualization UI, the step loop hands you everything to render: per-position confidence/entropy at each step, which tokens commit when, and (with ReMDM) tokens un-committing — and on math you should expect the display to show mostly left-to-right filling with occasional out-of-order 'anchor' commits, not the fully-parallel mosaic that marketing demos suggest.",
+  "gaps": [
+    "No verified tokens/sec measurements on actual laptop GPUs (RTX 3060/4060 mobile, Apple M-series) for any dLLM — closest proxies are RTX 4090 (dLLM-Cache), DGX Spark (Nemotron, C-tier source), and a 12-core desktop CPU (diffuse-cpp, B-tier).",
+    "ParallelBench's exact accuracy-vs-tokens-per-step tables were not extracted (HTML 404); only the qualitative task-category results and theory were recovered.",
+    "Dream 7B's own steps-vs-quality curves (paper Figure numbers) not extracted from the PDF; step-tradeoff evidence comes from LLaDA, Prophet, and 2026 scheduling papers instead.",
+    "diffuse-cpp benchmark claims could not be cross-verified against a public GitHub repo or independent replication.",
+    "No head-to-head study found of unmasking heuristics (maskgit_plus vs topk_margin vs entropy) specifically on arithmetic/GSM8K at small model scale (<1B) — the enumerated strategies are documented on 7-8B models only.",
+    "Sampling-side numerics for CFG on math (does cfg_scale help GSM8K?) — LLaDA adopted unsupervised CFG from SMDM but no task-specific ablation was recovered."
+  ],
+  "bestSources": [
+    {
+      "title": "Fast-dLLM (arXiv 2505.22618 + NVlabs/Fast-dLLM GitHub)",
+      "url": "https://arxiv.org/abs/2505.22618",
+      "why": "The canonical acceleration recipe: proves the confidence-threshold theorem, defines PrefixCache/DualCache, publishes the full ablation table (6.7 → 54.4 tok/s on GSM8K with accuracy cost quantified), and ships Apache-2.0 code with GSM8K eval — directly copyable into a from-scratch build."
+    },
+    {
+      "title": "ML-GSAI/LLaDA GitHub (generate.py + FAQ)",
+      "url": "https://github.com/ML-GSAI/LLaDA",
+      "why": "The reference sampler implementation every other paper modifies: low-confidence remasking, semi-AR blocks, linear commit schedule, Gumbel temperature trick, CFG — the exact ~100 lines a minimal local implementation should reproduce."
+    },
+    {
+      "title": "No Compute Left Behind: Rethinking Reasoning and Sampling with Masked Diffusion Models",
+      "url": "https://arxiv.org/html/2510.19990",
+      "why": "The most decision-relevant evidence for a MATH-specialized dLLM: quantifies exactly how much parallel/any-order decoding hurts GSM8K (76.95→62.31 at 2/step; 53.44 vs 75.96 any-order vs L2R) and provides the fix (entropy-gated MED, 2.7x speedup at parity)."
+    },
+    {
+      "title": "dLLM-Cache: Accelerating Diffusion LLMs with Adaptive Caching (arXiv 2506.06295)",
+      "url": "https://arxiv.org/abs/2506.06295",
+      "why": "Only source with consumer-GPU (RTX 4090) end-to-end numbers, plus the feature-stability insight (V-verify, ρ=0.25) that makes per-step recomputation affordable — the closest published proxy for laptop feasibility."
+    },
+    {
+      "title": "ParallelBench (arXiv 2510.04767, ICLR 2026)",
+      "url": "https://arxiv.org/abs/2510.04767",
+      "why": "The honest counterweight: information-theoretic lower bound on parallel-decoding error, proof that no current strategy adapts parallelism well, and the task taxonomy explaining why GSM8K numbers look fine while other workloads collapse."
+    }
+  ]
+}

@@ -1,0 +1,269 @@
+{
+  "aspect": "Discrete diffusion theory & foundations — lens: What / mechanisms",
+  "findings": [
+    {
+      "claim": "D3PM is the founding formalism for discrete diffusion: the forward process corrupts tokens via categorical transition matrices Q_t (proposed variants: uniform/multinomial, absorbing [MASK] state, discretized Gaussian, nearest-neighbor in embedding space); training uses a hybrid loss L_lambda = variational lower bound + auxiliary cross-entropy; the absorbing-state variant explicitly bridges diffusion with masked language models (BERT is a one-step diffusion model, per Sec. 4) and autoregressive models, and the choice of transition matrix is a first-order design decision for text vs image results (Austin, Johnson, Ho, Tarlow, van den Berg; NeurIPS 2021).",
+      "url": "https://arxiv.org/abs/2107.03006",
+      "title": "Structured Denoising Diffusion Models in Discrete State-Spaces (D3PM)",
+      "tier": "S",
+      "date": "2021-07-07 (v3 2023-02-22), NeurIPS 2021 — historical relevance explicit",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "Multinomial diffusion (with Argmax Flows) is the direct predecessor of D3PM: it introduced gradually adding categorical (uniform) noise to discrete data with a learned denoising process, without embedding text into continuous space, and outperformed dequantization approaches on text log-likelihood (Hoogeboom, Nielsen, Jaini, Forré, Welling; NeurIPS 2021).",
+      "url": "https://arxiv.org/abs/2102.05379",
+      "title": "Argmax Flows and Multinomial Diffusion: Learning Categorical Distributions",
+      "tier": "S",
+      "date": "2021-02, NeurIPS 2021 — historical relevance explicit",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "Campbell et al. gave the first continuous-time (CTMC) formulation of discrete denoising diffusion: forward and reverse processes are Continuous Time Markov Chains with rate matrices, trained by a continuous-time ELBO; sampling uses tau-leaping borrowed from chemical physics plus a predictor-corrector scheme, with a theoretical bound on the error between generated and true data distributions (NeurIPS 2022). This is the mathematical backbone reused by SEDD and later samplers.",
+      "url": "https://arxiv.org/abs/2205.14987",
+      "title": "A Continuous Time Framework for Discrete Denoising Models",
+      "tier": "S",
+      "date": "2022-05, NeurIPS 2022",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "Autoregressive Diffusion Models (ARDM) proved early that order-agnostic autoregressive models and absorbing discrete diffusion are special cases of one model class: ARDMs train without causal masking using a diffusion-style objective, support budget-adaptive parallel generation, and reach 1.43 bits/char on text8 in 250 steps where discrete diffusion needed 1000 — the original seed of the 'masked diffusion = any-order AR' equivalence (Hoogeboom et al., ICLR 2022).",
+      "url": "https://arxiv.org/abs/2110.02037",
+      "title": "Autoregressive Diffusion Models",
+      "tier": "S",
+      "date": "2021-10, ICLR 2022",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "SEDD (ICML 2024 Best Paper) extends score matching to discrete space via the concrete score — ratios p_t(y)/p_t(x) for neighboring sequences (Hamming distance 1) — trained with the score entropy loss, sum over y~x of [s_theta(x)_y − (p(y|x0)/p(x|x0)) log s_theta(x)_y] in its tractable denoising form; it is convex with a log-barrier, and SEDD reduces perplexity 25–75% vs prior diffusion LMs, e.g., SEDD Small <=41.84 on WikiText2 vs GPT-2 Small 42.43, with un-annealed generative quality ~6–8x better than un-annealed GPT-2 (Lou, Meng, Ermon).",
+      "url": "https://arxiv.org/abs/2310.16834",
+      "title": "Discrete Diffusion Modeling by Estimating the Ratios of the Data Distribution (SEDD)",
+      "tier": "S",
+      "date": "2023-10, ICML 2024",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "Aaron Lou's expository blog gives the cleanest derivation chain for score-based discrete diffusion: why continuous score matching fails on discrete data, concrete score definition, score entropy and denoising score entropy, CTMC forward equation dp_t/dt = Q p_t, and the reverse transition p(x_{t−dt}=a|x_t=b) ≈ delta_b(a) + (p_t(a)/p_t(b)) Q(b,a) dt — with the compute-for-quality log-log tradeoff of sampling iterations made explicit.",
+      "url": "https://aaronlou.com/blog/2024/discrete-diffusion/",
+      "title": "Language Modeling by Estimating the Ratios of the Data Distribution (Aaron Lou blog)",
+      "tier": "A",
+      "date": "2024",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "MDLM reduces absorbing-state diffusion to a Rao-Blackwellized, schedule-invariant weighted masked-LM loss. Exact continuous-time objective from the project page: L_NELBO = E_q ∫_0^1 [alpha'_t/(1−alpha_t)] * sum_l log<x_theta^l(z_t), x^l> dt — i.e., time-weighted cross-entropy on masked tokens only. The SUBS parameterization enforces zero masking probabilities (MASK logit = −inf) and carry-over unmasking (unmasked tokens copied through). Results at 110M/327B tokens on LM1B: MDLM 23.00 PPL vs AR Transformer 20.86 vs SEDD <=32.79 (Sahoo et al., NeurIPS 2024).",
+      "url": "https://arxiv.org/abs/2406.07524",
+      "title": "Simple and Effective Masked Diffusion Language Models (MDLM); exact NELBO from https://s-sahoo.com/mdlm/",
+      "tier": "S",
+      "date": "2024-06, NeurIPS 2024",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "MD4 (DeepMind) independently proved the same simplification: the continuous-time variational objective of masked diffusion is a simple weighted integral of cross-entropy losses; it adds GenMD4 with state-dependent masking schedules, surpasses prior diffusion LMs at GPT-2 scale on OpenWebText (better on 4/5 zero-shot tasks), and gets 2.75 bpd on CIFAR-10 / 3.40 bpd on ImageNet 64x64 as a pixel-level discrete model, beating similar-size AR models (Shi, Han, Wang, Doucet, Titsias; NeurIPS 2024). Code: github.com/google-deepmind/md4.",
+      "url": "https://arxiv.org/abs/2406.04329",
+      "title": "Simplified and Generalized Masked Diffusion for Discrete Data (MD4)",
+      "tier": "S",
+      "date": "2024-06, NeurIPS 2024",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "RADD proved the concrete score of absorbing diffusion factorizes as (time-independent conditional probability of clean data) x (analytic time-dependent scalar), so the time-conditioning input can be removed entirely; this enables caching denoiser outputs across steps (up to 3.5x faster sampling) and yields SOTA zero-shot perplexity among diffusion LMs at GPT-2 scale, while unifying the absorbing-diffusion and any-order-AR views (ML-GSAI; ICLR 2025).",
+      "url": "https://arxiv.org/abs/2406.03736",
+      "title": "Your Absorbing Discrete Diffusion Secretly Models the Conditional Distributions of Clean Data (RADD)",
+      "tier": "S",
+      "date": "2024-06, ICLR 2025",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "The sharpest theoretical criticism: Zheng et al. prove both training and sampling of masked diffusion models are theoretically free of the time variable — 'the key signature of diffusion models' — making them equivalent to (order-agnostic) masked models; their first-hitting sampler is exactly equivalent to MDM generation with ~20x speedup; and they expose a float32 Gumbel categorical-sampling numerical bug that silently lowers effective sampling temperature, reducing token diversity and making prior MDM 'beats AR generative perplexity' evaluations 'somewhat unfair' (ICLR 2025).",
+      "url": "https://arxiv.org/abs/2409.02908",
+      "title": "Masked Diffusion Models are Secretly Time-Agnostic Masked Models and Exploit Inaccurate Categorical Sampling",
+      "tier": "S",
+      "date": "2024-09 (rev. 2025-04), ICLR 2025",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "A 2025 follow-up formalizes the equivalence constructively: the MDM objective decomposes exactly into weighted autoregressive losses over decoding orders, with a direct mapping between decoding order and multivariate noise schedules (breaking objective invariance to the schedule); hence MDMs 'train to decode tokens in a random order' and the order itself can be optimized for performance (Garg, Kohli, Sarawagi; EurIPS 2025 PriGM workshop).",
+      "url": "https://arxiv.org/abs/2511.19152",
+      "title": "Masked Diffusion Models are Secretly Learned-Order Autoregressive Models",
+      "tier": "S",
+      "date": "2025-11, EurIPS 2025 workshop (preprint-level venue)",
+      "confidence": "medium",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "Absorbing vs uniform is a real design fork: absorbing/[MASK] noise dominates language benchmarks (D3PM onward), but tokens are locked once revealed — no self-correction; uniform-noise diffusion (UDLM) can continuously edit outputs during denoising, benefits substantially more from classifier-based/classifier-free guidance (derived simply in this paper), and the absorbing-vs-uniform gap becomes negligible or reverses for small-vocabulary domains (genomics, molecules) — relevant for a math DLLM with a small arithmetic vocabulary (Schiff et al., ICLR 2025).",
+      "url": "https://arxiv.org/abs/2412.10193",
+      "title": "Simple Guidance Mechanisms for Discrete Diffusion Models (UDLM)",
+      "tier": "S",
+      "date": "2024-12, ICLR 2025",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "GIDD generalizes masked diffusion to any linear interpolation between data and a time-varying mixing distribution; hybrid mask+uniform noise training yields a novel ELBO, compute-matched SOTA diffusion-LM performance, better sample quality than mask-only models, and unlocks self-correction — the model can identify and fix its own already-generated tokens (Rutte et al., code github.com/dvruette/gidd).",
+      "url": "https://arxiv.org/abs/2503.04482",
+      "title": "Generalized Interpolating Discrete Diffusion (GIDD)",
+      "tier": "S",
+      "date": "2025-03, ICML 2025",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "Why text diffusion lagged image diffusion (expert analysis, DeepMind's Sander Dieleman, Jan 2023): (1) Gaussian noise levels map to spatial-frequency feature scales that match human visual perception, but 'what does high frequency even mean' for discrete symbolic text; (2) discreteness forces either a discrete corruption process or embedding-space diffusion, each losing benefits; (3) AR training gets useful gradient signal from every position in one forward pass while diffusion samples one noise level per example, and AR sampling exploits KV caching — his 2023 verdict: 'still too early to consider diffusion a serious alternative to autoregression at scale.'",
+      "url": "https://sander.ai/2023/01/09/diffusion-language.html",
+      "title": "Diffusion language models — Sander Dieleman",
+      "tier": "A",
+      "date": "2023-01-09",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "Continuous embedding-space diffusion LMs pay a large, scale-invariant compute tax: Plaid's scaling-law analysis states verbatim 'Regardless of scale, Plaid models require a constant factor of about 64x more compute to match their autoregressive equivalents' (same scaling slope, constant offset). Plaid uses learned embeddings with CDCD-style categorical reparameterization; Plaid 1B outperforms GPT-2 124M in zero-shot likelihood (Gulrajani & Hashimoto, NeurIPS 2023). This 64x applies to continuous-relaxation diffusion, not masked discrete diffusion.",
+      "url": "https://arxiv.org/abs/2305.18619",
+      "title": "Likelihood-Based Diffusion Language Models (Plaid) — quote verified via ar5iv HTML",
+      "tier": "S",
+      "date": "2023-05, NeurIPS 2023",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "For masked discrete diffusion the measured compute gap is ~16x, not 64x: the first MDM scaling law (SMDM, up to 1.1B params on SlimPajama) shows a scaling rate comparable to ARMs with 'a relatively small compute gap'; 'MDMs with 16 times more pre-training time offer a flexible trade-off against ARMs with KV-Cache: MDMs match ARMs in performance while being 1.4 times faster during sampling.' The same 1.1B MDM achieves math reasoning competitive with 7B Llama-2 on GSM8K, and the paper introduces unsupervised classifier-free guidance (Nie et al., ICLR 2025).",
+      "url": "https://arxiv.org/abs/2410.18514",
+      "title": "Scaling up Masked Diffusion Models on Text (SMDM)",
+      "tier": "S",
+      "date": "2024-10 (rev. 2025-02), ICLR 2025",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "Feasibility-critical theory for a math-solving DLLM: under mild conditions MDMs achieve near-optimal perplexity with sampling steps independent of sequence length (efficiency win), but when measured by sequence error rate — required for whole-answer correctness on reasoning tasks — the number of sampling steps must scale linearly with sequence length, erasing the parallel-decoding efficiency advantage over AR; whether diffusion 'wins' depends on the evaluation metric (Feng et al.).",
+      "url": "https://arxiv.org/abs/2502.09622",
+      "title": "Theoretical Benefit and Limitation of Diffusion Language Model",
+      "tier": "S",
+      "date": "2025-02, ICML 2025",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "Existence proof at scale: LLaDA trains a masked diffusion model from scratch (forward random masking, reverse mask-prediction with a Transformer, cross-entropy bound on masked tokens) at 8B params / 2.3T tokens; LLaDA 8B Base surpasses LLaMA2 7B on nearly all of its evaluated tasks and is overall competitive with LLaMA3 8B, with SFT instruction-following — the masked-diffusion objective works at modern LLM scale (Nie, Zhu et al., Renmin U/ML-GSAI).",
+      "url": "https://arxiv.org/abs/2502.09992",
+      "title": "Large Language Diffusion Models (LLaDA)",
+      "tier": "S",
+      "date": "2025-02, ICML 2025",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "Mechanism-level advantage for math/planning: discrete diffusion's any-order, easy-first generation addresses 'subgoal imbalance' that AR models fail on — Multi-Granularity Diffusion Modeling reaches 91.5% on Countdown and 100% on Sudoku vs 45.8% and 20.7% for AR models without search (Ye et al., HKU NLP, ICLR 2025; code github.com/HKUNLP/diffusion-vs-ar) — direct evidence that the diffusion mechanism (not scale) can beat AR on equation-style search problems.",
+      "url": "https://arxiv.org/abs/2410.14157",
+      "title": "Beyond Autoregression: Discrete Diffusion for Complex Reasoning and Planning",
+      "tier": "S",
+      "date": "2024-10, ICLR 2025",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "Practitioner replication of the core mechanism is trivial at small scale: masked diffusion is 'a generalization of masked language modeling with variable masking rates' — a practitioner fine-tuned RoBERTa-base on WikiText-2 with a collator sampling mask probability 0.1–1.0 per batch, 30 minutes on one H200, then generated 256-token sequences by 10 iterative denoise/re-mask steps (100%→0% schedule, top-k/top-p per step); he cites D3PM's own statement that BERT is a one-step diffusion model. Confirms the from-scratch build path is BERT + variable masking + an unmasking schedule, not SDE machinery.",
+      "url": "https://nathan.rs/posts/roberta-diffusion/",
+      "title": "BERT is just a Single Text Diffusion Step (Nathan Barry)",
+      "tier": "B",
+      "date": "2025-10-20",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "Open structural problems identified in a 2025 discreteness analysis: (i) uniform corruption does not respect how information is distributed across token positions, and (ii) token-wise marginal training cannot capture multi-token joint dependencies during parallel decoding — i.e., unmasking many tokens simultaneously samples from a product of marginals, not the joint; this is the theoretical root of quality loss at few sampling steps (Jin et al., preprint).",
+      "url": "https://arxiv.org/abs/2512.22630",
+      "title": "On the Role of Discreteness in Diffusion LLMs",
+      "tier": "S",
+      "date": "2025-12-27, arXiv preprint (not yet peer-reviewed)",
+      "confidence": "medium",
+      "evidenceType": "direct"
+    }
+  ],
+  "bestSources": [
+    {
+      "title": "Simple and Effective Masked Diffusion Language Models (MDLM) + project page",
+      "url": "https://arxiv.org/abs/2406.07524",
+      "why": "The single most build-ready theory artifact: exact continuous-time NELBO (weighted masked cross-entropy with alpha'_t/(1-alpha_t) weight), SUBS parameterization, schedule invariance, training recipe, honest AR-vs-MDM perplexity numbers, and maintained reference code (kuleshov-group/mdlm). For a from-scratch laptop build, this is the objective to implement."
+    },
+    {
+      "title": "Structured Denoising Diffusion Models in Discrete State-Spaces (D3PM)",
+      "url": "https://arxiv.org/abs/2107.03006",
+      "why": "Founding formalism that defines the entire design space: transition-matrix taxonomy (uniform/absorbing/Gaussian/NN), hybrid ELBO+CE loss, and the BERT/AR connections every later paper builds on. Required reading to understand why absorbing won."
+    },
+    {
+      "title": "Masked Diffusion Models are Secretly Time-Agnostic Masked Models and Exploit Inaccurate Categorical Sampling",
+      "url": "https://arxiv.org/abs/2409.02908",
+      "why": "The corrective lens: proves time-conditioning is unnecessary, provides the exactly-equivalent first-hitting sampler (20x), and exposes the float32 Gumbel sampling artifact that inflated MDM quality claims — prevents a builder from cargo-culting broken evaluation and wasted architecture complexity."
+    },
+    {
+      "title": "Theoretical Benefit and Limitation of Diffusion Language Model",
+      "url": "https://arxiv.org/abs/2502.09622",
+      "why": "Directly governs the math-solving use case: near-optimal perplexity in O(1) steps, but sequence-level correctness needs steps ~ linear in length. Sets honest expectations for parallel decoding on GSM8K-style answers where one wrong token ruins the result."
+    },
+    {
+      "title": "Aaron Lou's SEDD blog + paper (ICML 2024 Best Paper)",
+      "url": "https://aaronlou.com/blog/2024/discrete-diffusion/",
+      "why": "Best pedagogical derivation of the score-based/CTMC view (concrete scores, score entropy, reverse-rate sampling) — the theory a builder needs to understand what the simplified masked objective is secretly doing, and the quality-vs-steps tradeoff curves."
+    }
+  ],
+  "contradictions": [
+    "SEDD's headline claim of beating GPT-2 on generative perplexity is partially undermined by arXiv 2409.02908: float32 Gumbel categorical sampling numerically lowers effective temperature, reducing diversity and making those generative-perplexity comparisons 'somewhat unfair'; zero-shot likelihood PPL wins stand, generation-quality wins are contested.",
+    "Compute-gap numbers conflict on the surface: Plaid reports ~64x (constant across scales) for continuous embedding-space diffusion (2023), while SMDM reports ~16x for masked discrete diffusion (2024), and MDLM shows only a ~10% perplexity gap at equal tokens (23.00 vs 20.86). Resolution: the gap depends on model family (continuous vs masked) and on metric (likelihood-match multiplier vs benchmark parity) — but every measurement agrees AR is more compute-efficient at equal budget.",
+    "Is it even diffusion? Three independent lines (RADD 2406.03736, time-agnostic 2409.02908, learned-order 2511.19152, seeded by ARDM 2021) prove masked diffusion training/sampling is equivalent to time-free any-order masked/AR modeling — contradicting the 'diffusion' framing SEDD/MDLM market. The equivalence is simultaneously exploited constructively (drop time-conditioning, cache outputs, first-hitting sampler), so the contradiction is about framing, not correctness.",
+    "Parallel-decoding speed promise vs correctness theory: MDM pitch is many-tokens-per-step, but 2502.09622 proves sequence error rate forces steps ~ O(sequence length), and 2512.22630 shows parallel unmasking samples from a product of marginals that cannot represent multi-token dependencies. Yet 2410.14157 shows diffusion decisively beats AR on Countdown/Sudoku — the win comes from flexible decoding order (easy-first), not from step-count efficiency. A math DLLM should expect order-flexibility gains but not free parallelism.",
+    "Absorbing vs uniform: absorbing/[MASK] noise wins language perplexity from D3PM through LLaDA, but vanilla absorbing locks tokens once revealed (no self-correction); UDLM shows uniform benefits more from guidance and matches/beats absorbing at small vocabularies; GIDD shows hybrid mask+uniform restores self-correction. There is no single 'correct' forward process — it is a task-dependent design fork, and small-vocab arithmetic is exactly the regime where uniform/hybrid is competitive."
+  ],
+  "coverage": {
+    "attempted": [
+      "D3PM structured denoising diffusion discrete state spaces arXiv 2107.03006",
+      "score entropy discrete diffusion SEDD arXiv Aaron Lou",
+      "simple effective masked diffusion language models MDLM arXiv 2406.07524",
+      "masked diffusion models secretly time-agnostic 2409.02908",
+      "Simplified and Generalized Masked Diffusion MD4 2406.04329",
+      "RADD absorbing diffusion conditional distributions 2406.03736",
+      "absorbing vs uniform transition discrete diffusion UDLM GIDD",
+      "why is discrete text diffusion harder than image diffusion",
+      "Campbell CTMC framework 2205.14987 tau-leaping",
+      "LLaDA 8B 2502.09992",
+      "Hoogeboom argmax flows multinomial diffusion 2102.05379",
+      "Theoretical Benefit and Limitation of Diffusion Language Model 2502.09622",
+      "Sander Dieleman diffusion language models blog",
+      "masked diffusion ELBO derivation tutorial weighted cross-entropy",
+      "ARDM order-agnostic 2110.02037 equivalence",
+      "Plaid 64x compute 2305.18619",
+      "GIDD generalized interpolating discrete diffusion 2503.04482",
+      "Hacker News discrete diffusion practitioner discussion",
+      "Beyond Autoregression reasoning planning 2410.14157",
+      "Scaling up Masked Diffusion Models on Text 2410.18514"
+    ],
+    "useful": [
+      "All seven assigned queries produced primary sources; extra queries surfaced CTMC/tau-leaping foundations, ARDM lineage, LLaDA scale proof, SMDM 16x + GSM8K math evidence, sequence-error-rate step-scaling theory, MGDM reasoning wins, GIDD/UDLM absorbing-vs-uniform fork, verified 64x Plaid quote via ar5iv, and a practitioner BERT-to-diffusion replication"
+    ],
+    "failed": [
+      "Exa MCP not available in this environment (fell back to WebSearch + WebFetch)",
+      "WebFetch of sander.ai/2023/01/09/diffusion-language-models.html returned 404 (wrong slug; recovered at /diffusion-language.html)",
+      "Direct PDF fetch of arxiv.org/pdf/2305.18619 was unparseable binary (recovered via ar5iv HTML with exact quote)",
+      "No raw HN/Reddit thread was fetched directly; practitioner evidence came from named practitioner blogs instead"
+    ]
+  },
+  "gaps": [
+    "No published compute/scaling measurements at true laptop scale (<100M params, CPU or mobile GPU): all scaling-law evidence (Plaid 64x, SMDM 16x, MDLM, LLaDA) was measured at 85M–8B on cluster GPUs; the constant-factor gaps plausibly extrapolate downward but this is unverified inference.",
+    "D3PM's per-matrix-type quantitative text results (text8 bpc, LM1B PPL for uniform vs absorbing vs NN) were not extracted from the paper body — only the qualitative ranking (absorbing best for text) is verified here.",
+    "MD4's exact weighting function was not quoted from the MD4 paper itself (only 'weighted integral of cross-entropy losses'); the exact alpha'_t/(1−alpha_t) weight was verified from the MDLM project page, and the two papers' objectives are known to coincide, but I did not verify MD4's own notation.",
+    "arXiv 2512.22630 (discreteness analysis) and 2511.19152 (learned-order equivalence) are preprint/workshop-level and not yet validated by peer review or replication.",
+    "Expected but not found: a rigorous head-to-head of uniform vs absorbing diffusion on arithmetic/math token vocabularies specifically (UDLM's small-vocab evidence is genomics/molecules); whether hybrid GIDD-style self-correction measurably helps GSM8K-style answers remains an open question."
+  ],
+  "practitionerReality": "Practitioners have converged on masked/absorbing diffusion as the default discrete-diffusion recipe precisely because the theory collapsed to something familiar: BERT-style masked cross-entropy with a variable masking rate plus an iterative unmask schedule at inference. Nathan Barry's replication (Oct 2025) turned stock RoBERTa into a working text diffusion generator with a custom collator and 30 minutes on one H200 — no CTMC, no score functions, no time embedding — and D3PM itself sanctioned this ('BERT is a one-step diffusion model'). The equivalence papers (RADD, time-agnostic, learned-order) are treated as licenses to simplify: drop time-conditioning, cache denoiser outputs, use first-hitting or confidence-based unmasking samplers. Two practitioner traps recur in the literature: (1) the float32 Gumbel categorical-sampling bug silently anneals temperature and flatters quality metrics — sample in float64 or via cumulative methods before trusting any perplexity/diversity numbers; (2) vanilla absorbing diffusion cannot revise a token once revealed, so wrong early commitments are permanent — remasking samplers or hybrid uniform noise (GIDD/UDLM) are the known fixes, and small math vocabularies are exactly where uniform/hybrid is competitive. Commercial systems (Mercury, Gemini Diffusion — Simon Willison's May 2025 writeup, Seed Diffusion) validated the speed story in production, but the theory says the honest framing for a laptop math DLLM is: an any-order masked predictor whose step count must grow with answer length if you need the whole equation right, with the win coming from flexible (easy-first) decoding order rather than raw parallelism."
+}

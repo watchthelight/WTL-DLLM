@@ -1,0 +1,269 @@
+{
+  "aspect": "AR vs diffusion debate — lens: Controversies",
+  "findings": [
+    {
+      "claim": "CMU study (Prabhudesai, Wu, Zadeh, Fragkiadaki, Pathak) found masked diffusion beats AR only when data is scarce and repeated: AR wins at low compute near Chinchilla-optimal, but diffusion keeps improving with repeated data up to ~100 epochs (fitted repetition half-value R_D* ≈ 500 for diffusion vs ≈ 15 for AR, i.e., AR gets value from only ~4 epochs). They derive a closed-form critical compute threshold at which diffusion overtakes AR for a given unique-token budget, and state the practical rule: 'if you are compute-constrained, use autoregressive models; if you are data-constrained, use diffusion models.'",
+      "url": "https://arxiv.org/abs/2507.15857",
+      "title": "Diffusion Beats Autoregressive in Data-Constrained Settings (arXiv:2507.15857)",
+      "tier": "S",
+      "date": "2025-07-21",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "The same team's project page undercuts a pure 'diffusion is special' reading: when AR models were explicitly trained with varied token orderings, at N=16 orderings 'performance approaches that of diffusion models' — evidence that diffusion's data-constrained advantage is largely implicit data augmentation over orderings, replicable inside the AR paradigm. Example downstream gap at 100M unique tokens: SciQ 68.67% (diffusion) vs 58.05% (AR).",
+      "url": "https://diffusion-scaling.github.io/",
+      "title": "Diffusion Beats Autoregressive in Data-Constrained Settings — project page",
+      "tier": "S",
+      "date": "2025",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "NUS/Sea AI Lab 'Super Data Learners' (Ni et al.) independently confirmed the crossover under 'strictly controlled pre-training settings': with limited unique data, DLMs surpass AR by training more epochs; crossover shifts later with more/higher-quality data, earlier with larger models, and persists across dense and sparse (MoE) architectures. Headline results: a 1.7B DLM with ~1.5T-token compute budget on only 10B unique Python tokens overtakes a strictly matched AR coder; a 1B DLM hits >56% HellaSwag and >33% MMLU using only 1B unique tokens repeated (up to 480 epochs tested).",
+      "url": "https://arxiv.org/abs/2511.03276",
+      "title": "Diffusion Language Models are Super Data Learners (arXiv:2511.03276)",
+      "tier": "S",
+      "date": "2025-11-05",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "The pro-diffusion Super Data Learners paper itself quantifies the compute counterweight: 'During inference, given a fixed number of sampling steps, masked diffusion models consume between 16× and 4700× more FLOPs per task, with this gap widening as the target sequence length increases from 16 to 4096' (Section 7.1), and its limitations section concedes 'DLMs trade compute for data potential. The crossovers rely on higher train- and test-time FLOPs with bidirectional attention.'",
+      "url": "https://arxiv.org/html/2511.03276v1",
+      "title": "Diffusion Language Models are Super Data Learners — Section 7 (FLOPs accounting)",
+      "tier": "S",
+      "date": "2025-11-05",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "Deflationary ablation (Gao et al., 'What Makes Diffusion Language Models Super Data Learners?') attributes the data-efficiency advantage dominantly to random masking of input tokens rather than anything diffusion-specific, and reports 'similar gains can be obtained through MLP dropout and weight decay' on AR models — i.e., the crossover may largely be stochastic regularization under multi-epoch training, not a new modeling paradigm. Marked work-in-progress.",
+      "url": "https://arxiv.org/abs/2510.04071",
+      "title": "What Makes Diffusion Language Models Super Data Learners? (arXiv:2510.04071)",
+      "tier": "S",
+      "date": "2025-10-05",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "The canonical compute-gap number in the debate comes from Nie et al. 'Scaling up Masked Diffusion Models on Text': MDMs follow a scaling rate comparable to AR with a 'relatively small compute gap' — widely cited (e.g., by the CMU authors in their AIhub interview) as discrete diffusion requiring 'roughly 16× more compute than autoregressive LLMs' to match likelihood in single-epoch settings; their 1.1B MDM beat 1.1B TinyLlama trained on the same data on 4 of 8 zero-shot benchmarks.",
+      "url": "https://arxiv.org/abs/2410.18514",
+      "title": "Scaling up Masked Diffusion Models on Text (arXiv:2410.18514)",
+      "tier": "S",
+      "date": "2024-10-24",
+      "confidence": "medium",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "ETH-affiliated scaling study (von Rütte et al.) complicates both camps: DLM scaling 'strongly depends on the noise type and is considerably different from ALMs'; uniform diffusion needs more parameters but less data than masked diffusion for compute-efficient training (better in data-bound settings); yet 'all noise types converge to similar loss values in compute-bound scaling.' They validated predictions by training a 10B-parameter uniform diffusion model at 10^22 FLOPs (largest known public uniform diffusion model) and argue DLMs can be competitive with AR at large scale — i.e., the 16× penalty is not a fixed law.",
+      "url": "https://arxiv.org/abs/2512.10858",
+      "title": "Scaling Behavior of Discrete Diffusion Language Models (arXiv:2512.10858)",
+      "tier": "S",
+      "date": "2025-12-11",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "Zheng et al. exposed that headline claims of diffusion beating AR on generative perplexity were artifacts of a float32 Gumbel sampling bug: -log(-log u) truncates at ~16.64 in fp32, biasing sampling toward high-probability tokens (a hidden temperature-lowering effect). Affected evaluations include SEDD (ICML 2024 Best Paper), MD4, and MDLM. With 64-bit sampling, generative perplexity jumps 31.24 → 126.11 and sentence entropy rises 5.17 → 5.66; the authors conclude MDMs 'do not actually outperform autoregressive models' on this metric and that MDMs are 'secretly time-agnostic' masked models (the continuous-time diffusion framing adds nothing over order-agnostic masked modeling).",
+      "url": "https://zhengkw18.github.io/blog/2024/mdm/",
+      "title": "Are Discrete Diffusion Models Better Than Auto-regressive Models in Text Generation? Uncovering a Hidden Numerical Issue (Kaiwen Zheng blog; paper arXiv:2409.02908)",
+      "tier": "A",
+      "date": "2024-09",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "A 2026 Purdue position paper ('Generative Frontiers: Why Evaluation Matters for Diffusion Language Models', Pynadath, Shi, Zhang) argues most published AR-vs-diffusion comparisons are methodologically unsound: comparing ELBOs across models with different latent structures is unreliable; 'highly repetitive sequences can achieve competitive perplexity values while still corresponding to poor generative quality'; minor entropy adjustments can reverse model rankings; 'single-point comparisons measure inference settings; generative frontiers measure model quality.' Recommends entropy–perplexity frontier curves on OpenWebText instead of single-point generative PPL, and flags LM1B (sentence-shuffled) as unsuitable.",
+      "url": "https://arxiv.org/html/2604.02718",
+      "title": "Generative Frontiers: Why Evaluation Matters for Diffusion Language Models (arXiv:2604.02718)",
+      "tier": "S",
+      "date": "2026-04-03",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "Sander Dieleman's canonical expert essay lays out why AR won for text: diffusion's vision success rests on noise weighting acting as a perceptual prior with no text analogue ('what does high frequency even mean' for text); AR training gets 'useful gradient signal from all steps in the sampling process' in one pass while diffusion trains one noise level per example; AR sampling caches activations while diffusion 'each sampling step requires a full forward pass across the entire input.' Concluded (Jan 2023) it was 'too early to consider diffusion as a serious alternative to autoregression for generative language modelling at scale' — the baseline position later challengers argue against. Historical but foundational to the debate.",
+      "url": "https://sander.ai/2023/01/09/diffusion-language.html",
+      "title": "Diffusion language models — Sander Dieleman",
+      "tier": "A",
+      "date": "2023-01-09",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "Hacker News practitioners attacked the 'super data learners' claim on methodology: godelski — 'I would be extremely concerned if people honestly believed that you could use loss as a strong indicator for comparing two different architectures'; thesz — the comparison 'matched DLM and AR by weights' not by compute; BarakWidawsky — apparent data efficiency may be 'Diffusion models having less capacity for memorization'; woadwarrior01 cited the '16× to 4700× increase in FLOPs' at inference; bicsi claimed iterated AR with chain-of-thought achieves equivalent results cheaper; counterpoint from fancyfredbot warned premature dismissal 'set AI back by decades' (re: neural nets).",
+      "url": "https://news.ycombinator.com/item?id=44856101",
+      "title": "Diffusion language models are super data learners — Hacker News thread",
+      "tier": "B",
+      "date": "2025-08",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "Mercury 2's speed claims have partial independent verification but unverified quality claims: Artificial Analysis (independent, live measurements) recorded Mercury 2 at roughly 711–1,196 output tokens/sec depending on measurement window — described as over 3× faster than the next-fastest model in its price class — while Inception's own launch materials claim 5–10× lower end-to-end latency than speed-optimized models from OpenAI, Anthropic, Meta, and Google. Even vendors position quality at the Haiku/Flash class, not the frontier; quality-parity claims rest on vendor-run benchmarks.",
+      "url": "https://artificialanalysis.ai/models/mercury-2",
+      "title": "Mercury 2 — Artificial Analysis independent performance benchmarking",
+      "tier": "A",
+      "date": "2026-02",
+      "confidence": "medium",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "Firsthand HN testing of Mercury 2 (Feb 2026) found the speed comes with quality failures: Karuma got 'Dieadona' instead of 'Maradona' ('unforgivable mistakes' vs local 3B models); lprimeisafk said it 'fails the car wash test' (logic); espadrine caught wrong Unicode emoji facts it couldn't self-correct; nylonstrung: diffusion models have 'trailed the Pareto frontier for vast majority of use cases'; dmix: Mercury 1 was 'significantly slower than Cursor's autocomplete' in real use despite tok/s claims; Inception co-founder (volodia) countered 'Mercury is >5× faster at comparable quality.'",
+      "url": "https://news.ycombinator.com/item?id=47144464",
+      "title": "Mercury 2: Fast reasoning LLM powered by diffusion — Hacker News thread",
+      "tier": "B",
+      "date": "2026-02",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "Simon Willison's hands-on Gemini Diffusion test (May 2025) measured 857 tokens/sec building a working chat app in single-digit seconds, but he noted the experience 'felt similar to the Cerebras Coder tool' running Llama 3.1-70b (an AR model) at ~2,000 tokens/sec — undercutting the claim that extreme speed is diffusion-exclusive — and that Google's own pitch was only 'the performance of Gemini 2.0 Flash-Lite at 5x the speed' with no independent quality benchmarks available.",
+      "url": "https://simonwillison.net/2025/May/21/gemini-diffusion/",
+      "title": "Gemini Diffusion — Simon Willison",
+      "tier": "A",
+      "date": "2025-05-21",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "NVIDIA's Fast-dLLM paper documents that open diffusion LLMs are often SLOWER than AR in practice: dLLMs 'lag behind autoregressive models due to the lack of Key-Value Cache and quality degradation when decoding multiple tokens simultaneously' — parallel decoding disrupts token dependencies via the conditional-independence assumption. Their fix (block-wise approximate KV cache + confidence-aware parallel decoding) yields up to 27.6× throughput on LLaDA/Dream with 1-2 point accuracy cost — proving the advertised dLLM speed advantage is an engineering outcome, not intrinsic, and quality-speed tradeoffs are real.",
+      "url": "https://arxiv.org/abs/2505.22618",
+      "title": "Fast-dLLM: Training-free Acceleration of Diffusion LLM by Enabling KV Cache and Parallel Decoding (arXiv:2505.22618)",
+      "tier": "S",
+      "date": "2025-05",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "Pro-diffusion evidence on reasoning-order tasks (ICLR 2025, Ye et al. 'Beyond Autoregression'): discrete diffusion (MGDM) dramatically beats AR on planning-heavy benchmarks — Sudoku 100% vs 20.7%, Countdown 91.5% vs 45.8% — attributed to 'subgoal imbalance': AR struggles to learn hard intermediate steps in fixed left-to-right order while diffusion can acquire easy subgoals first in any order. Directly relevant to whether diffusion architectures suit equation-solving/math tasks.",
+      "url": "https://arxiv.org/abs/2410.14157",
+      "title": "Beyond Autoregression: Discrete Diffusion for Complex Reasoning and Planning (arXiv:2410.14157)",
+      "tier": "S",
+      "date": "2024-10-18",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "Nathan Barry's viral post (Oct 20, 2025) demonstrated 'BERT-style models are essentially just text diffusion models trained on one masking rate' by fine-tuning RoBERTa with variable masking rates into a working 256-token generator — fueling the deflationary side of the debate ('discrete diffusion = generalized masked LM from 2018, rebranded'). It prompted a public response from Karpathy on X.",
+      "url": "https://nathan.rs/posts/roberta-diffusion/",
+      "title": "BERT is just a Single Text Diffusion Step — Nathan Barry",
+      "tier": "A",
+      "date": "2025-10-20",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "Karpathy's October 2025 reflection (as reported in translated coverage of his X post responding to Barry) stayed deliberately agnostic: 'Human thinking may be more autoregressive - a step-by-step process. But it's hard to say that there isn't a mechanism more like diffusion in our mental latent space'; 'Perhaps there's room for interpolation or further generalization between the two'; calling the generative objective the 'flexible' part of the LLM stack. He did not argue autoregression should end — frequently miscited as a stronger pro-diffusion endorsement than it was.",
+      "url": "https://eu.36kr.com/en/p/3539549367824519",
+      "title": "Diffusion Won't Die, BERT Will Live Forever: Karpathy's Late-Night Reflection (36kr English)",
+      "tier": "C",
+      "date": "2025-10",
+      "confidence": "medium",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "A small-scale controlled comparison (Vicentino, Mar 2026; 50M TinyStories tokens, matched data/compute/hardware — the closest analogue to a laptop-scale build) found: masked diffusion training costs only +4.7% wall-clock vs AR at ~50K tokens/sec; AR converges faster but overfits by step 14K while diffusion is still improving at 20K; and a structural diversity-fluency tradeoff — AR outputs fluent but 99.8% began identically, diffusion gave 93.4% unique 5-word openings (higher Distinct-n, lower Self-BLEU) with occasional grammatical breaks. Single-author unreviewed preprint — treat as indicative, not definitive.",
+      "url": "https://arxiv.org/abs/2603.22075",
+      "title": "Autoregressive vs. Masked Diffusion Language Models: A Controlled Comparison (arXiv:2603.22075)",
+      "tier": "S",
+      "date": "2026-03-23",
+      "confidence": "medium",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "The any-order-modeling cost side of the debate: Pynadath & Zhang (Feb 2026) show any-order autoregressive models face a 'structural-semantic tradeoff' — each hidden state must simultaneously attend to semantically informative tokens for prediction and structurally recent tokens for summarization, conflicting goals that require two-stream attention (extra architecture/compute) to resolve; they frame AO-ARMs positively as 'a promising path toward efficient masked diffusion by enabling native key-value caching,' i.e., any-order generation is worth it only with nontrivial architectural surcharges.",
+      "url": "https://arxiv.org/abs/2602.16092",
+      "title": "Why Any-Order Autoregressive Models Need Two-Stream Attention: A Structural-Semantic Tradeoff (arXiv:2602.16092)",
+      "tier": "S",
+      "date": "2026-02-17",
+      "confidence": "medium",
+      "evidenceType": "direct"
+    }
+  ],
+  "contradictions": [
+    "Data-efficiency crossover vs deflation: Two independent groups (CMU arXiv:2507.15857; NUS arXiv:2511.03276) find diffusion beats AR under data constraints, but Gao et al. (arXiv:2510.04071) show similar gains from plain random masking plus MLP dropout and weight decay on AR models, and CMU's own N=16-orderings AR experiment 'approaches diffusion' — so whether the win belongs to 'diffusion' or to generic order-augmentation/regularization is unresolved.",
+    "Compute gap numbers conflict by regime: 16× training-compute penalty for MDMs (Nie et al. 2410.18514, single-epoch likelihood) vs 'all noise types converge to similar loss in compute-bound scaling' and uniform diffusion competitive at 10B/10^22 FLOPs (von Rütte 2512.10858) vs 16×–4700× more inference FLOPs per task (Ni et al. 2511.03276). Advocates and skeptics quote different numbers from different regimes (train vs inference, masked vs uniform, single- vs multi-epoch) as if comparable.",
+    "Speed narrative is internally contradictory: proprietary dLLMs measure genuinely fast (Artificial Analysis ~711–1,196 tok/s for Mercury 2; Willison 857 tok/s for Gemini Diffusion), yet open dLLMs (LLaDA/Dream) are documented as slower than AR out of the box due to missing KV cache (Fast-dLLM 2505.22618), and Cerebras runs a 70B AR model at ~2,000 tok/s — so speed is neither exclusive to nor guaranteed by diffusion. HN user dmix: Mercury 1 was 'significantly slower than Cursor's autocomplete' in real use.",
+    "Quality-at-speed dispute: Inception co-founder claims '>5× faster at comparable quality'; firsthand HN tests report name corruption ('Dieadona'), logic failures, and uncorrectable factual errors; vendors themselves peg quality at Flash-Lite/Haiku tier — 'comparable quality' means comparable to speed-optimized small models, not frontier models.",
+    "Likelihood evaluation unfairness cuts both ways: diffusion is underrated by comparing its ELBO upper bound against AR's exact NLL, but diffusion was simultaneously overrated by generative-perplexity wins that Zheng et al. showed were artifacts of fp32 truncated Gumbel sampling (Gen PPL 31.24→126.11 when fixed) and low-entropy decoding; the Purdue position paper (2604.02718) argues most single-point comparisons in the literature are meaningless either way.",
+    "Any-order modeling: framed as diffusion's superpower (reversal-curse resistance, Sudoku 100% vs 20.7%, subgoal imbalance — Ye et al.) and as its tax (loses KV caching, needs two-stream attention, spends capacity on orderings mostly useless for left-to-right language use — Dieleman, Pynadath & Zhang, HN commenters).",
+    "Identity dispute: 'discrete diffusion is a genuinely new paradigm' (Ni et al.'s three compounding factors; Karpathy's latent-diffusion speculation) vs 'it is BERT/masked LM generalized, secretly time-agnostic' (Barry's RoBERTa demo; Zheng et al. 2409.02908)."
+  ],
+  "coverage": {
+    "attempted": [
+      "autoregressive vs diffusion language model debate 2025 2026",
+      "diffusion beats autoregressive data-constrained settings arXiv",
+      "scaling laws discrete diffusion vs autoregressive crossover compute",
+      "Mercury Inception Labs speed claims skeptical independent benchmark",
+      "hacker news LLaDA diffusion LLM skeptical comments",
+      "diffusion perplexity comparison unfair likelihood bound autoregressive exact",
+      "Super Data Learners Jinjie Ni crossover",
+      "Artificial Analysis Mercury independent tokens per second",
+      "Simon Willison Gemini Diffusion",
+      "Nie Scaling up Masked Diffusion 16x compute",
+      "Sander Dieleman diffusion language models / spectral autoregression",
+      "HN Mercury threads",
+      "Karpathy diffusion text tweet",
+      "Fast-dLLM LLaDA slow KV cache",
+      "LLaDA ICLR 2025 rejected OpenReview",
+      "16x 4700x inference FLOPs source verification"
+    ],
+    "useful": [
+      "diffusion beats autoregressive data-constrained (found CMU paper + project page + AIhub interview)",
+      "scaling laws crossover (found von Rütte 2512.10858 + Nie 2410.18514)",
+      "Mercury skeptic queries (found Artificial Analysis live benchmarks + HN 47144464 firsthand failures)",
+      "HN skeptical comments (found dense thread 44856101 with verbatim objections)",
+      "likelihood unfairness (found Zheng numerical-issue blog/paper + Purdue position paper 2604.02718)",
+      "Super Data Learners (paper + repo + FLOPs section verified in HTML)",
+      "Karpathy (found Barry's trigger post + translated coverage of his X reflection)",
+      "Fast-dLLM (verified open dLLMs slower than AR without caching)"
+    ],
+    "failed": [
+      "OpenReview LLaDA forum (Cloudflare bot check blocked; peer-review skepticism record unverified)",
+      "HN Mercury-paper thread 44489690 (HTTP 429 twice)",
+      "'LLaDA rejected from ICLR' rumor (no evidence found — dropped)",
+      "Gulrajani & Hashimoto exact continuous-diffusion compute-gap figure (~64x often cited; not verifiable from fetched abstract — omitted)",
+      "Karpathy's original X post text (only secondary/translated coverage reachable)",
+      "any public methodological attack between the CMU and NUS data-efficiency teams (rumored X drama; nothing verifiable found — both papers treat each other as concurrent work)"
+    ]
+  },
+  "practitionerReality": "For a consumer-laptop build, the debate resolves into concrete guidance. (1) At low compute — exactly the laptop regime — AR wins on loss per FLOP; the diffusion crossover only appears after many epochs over a small unique-token budget (CMU: diffusion useful to ~100 epochs, R_D* ≈ 500 vs AR ≈ 15). The good news: a math-specialized model trained on a small fixed corpus (GSM8K + synthetic arithmetic) repeated many epochs is precisely the data-constrained regime where diffusion's advantage is claimed, so the project sits on the favorable side of the controversy — if you can afford the extra training FLOPs. (2) Do not expect Mercury/Gemini-style speed locally: those numbers come from optimized data-center serving; open dLLMs are slower than same-size AR models out of the box (no KV cache, full-sequence forward pass per denoising step, 16x-4700x more inference FLOPs per task), and parallel-decoding shortcuts degrade quality via the conditional-independence problem (Fast-dLLM). On a CPU or mid-range laptop GPU, budget for slower generation than an equal-size AR model — the visualization of iterative unmasking, not speed, is the honest selling point. (3) Evaluation traps are the hidden pitfall: use float64 (or careful categorical) Gumbel sampling — fp32 truncation silently inflates results; never trust generative perplexity alone (low-entropy repetitive junk scores well); compare entropy-perplexity operating curves, and remember diffusion NLL numbers are upper bounds while AR's are exact. (4) Diffusion's genuine, replicated advantages relevant to math: strong performance on planning/constraint tasks (Sudoku 100% vs 20.7% AR; Countdown 91.5% vs 45.8%), output diversity, and multi-epoch robustness. (5) Much of the 'diffusion advantage' may be recoverable in AR via random-order/masking augmentation and stronger regularization — a cheap fallback path if the diffusion build underperforms.",
+  "gaps": [
+    "No independent third-party replication of Mercury's quality-parity benchmarks exists — Artificial Analysis independently verifies speed/price only; quality claims trace to Inception's own evals.",
+    "No published head-to-head wall-clock benchmark of a dLLM vs an AR model on consumer CPU or laptop GPU (all speed literature uses A100/H100/Blackwell-class hardware) — a real hole for the laptop feasibility envelope.",
+    "LLaDA's peer-review record (OpenReview forum KnqiC0znVF) was unreachable behind a bot check, so reviewer-level skepticism about its 'competitive with LLaMA3-8B' framing could not be documented; it did land as a NeurIPS 2025 presentation.",
+    "The often-cited ~64x compute-gap figure for continuous (Plaid-style) diffusion LMs from Gulrajani & Hashimoto could not be verified from the primary abstract and was omitted.",
+    "Expected but not found: a rigorous rebuttal paper directly attacking the CMU or NUS crossover results (the strongest counterevidence found is the Gao et al. regularization ablation and HN methodological critiques, not a formal replication failure).",
+    "Karpathy's exact original wording (Oct 2025 X post) is only available via translated secondary coverage; treat those quotes as paraphrase-grade.",
+    "No source quantifying the crossover's sensitivity to tokenizer/vocabulary choices or to math-specific corpora — all data-constrained evidence is web-text or Python code."
+  ],
+  "bestSources": [
+    {
+      "title": "Diffusion Beats Autoregressive in Data-Constrained Settings (arXiv:2507.15857 + diffusion-scaling.github.io)",
+      "url": "https://arxiv.org/abs/2507.15857",
+      "why": "The canonical quantified statement of when diffusion wins: critical-compute threshold, epoch-repetition half-lives (R_D* 500 vs 15), the compute-vs-data decision rule, and the N=16-orderings AR ablation that keeps the claim honest. Directly determines whether the laptop math project should choose diffusion."
+    },
+    {
+      "title": "Diffusion Language Models are Super Data Learners (arXiv:2511.03276)",
+      "url": "https://arxiv.org/abs/2511.03276",
+      "why": "Largest strictly-controlled crossover study (up to 8B params, 480 epochs, dense+MoE), independently replicating the CMU result at scale while candidly quantifying the 16x-4700x inference FLOPs cost — the single most balanced primary source in the controversy."
+    },
+    {
+      "title": "Uncovering a Hidden Numerical Issue in MDM evaluation (Kaiwen Zheng blog; paper arXiv:2409.02908)",
+      "url": "https://zhengkw18.github.io/blog/2024/mdm/",
+      "why": "The sharpest debunk in the debate: shows award-winning 'diffusion beats AR' generative-perplexity results were fp32 sampling artifacts (31.24 to 126.11 after fix). Changes how anyone building a dLLM must implement and evaluate sampling — directly actionable for the build plan."
+    },
+    {
+      "title": "Hacker News threads: super data learners (44856101) and Mercury 2 (47144464)",
+      "url": "https://news.ycombinator.com/item?id=44856101",
+      "why": "Densest practitioner counterarguments on record: loss-across-architectures invalidity, params-vs-compute matching, memorization confounds, KV-cache economics, plus firsthand Mercury quality failures — the reality check absent from papers and press releases."
+    },
+    {
+      "title": "Scaling Behavior of Discrete Diffusion Language Models (arXiv:2512.10858)",
+      "url": "https://arxiv.org/abs/2512.10858",
+      "why": "Most current and nuanced scaling picture: shows the AR-vs-diffusion answer depends on noise type (masked vs uniform) and regime (compute- vs data-bound), validated with a 10B-parameter model — prevents over-generalizing either the 16x penalty or the crossover claims."
+    }
+  ]
+}

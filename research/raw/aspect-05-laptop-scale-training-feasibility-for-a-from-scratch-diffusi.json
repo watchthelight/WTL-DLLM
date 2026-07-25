@@ -1,0 +1,261 @@
+{
+  "aspect": "Laptop-scale training feasibility for a from-scratch diffusion LLM — Economics / practitioner reality",
+  "findings": [
+    {
+      "claim": "The modded-nanogpt speedrun trains a GPT-2-124M-class model to <=3.28 validation loss on FineWeb in 1.32 minutes on 8xH100 (record #84, May 21 2026), down from the 45-minute llm.c baseline of May 2024, using under ~400M tokens instead of 10B. The trick registry (Muon optimizer with Newton-Schulz, rotary embeddings, QK-norm, ReLU^2, FP8 matmuls, FlexAttention/FA3 with sliding windows, U-net/MUDD skip connections, value embeddings, batch/sequence-length scheduling, multi-token prediction) is the canonical list of software-side efficiency gains a laptop build can borrow — roughly a 30x token-efficiency and 30x wall-clock improvement over the naive stack at fixed hardware.",
+      "url": "https://github.com/KellerJordan/modded-nanogpt",
+      "title": "GitHub - KellerJordan/modded-nanogpt (README, record table)",
+      "tier": "S",
+      "date": "record dated 2026-05-21; project since 2024-05",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "A single consumer RTX 4090 (24GB) can train GPT-2-124M quality from scratch in ~90 minutes: a port of the speedrun techniques (Muon, FlexAttention with document-causal masking, progressive context 256->1792, FP8 via torchao, value embeddings, U-net skips) reached 3.25 avg validation loss at step 1750 on ~0.92B FineWeb-Edu tokens at ~160k tokens/sec peak. This is the strongest direct evidence that modern efficiency tricks transfer to one consumer GPU; a mid-range laptop GPU is several times slower than a 4090 but the same recipe applies.",
+      "url": "https://github.com/Deveraux-Parker/nanoGPT_1GPU_SPEEDRUN",
+      "title": "GitHub - Deveraux-Parker/nanoGPT_1GPU_SPEEDRUN",
+      "tier": "S",
+      "date": "2025 (repo; exact date not stated in README)",
+      "confidence": "medium",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "An independent practitioner worklog (Jan 16 - Mar 3, 2025) reproduced the speedrun on 2x RTX 4090: baseline 8.13 hours to 3.28 val loss, reduced to 2.55 hours (3.2x) with Muon (largest single gain), RoPE, ReLU^2, trapezoidal LR, logit soft-capping (30), and FlexAttention; final run used 1.88B tokens vs 6.44B baseline. Confirms consumer-hardware replication of the efficiency stack by a second party, with times not comparable 1:1 to the 8xH100 leaderboard.",
+      "url": "https://www.tylerromero.com/posts/nanogpt-speedrun-worklog/",
+      "title": "NanoGPT Speedrun Worklog - Tyler Romero",
+      "tier": "A",
+      "date": "2025-01 to 2025-03",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "Karpathy's llm.c reproduced GPT-2 (124M) on 10B FineWeb tokens in ~90 minutes on one 8xA100 80GB node (~$14/hr on Lambda, ~$20 total, ~60% MFU), and he states you can train on a single GPU 'it would just take proportionally longer (e.g. ~4-24 hours depending on the GPU)'. This anchors the cloud-rental alternative: ~$20-75 buys what would be roughly a week of continuous laptop-GPU time for a 124M AR model on the pre-Muon stack.",
+      "url": "https://github.com/karpathy/llm.c/discussions/481",
+      "title": "Reproducing GPT-2 (124M) in llm.c in 90 minutes for $20 - karpathy/llm.c Discussion #481",
+      "tier": "S",
+      "date": "2024-05-28",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "nanoGPT's own baselines calibrate the CPU-only floor and the old-stack ceiling: char-level Shakespeare GPT trains in ~3 min on one A100 (val loss 1.4697); a shrunk config (context 64, batch 12, 4 layers, n_embd 128, 2000 iters) trains in ~3 minutes on CPU only to loss ~1.88; Apple Silicon MPS gives roughly 2-3x over CPU; and full GPT-2 124M reproduction on the unoptimized stack was ~4 days on 8xA100 40GB. CPU-only from-scratch training is therefore viable only for toy-scale (~1M-param, short-context) models.",
+      "url": "https://github.com/karpathy/nanoGPT",
+      "title": "GitHub - karpathy/nanoGPT (README)",
+      "tier": "S",
+      "date": "2022-2023 (README)",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "Direct laptop benchmark: on a 2024 MacBook Pro (M4, 24GB) using PyTorch MPS, the strongest model trainable in 5 minutes was a ~1.8M-parameter GPT-style transformer on ~20M TinyStories tokens reaching ~9.6 perplexity; a ~1M-param model sustained ~100k tokens/sec. Larger models did worse within the fixed budget (too slow per token), matching Chinchilla's tokens/20 sizing rule; torch.compile, float16 and gradient accumulation gave no benefit on MPS (GPU launch overhead was the bottleneck), and MLX gave no meaningful gain over MPS.",
+      "url": "https://www.seangoedecke.com/model-on-a-mbp/",
+      "title": "What's the strongest AI model you can train on a laptop in five minutes? - Sean Goedecke",
+      "tier": "A",
+      "date": "2025-08-12",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "In the same laptop experiment, the author's discrete diffusion attempt (D3PM) 'produced only gibberish output' within the 5-minute budget while the equal-budget autoregressive model produced coherent story text. This is the only documented from-scratch diffusion-LM-on-a-laptop attempt found, and it indicates the diffusion objective converges visibly slower than AR at ultra-small compute — plan for hours (not minutes) of training and a masked (absorbing-state) objective rather than raw D3PM.",
+      "url": "https://www.seangoedecke.com/model-on-a-mbp/",
+      "title": "What's the strongest AI model you can train on a laptop in five minutes? - Sean Goedecke",
+      "tier": "A",
+      "date": "2025-08-12",
+      "confidence": "medium",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "TinyStories (Eldan & Li, Microsoft Research) shows models below 10M total parameters — even with a single transformer block — trained on a synthetic corpus of 3-4-year-old-vocabulary stories generate fluent, consistent multi-paragraph English with near-perfect grammar, while GPT-2 small (124M) trained on general web corpora 'can rarely generate coherent and consistent English text'. Domain restriction, not parameter count, is the lever that makes laptop-scale models look competent; the same logic applies to restricting to math.",
+      "url": "https://arxiv.org/abs/2305.07759",
+      "title": "TinyStories: How Small Can Language Models Be and Still Speak Coherent English? (arXiv:2305.07759)",
+      "tier": "S",
+      "date": "2023-05",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "Karpathy's llama2.c storyteller models (15M/42M/110M params on TinyStories) 'all trained in a few hours' on 4x A100 40GB, with the 110M taking ~24 hours (~96 A100-hours). Scaling down, a 10-15M-param model is a few tens of A100-hours, i.e. roughly days on a mid-range laptop GPU or a weekend on Apple Silicon — a realistic upper size band for a laptop-trained backbone.",
+      "url": "https://github.com/karpathy/llama2.c/blob/master/README.md",
+      "title": "karpathy/llama2.c README (models section)",
+      "tier": "S",
+      "date": "2023",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "Chinchilla (Hoffmann et al. 2022) established compute-optimal training at roughly 20 tokens per parameter (70B model / 1.4T tokens), scaling model and data equally with compute; Epoch AI's 2024 replication attempt broadly confirmed the compute-optimal ratio while critiquing the original parametric fit. Budget arithmetic for the build: a 10M-param model wants ~200M tokens, a 50M model ~1B tokens, a 100M model ~2B tokens — at a measured consumer-GPU rate of ~100-160k tok/s that is minutes-to-hours per epoch-equivalent, putting 10-50M AR models comfortably inside laptop budgets.",
+      "url": "https://epoch.ai/publications/chinchilla-scaling-a-replication-attempt",
+      "title": "Chinchilla scaling: A replication attempt - Epoch AI (re: Hoffmann et al., arXiv:2203.15556)",
+      "tier": "A",
+      "date": "2024 (original paper 2022-03)",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "Competitive industrial small models are trained far beyond Chinchilla-optimal: SmolLM2-135M was pretrained on 2 trillion tokens (~740x the 20-tokens/param rule) and SmolLM2-360M on 4T tokens. A laptop-trained 100M-class model cannot approach this data budget, so expectations must be set against Chinchilla-optimal quality (GPT-2-ish), not against modern smol-model quality.",
+      "url": "https://huggingface.co/HuggingFaceTB/SmolLM2-135M",
+      "title": "HuggingFaceTB/SmolLM2-135M model card - Hugging Face",
+      "tier": "S",
+      "date": "2024-11-01",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "SMDM ('Scaling up Masked Diffusion Models on Text', ICLR 2025) establishes the first MDM scaling law with a scaling rate comparable to autoregressive models and reports that MDMs need up to 16x more pre-training time to match ARMs-with-KV-cache in generation quality (then sample ~1.4x faster); their 1.1B MDM beats same-data TinyLlama 1.1B on 4 of 8 zero-shot benchmarks and breaks the reverse curse. Their training used 8-16 data-center GPUs across 1e19-1.6e21 FLOPs — so for general text, budget a substantial 'diffusion tax' (up to ~16x) over the AR wall-clock numbers when planning laptop runs.",
+      "url": "https://arxiv.org/abs/2410.18514",
+      "title": "Scaling up Masked Diffusion Models on Text (arXiv:2410.18514, ICLR 2025; code ML-GSAI/SMDM)",
+      "tier": "S",
+      "date": "2024-10-24 (rev. 2025-02-28)",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "'Diffusion Beats Autoregressive in Data-Constrained Settings' (NeurIPS 2025) shows the diffusion tax inverts when unique data is limited and you train many epochs: masked diffusion achieves lower validation loss and better downstream performance than AR on repeated data, because randomized masking implicitly trains over many token orderings (implicit data augmentation); the paper derives a closed-form critical compute threshold where diffusion overtakes AR. A laptop math-specialist trained for many epochs on a fixed 10-100M-token synthetic corpus sits squarely in this diffusion-favorable regime.",
+      "url": "https://arxiv.org/abs/2507.15857",
+      "title": "Diffusion Beats Autoregressive in Data-Constrained Settings (arXiv:2507.15857)",
+      "tier": "S",
+      "date": "2025-07-21 (NeurIPS 2025)",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "'Beyond Autoregression' (ICLR 2025) trains discrete diffusion models at laptop-trainable sizes — configs of ~6M, ~85M, and ~303M parameters (LLaMA-Factory-based repo) — and finds Multi-Granularity Diffusion Modeling beats AR by huge margins on search/planning tasks adjacent to equation solving: 91.5% vs 45.8% on Countdown and 100% vs 20.7% on Sudoku, without external search. Direct evidence that small discrete diffusion models can outperform same-size AR models on structured symbolic tasks, supporting the math-specialization bet.",
+      "url": "https://arxiv.org/abs/2410.14157",
+      "title": "Beyond Autoregression: Discrete Diffusion for Complex Reasoning and Planning (arXiv:2410.14157; code HKUNLP/diffusion-vs-ar)",
+      "tier": "S",
+      "date": "2024-10 (ICLR 2025)",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "TinyGSM shows small models solve GSM8K-style math when fed dense synthetic data: fine-tuning a 125M model on TinyGSM (12.3M GPT-3.5-generated grade-school problems paired with Python solutions) reaches 63.1% on GSM8K, and a 1.3B generator + 1.3B verifier reaches 81.5%. The dataset route (synthetic math problems + solutions) is the highest-leverage economics play for a laptop math model — data quality substitutes for parameters and compute.",
+      "url": "https://arxiv.org/abs/2312.09241",
+      "title": "TinyGSM: achieving >80% on GSM8k with small language models (arXiv:2312.09241)",
+      "tier": "S",
+      "date": "2023-12",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "Karpathy's nanochat speedrun quantifies what $100 of rented frontier compute buys end-to-end: 3h51m on 8xH100 (~$24/hr, $92.40) trains a d20, 561M-param model on 11.2B tokens through SFT, scoring CORE 0.22 (slightly above GPT-2-large) but only 0.0455 on GSM8K — Karpathy notes it is 'not so sure ... how to do simple maths.' General-purpose pretraining at sub-$100 scale does not produce math ability; specialization (task-specific data, possibly tool use/verifiers) is mandatory for the math goal, and it also shows a laptop cannot compete with even $100 of cloud for general capability.",
+      "url": "https://github.com/karpathy/nanochat/discussions/1",
+      "title": "Introducing nanochat: The best ChatGPT that $100 can buy - karpathy/nanochat Discussion #1",
+      "tier": "S",
+      "date": "2025-10",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "Frontier-scale contrast for DLLMs: LLaDA 8B — the flagship open masked diffusion LLM — was pretrained from scratch on 2.3T tokens using 0.13 million H800 GPU-hours (order $200-400k of cloud compute), performing on par with LLaMA3 8B on many benchmarks. Competitive general-purpose diffusion LLMs are ~5 orders of magnitude beyond laptop training budgets; local from-scratch work must target 1M-100M params on narrow domains, or fine-tune released weights.",
+      "url": "https://arxiv.org/abs/2502.09992",
+      "title": "Large Language Diffusion Models (LLaDA, arXiv:2502.09992)",
+      "tier": "S",
+      "date": "2025-02",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "MDLM (NeurIPS 2024, kuleshov-group) is the standard reference codebase for masked diffusion LMs: its OpenWebText model (~130M non-embedding params, GPT-2-medium-ish backbone, context 1024, 1M training steps) is on Hugging Face, and the paper's generation benchmarks were run on single consumer/prosumer GPUs (RTX 3090 / A5000) — consumer-GPU inference of a 100M-class masked diffusion model is proven, while the repo documents no laptop-scale training path (training was done at data-center scale).",
+      "url": "https://github.com/kuleshov-group/mdlm",
+      "title": "GitHub - kuleshov-group/mdlm (Simple and Effective Masked Diffusion Language Model)",
+      "tier": "S",
+      "date": "2024 (NeurIPS 2024)",
+      "confidence": "medium",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "Measured 8GB-laptop-GPU reality (RTX 4060 Laptop, fine-tuning Stable LM 2 1.6B, Apr 2024): on Windows the GPU silently spills past VRAM into shared system RAM instead of OOMing — just 0.9GB of overflow slowed training by ~45%, and a batch-size-2 run took 25.0 min/epoch vs 16.5 min/epoch at batch 1 (GPU power dropped 82W to 65W while waiting on memory); RTX 4060 thermal throttle point is 87C. For the build: a 5-50M-param model fits 8GB easily, but batch size/precision must be tuned to stay strictly inside VRAM, and sustained-load thermals are a real constraint on thin laptops.",
+      "url": "https://dev.to/maximsaplin/fine-tuning-llm-on-a-laptop-vram-shared-memory-gpu-load-performance-4agj",
+      "title": "Fine-tuning LLM on a laptop: VRAM, shared memory, GPU load, performance - Maxim Saplin (dev.to)",
+      "tier": "B",
+      "date": "2024-04-09",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "Grokking (Power et al., OpenAI 2022) demonstrates that shallow transformers on small algorithmically generated datasets (modular arithmetic, p=97) reach perfect generalization long after overfitting; follow-up literature standardizes the setup as a ~2-layer, d_model=128, 4-head transformer on the order of 3x10^5 parameters. Pure arithmetic competence therefore needs well under 1M parameters — trivially CPU-trainable — but grokking-style training demands long optimization with weight decay, so wall-clock budget goes to steps, not size. Code: github.com/openai/grok.",
+      "url": "https://arxiv.org/abs/2201.02177",
+      "title": "Grokking: Generalization Beyond Overfitting on Small Algorithmic Datasets (arXiv:2201.02177)",
+      "tier": "S",
+      "date": "2022-01-06",
+      "confidence": "medium",
+      "evidenceType": "direct"
+    }
+  ],
+  "coverage": {
+    "attempted": [
+      "modded-nanogpt speedrun GPT-2 124M training time 8xH100 record",
+      "TinyStories arXiv small language models below 10M parameters coherent English",
+      "SMDM scaling masked diffusion models text 16x compute autoregressive arXiv",
+      "llm.c reproduce GPT-2 124M 90 minutes $20 karpathy",
+      "grokking modular arithmetic two-layer transformer parameters Power 2022 arXiv",
+      "llama2.c karpathy TinyStories 15M model training time GPU",
+      "Chinchilla scaling laws 20 tokens per parameter compute optimal Hoffmann",
+      "laptop GPU deep learning training thermal throttling reddit 8GB VRAM reality",
+      "MDLM masked diffusion language model github kuleshov-group training hardware OpenWebText",
+      "TinyGSM small language models GSM8K 125M synthetic dataset accuracy",
+      "karpathy nanochat $100 speedrun train ChatGPT clone 8xH100 hours",
+      "'Diffusion Beats Autoregressive' data-constrained settings arXiv 2025 repeated epochs",
+      "'Beyond Autoregression' discrete diffusion planning Sudoku reasoning small models arXiv",
+      "LLaDA 8B diffusion language model 2.3 trillion tokens H800 GPU hours training compute",
+      "SmolLM2 135M 360M training tokens 2 trillion Hugging Face",
+      "minimal discrete diffusion language model implementation github single file d3pm tiny",
+      "Hacker News train small language model laptop from scratch experience",
+      "seangoedecke strongest model you can train on a laptop in five minutes MacBook",
+      "WebFetch of 14 primary sources (arXiv abstracts, GitHub READMEs, practitioner blogs)"
+    ],
+    "useful": [
+      "All 18 search queries returned usable leads; highest-yield were the speedrun/llm.c queries (hard wall-clock+cost numbers), the three diffusion-paper queries (SMDM, Diffusion-Beats-AR, Beyond-Autoregression — the regime-dependence triangle), the Sean Goedecke laptop-benchmark query (only direct laptop AR-vs-diffusion data point), and the TinyGSM/nanochat pair (math-capability economics)"
+    ],
+    "failed": [
+      "Direct firsthand Reddit threads on laptop thermal throttling during multi-hour ML training (searches surfaced SEO aggregators and forum index pages instead; settled for the measured dev.to writeup plus an unfetched NVIDIA-forum lead)",
+      "First URL guess for the Goedecke article (seangoedecke.com/model-on-a-laptop/ 404; recovered via search to /model-on-a-mbp/)",
+      "Extracting MDLM/SMDM training GPU-hours and the exact closed-form threshold constants of arXiv 2507.15857 from abstracts/READMEs — full-paper reads needed",
+      "Exact parameter count and per-run wall-clock in Power et al. grokking primary text (abstract page lacks it; param figure taken from follow-up literature)"
+    ]
+  },
+  "contradictions": [
+    "Diffusion compute tax vs diffusion advantage: SMDM (arXiv:2410.18514) reports MDMs need up to 16x more pre-training time than AR for equal generation quality, while arXiv:2507.15857 shows diffusion BEATS AR once you train many epochs on limited unique data, and arXiv:2410.14157 shows 6M-303M diffusion models crushing AR on Countdown/Sudoku. Resolution is regime-dependent: single-epoch, data-rich general text -> AR is far cheaper; multi-epoch, small fixed corpus (exactly the laptop math-specialist setting) -> diffusion is competitive or better. The build plan should exploit the second regime, not fight the first.",
+    "Practitioner failure vs paper success at small scale: Sean Goedecke's D3PM produced pure gibberish in a 5-minute MacBook budget while papers show small masked diffusion models working well — differences are objective (uniform-transition D3PM vs absorbing-state masked diffusion), budget (5 minutes vs full runs), and recipe maturity; this is a warning that the naive D3PM formulation is the wrong starting point, not that laptop DLLMs are impossible.",
+    "Parameter-count optimism vs data-budget pessimism: TinyStories says <10M params suffices for coherent text, but SmolLM2-135M needed 2T tokens to be a good general 135M model, and nanochat's $100/561M/11.2B-token model still scores only ~4.5% on GSM8K. Small-parameter success stories are always domain-restricted (stories, arithmetic, GSM8K-with-synthetic-data); a laptop model will only look good inside its niche.",
+    "8GB VRAM 'insufficient' vs 8GB working in practice: aggregated buying-guide advice says 8GB is inadequate and 12GB+ is needed, yet the measured dev.to run fine-tuned a 1.6B model on an 8GB RTX 4060 Laptop successfully — the real failure mode is silent shared-memory spillover (-45% speed from 0.9GB overflow) rather than hard OOM, so careful batch/precision management makes 8GB fully workable for <=100M-param training.",
+    "Hardware headline vs software reality: identical GPT-2-124M quality cost 45 min on 8xH100 (llm.c, 2024) vs 1.32 min (modded-nanogpt, 2026) vs ~90 min on ONE RTX 4090 — a ~30x software-stack factor means published 'hardware requirements' for a given quality level are soft and mostly reflect the age of the training recipe."
+  ],
+  "practitionerReality": "Verified envelope by hardware class. CPU-only: nanoGPT trains a 4-layer/128-dim char model in ~3 minutes; realistic ceiling is ~1-5M params on TinyStories-scale data over hours — enough for a grokking-style arithmetic specialist (~0.3M params) but AR converges much faster than diffusion here (the one documented laptop D3PM attempt produced gibberish). Apple Silicon (M4, MPS): ~100k tok/s on a ~1M-param model; 5 minutes bought a coherent 1.8M-param TinyStories GPT at ~9.6 ppl; expect ~1B tokens/day-class throughput on small models; torch.compile/fp16/MLX gave no speedup (kernel-launch overhead dominates). Laptop dGPU 6-8GB (3060/4060 class): a 1.6B fine-tune runs on 8GB, so a 5-50M-param masked diffusion model trains comfortably in VRAM; the traps are silent shared-memory spill (0.9GB over = -45% throughput) and 87C thermal throttling on sustained multi-hour runs — cap batch size, use bf16/fp16, monitor VRAM, elevate/cool the chassis. Upper consumer bound (desktop RTX 4090): GPT-2-124M quality in ~90 min with the Muon/FlexAttention/FP8 stack (~0.92B tokens at 160k tok/s); a mid-range laptop GPU is roughly 3-10x slower (inference), so: Chinchilla-optimal 10M-param AR model (~200M tokens) = hours; 50M (~1B tokens) = about a day; 100M (~2B tokens) = a few days. Applying SMDM's up-to-16x diffusion tax for general-text parity pushes a general 100M DLLM into weeks — infeasible-ish — BUT the math specialization flips the economics: train a 5-30M-param masked diffusion model for many epochs over a fixed ~10-100M-token synthetic math corpus (TinyGSM-style problems + grokking-style arithmetic), which is precisely the data-constrained regime where diffusion matches or beats AR (arXiv:2507.15857) and where small diffusion models already beat AR on Countdown/Sudoku (arXiv:2410.14157). Cash alternative for calibration: ~$20 (8xA100, 90 min) buys a full GPT-2-124M pretrain and ~$92 buys a 561M nanochat — renting one burst for the biggest planned run while iterating locally on the 1-10M scale is the rational split. Biggest unpriced risk: nobody has published wall-clock numbers for masked-diffusion pretraining on a laptop GPU, so the plan must include an early throughput probe (tokens/sec at your exact VRAM/thermals) before committing to a size.",
+  "gaps": [
+    "No published end-to-end account of pretraining a masked diffusion LM on a laptop or any single consumer GPU with reported wall-clock and quality — the nearest evidence is a failed 5-minute D3PM attempt (MacBook) and MNIST-scale one-file D3PM toys (cloneofsimo/d3pm, 400 LOC); the proposed project would be filling a genuinely undocumented niche",
+    "Training GPU-hours for the reference diffusion codebases (MDLM 1M-step OWT run, SEDD, SMDM runs) are not stated in their READMEs/abstracts — could not convert their runs into laptop-days without full-paper appendix reads",
+    "The closed-form critical-compute-threshold constants from arXiv:2507.15857 (epochs/unique-token budgets where diffusion overtakes AR) were not extractable from the abstract; needed to size the math corpus and epoch count precisely",
+    "No measured tokens/sec for ~10-100M-param training on actual laptop GPUs (3060/4060 mobile) — all consumer numbers found are desktop 4090 or Apple M4; my hours/days estimates carry a 3-10x uncertainty band",
+    "No GSM8K results for from-scratch sub-100M diffusion models (TinyGSM fine-tuned pretrained AR models; MGDM tasks are Sudoku/Countdown, not GSM8K) — the target capability is plausible but unproven at the planned scale",
+    "Exact parameter count and per-run wall-clock in the original grokking paper not verified from primary text (abstract omits it; ~3x10^5 figure comes from follow-up literature)",
+    "Could not verify high-quality firsthand Reddit/forum threads on multi-hour laptop thermal throttling during training (searches returned aggregators); only one measured practitioner source (dev.to) covers it"
+  ],
+  "bestSources": [
+    {
+      "title": "Diffusion Beats Autoregressive in Data-Constrained Settings (arXiv:2507.15857, NeurIPS 2025)",
+      "url": "https://arxiv.org/abs/2507.15857",
+      "why": "The decisive economics result for this project: it identifies the exact regime (many epochs over limited unique data — i.e., a laptop math-specialist) where the diffusion objective stops being a tax and becomes an advantage, with scaling laws and a critical-compute threshold to size the run."
+    },
+    {
+      "title": "KellerJordan/modded-nanogpt (GitHub README + record table)",
+      "url": "https://github.com/KellerJordan/modded-nanogpt",
+      "why": "The living registry of every training-efficiency trick that matters (Muon, FP8, attention windowing, schedules), with dated records showing a ~30x software-side improvement at fixed hardware — the menu a laptop build should copy from, validated on consumer GPUs by two independent ports."
+    },
+    {
+      "title": "What's the strongest AI model you can train on a laptop in five minutes? - Sean Goedecke",
+      "url": "https://www.seangoedecke.com/model-on-a-mbp/",
+      "why": "The only direct laptop-training benchmark found, with concrete tokens/sec, perplexity, architecture ablations, MPS pitfalls, and a documented failed D3PM diffusion attempt — the closest existing experiment to the proposed project."
+    },
+    {
+      "title": "Scaling up Masked Diffusion Models on Text (SMDM, arXiv:2410.18514, ICLR 2025)",
+      "url": "https://arxiv.org/abs/2410.18514",
+      "why": "Quantifies the diffusion-vs-AR compute gap (up to 16x pretraining for generation parity, 1.4x faster sampling) with the first MDM scaling law, and its open repo contains small-model (170M) MDM training recipes — the primary cost model for the diffusion side of the plan."
+    },
+    {
+      "title": "TinyGSM: achieving >80% on GSM8k with small language models (arXiv:2312.09241)",
+      "url": "https://arxiv.org/abs/2312.09241",
+      "why": "Proves the math-capability economics: 125M params + 12.3M synthetic problems = 63.1% GSM8K, versus nanochat's $92 general 561M model at 4.5% — synthetic task data, not scale, is the lever a laptop builder can actually pull, and the dataset is reusable."
+    }
+  ]
+}

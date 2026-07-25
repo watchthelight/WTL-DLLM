@@ -1,0 +1,216 @@
+{
+  "counterclaims": [
+    {
+      "claim": "dLLM GSM8K scores partly reflect benchmark contamination/pattern reuse, not math ability: a 2026 diffusion-LM study (RCD) found diffusion/SDAR-family chat models scoring up to 88.4% on GSM8K drop a consistent 2-7% on GSM1K (contamination-resistant clone) and degrade on GSM-Plus perturbations, concluding models 'rely partially on seen patterns from the training distribution.' Apple's GSM-Symbolic separately shows small models' GSM8K scores collapse (up to 65% drop) when a single irrelevant clause is added or numbers are changed. Any GSM8K target number for the laptop build (and the LLaDA 70.3 / Dream 77.2 anchors, whose 2.3T/580B-token data mixes are undisclosed and uncontrolled for contamination) should be treated as an upper bound on real equation-solving ability.",
+      "evidence": [
+        {
+          "title": "Residual Context Diffusion Language Models (GSM1K/GSM-Plus cross-benchmark contamination analysis)",
+          "url": "https://arxiv.org/pdf/2601.22954"
+        },
+        {
+          "title": "GSM-Symbolic: Understanding the Limitations of Mathematical Reasoning in LLMs (Apple)",
+          "url": "https://machinelearning.apple.com/research/gsm-symbolic"
+        }
+      ],
+      "strength": "high",
+      "weakensSynthesis": true
+    },
+    {
+      "claim": "The corpus's highest open-dLLM math number (MMaDA GSM8K 86.1, flagged as secondary-source-only) is almost certainly wrong and the model fails reproduction: 86.1 is MMaDA's POPE (multimodal) score, literature reports GSM8K 73.4, and an independent NeurIPS-track paper testing the actually-released MMaDA MixCoT checkpoint measured only ~48% GSM8K zero-shot — about 30 points BELOW LLaDA-8B-Instruct under identical sampling — attributing it to insufficient training or catastrophic forgetting. This is a concrete case of a flagship dLLM math claim failing when someone runs the released weights.",
+      "evidence": [
+        {
+          "title": "Consolidating Reinforcement Learning for Multimodal Discrete Diffusion Models (arXiv 2510.02880; measures released MMaDA checkpoint at ~48% GSM8K)",
+          "url": "https://arxiv.org/pdf/2510.02880"
+        },
+        {
+          "title": "MMaDA: Multimodal Large Diffusion Language Models (NeurIPS 2025 camera-ready; POPE 86.1 is the multimodal metric)",
+          "url": "https://proceedings.neurips.cc/paper_files/paper/2025/file/caa934a507a952698d54efb24845fc4b-Paper-Conference.pdf"
+        }
+      ],
+      "strength": "high",
+      "weakensSynthesis": true
+    },
+    {
+      "claim": "The 'diffusion beats AR in data-constrained settings' pillar (the main scientific argument FOR choosing diffusion in a laptop small-corpus build) is directly disputed: a follow-up ablation study ('What Makes Diffusion Language Models Super Data Learners?', with code) finds random input masking plays the dominant role and that 'similar gains can be obtained through MLP dropout and weight decay' applied to autoregressive models — i.e., much of diffusion's multi-epoch advantage is generic stochastic regularization, not a diffusion-specific property. Additionally, the original CMU paper itself concedes AR wins below a critical compute threshold, and a laptop build is compute-constrained as well as data-constrained, so it may sit on the AR-favored side of the crossover.",
+      "evidence": [
+        {
+          "title": "What Makes Diffusion Language Models Super Data Learners? (arXiv 2510.04071)",
+          "url": "https://arxiv.org/html/2510.04071"
+        },
+        {
+          "title": "Diffusion Beats Autoregressive in Data-Constrained Settings (CMU blog; states AR is favored when compute-constrained)",
+          "url": "https://blog.ml.cmu.edu/2025/09/22/diffusion-beats-autoregressive-in-data-constrained-settings/"
+        }
+      ],
+      "strength": "medium",
+      "weakensSynthesis": true
+    },
+    {
+      "claim": "Diffusion's speed advantage inverts specifically for math: GSM8K is the most parallelism-fragile benchmark measured — accuracy degrades immediately at just 2 tokens/step (~10% drop on Dream-7B entropy decoding, while HumanEval/MBPP tolerate 4 tokens/step), corroborating corpus findings (76.95%→62.31% at fixed 2-token parallelism; CPU GGUF port needs 15-16 steps for arithmetic and runs 0.6x llama.cpp speed). Theory (Feng et al.) says sequence-level correctness requires steps scaling linearly with length. Net: for equation solving on weak hardware, expect step counts near response length, i.e., roughly AR-like or worse wall-clock, not the 5-10x vendor speedups.",
+      "evidence": [
+        {
+          "title": "Dependency-Guided Parallel Decoding in Discrete Diffusion Language Models (GSM8K degrades at k=2)",
+          "url": "https://arxiv.org/html/2604.02560"
+        },
+        {
+          "title": "diffuse-cpp LLaDA-8B GGUF model card (math prompts slower than llama.cpp AR on CPU)",
+          "url": "https://huggingface.co/diffuse-cpp/LLaDA-8B-Instruct-GGUF"
+        },
+        {
+          "title": "Theoretical Benefit and Limitation of Diffusion Language Model (steps must scale with length for sequence error rate)",
+          "url": "https://arxiv.org/abs/2502.09622"
+        }
+      ],
+      "strength": "high",
+      "weakensSynthesis": true
+    },
+    {
+      "claim": "Headline dLLM speed wins are an artifact of idle datacenter GPU compute at batch 1 and do not transfer to laptops or serving: serving-stack analyses (Sangam; HERALD; Optimus) show dLLM block decoding contributes a full block of MLP compute per request per step, saturating GPU compute at very low batch sizes — dLLMs match/beat AR only at small batch and 'struggle to match autoregressive models' as batch grows, since AR amortizes memory-bound weight loading. A mid-range laptop GPU has a tiny fraction of an H100's compute, so full-sequence bidirectional forwards per denoising step are compute-bound from the start; the 1,000+ tok/s Mercury/Gemini/Seed numbers (H100/Blackwell + custom stacks) are structurally unreachable and even direction-of-advantage may flip locally.",
+      "evidence": [
+        {
+          "title": "Sangam: Efficiently Serving Diffusion LLMs with the AR Stack (arXiv 2607.04206)",
+          "url": "https://arxiv.org/pdf/2607.04206"
+        },
+        {
+          "title": "Gemini Diffusion official page (speed figure excludes 0.84s overhead; benchmarked only vs Flash-Lite)",
+          "url": "https://deepmind.google/models/gemini-diffusion/"
+        }
+      ],
+      "strength": "high",
+      "weakensSynthesis": true
+    },
+    {
+      "claim": "Small-model diffusion 'math wins' are task-specific fine-tunes that do not generalize: the 91.5% Countdown / 100% Sudoku results (Beyond Autoregression, 85M) came after training on ~500k in-task generated problems, while the general-purpose 7B Dream — trained on 580B tokens — scores only 16.0 on Countdown; DoT-scratch's 100% on 4x4/5x5 multiplication is fixed-format template arithmetic, and the same paper's GSM8K result (Plaid-1B fine-tuned, 32.6%) LOSES to fine-tuned GPT-2-small CoT (40.7%). The honest reading: laptop-scale diffusion can master narrow, templated symbolic tasks it is trained on, but there is no evidence the mechanism transfers to open-form GSM8K-style word problems at small scale.",
+      "evidence": [
+        {
+          "title": "Beyond Autoregression: Discrete Diffusion for Complex Reasoning and Planning (task-specific training corpora)",
+          "url": "https://arxiv.org/abs/2410.14157"
+        },
+        {
+          "title": "Dream 7B paper (Countdown 16.0 for the general 7B model)",
+          "url": "https://arxiv.org/abs/2508.15487"
+        },
+        {
+          "title": "Diffusion of Thoughts (GSM8K 32.6% vs GPT-2-small CoT 40.7%)",
+          "url": "https://arxiv.org/abs/2402.07754"
+        }
+      ],
+      "strength": "high",
+      "weakensSynthesis": true
+    },
+    {
+      "claim": "Both documented laptop from-scratch diffusion-LM attempts produced gibberish: Goedecke's 5-minute D3PM on an M4 MacBook (corpus) and a second, longer attempt — 2 hours of masked-diffusion training on an M2 MacBook Air — whose author admits 'the output is obviously mostly nonsense' (sample: 'To be, fo hend! / First her sense ountier to Jupits'). No laptop-trained-from-scratch diffusion model with nontrivial math word-problem accuracy has been documented anywhere; the corpus's feasibility case rests on extrapolation from A100/L4/H200 runs (tiny-diffusion 20 min on A100; nanoLLaDA 55h on 4xL4; RoBERTa-diffusion 30 min on H200) plus the TinyStories domain-restriction analogy, not on a demonstrated artifact.",
+      "evidence": [
+        {
+          "title": "Building My Own Diffusion Language Model (boesch.dev; M2 Air, 2h, gibberish)",
+          "url": "https://boesch.dev/posts/simple-dlm/"
+        },
+        {
+          "title": "What's the strongest AI model you can train on a laptop in five minutes? (Goedecke; D3PM gibberish)",
+          "url": "https://www.seangoedecke.com/model-on-a-mbp/"
+        }
+      ],
+      "strength": "medium",
+      "weakensSynthesis": true
+    },
+    {
+      "claim": "TinyGSM-style 'small models solve GSM8K' evidence smuggles in an external Python interpreter: the 125M/63.1% and 1.3B/81.5% numbers come from models generating Python code that is EXECUTED to produce answers (plus a separate 1.3B verifier for the top number). The 2026 Looped-Diffusion follow-up that trains a 125M masked diffusion model on TinyGSM likewise uses Python-solution targets, reports only relative gains (+8.5 points), never discloses absolute GSM8K accuracy, and trained on 4xA100. A pure-text laptop dLLM without a code executor should expect substantially lower accuracy than these anchors, and adding an executor changes the product architecture.",
+      "evidence": [
+        {
+          "title": "TinyGSM: achieving >80% on GSM8K with small language models (Python solutions + verifier)",
+          "url": "https://arxiv.org/pdf/2312.09241"
+        },
+        {
+          "title": "Looped Diffusion Language Models (125M MDM on TinyGSM; no absolute GSM8K numbers)",
+          "url": "https://arxiv.org/html/2605.26106v1"
+        }
+      ],
+      "strength": "high",
+      "weakensSynthesis": true
+    },
+    {
+      "claim": "Grokking is not a dependable route to sub-1M-parameter arithmetic: the phenomenon is contingent and hyperparameter-fragile — it disappears if model size, weight decay, or data fraction are not 'just right'; too much weight decay prevents learning entirely, too little never escapes memorization, and finding workable values 'required extensive experimentation.' The corpus's 'trivially CPU-trainable arithmetic via grokking' framing understates both the tuning lottery and the unbounded wall-clock of waiting for delayed generalization on a laptop.",
+      "evidence": [
+        {
+          "title": "Do Machine Learning Models Memorize or Generalize? (Google PAIR explorable; weight-decay contingency)",
+          "url": "http://pair.withgoogle.com/explorables/grokking/"
+        },
+        {
+          "title": "Weight Decay Regimes in Grokking Transformers: Cheap Online Diagnostics",
+          "url": "https://arxiv.org/pdf/2605.20441"
+        }
+      ],
+      "strength": "medium",
+      "weakensSynthesis": false
+    },
+    {
+      "claim": "Standard transformers fail arithmetic length generalization without special engineering the corpus never mentions: models with absolute positional embeddings hit 0% beyond trained operand lengths, and fixes (Abacus digit-position embeddings, position coupling, input injection, digit-level tokenization) are an active research area entirely developed on AR models — none of it is validated for bidirectional masked diffusion. A math-specialized dLLM inherits this open problem: in-distribution template accuracy will not imply the model can add numbers one digit longer than its training data, which matters for an 'equation solver' deliverable.",
+      "evidence": [
+        {
+          "title": "Transformers Can Do Arithmetic with the Right Embeddings (Abacus embeddings, NeurIPS 2024)",
+          "url": "https://www.cs.umd.edu/~bhatele/pubs/pdf/2024/neurips2024c.pdf"
+        },
+        {
+          "title": "Length Generalization in Arithmetic Transformers (arXiv 2306.15400)",
+          "url": "https://arxiv.org/abs/2306.15400"
+        }
+      ],
+      "strength": "high",
+      "weakensSynthesis": false
+    },
+    {
+      "claim": "Windows-laptop toolchain reality undercuts direct reuse of the reference stacks: flash-attn does not build reliably on native Windows (multi-hour compile failures; maintainers recommend Linux/WSL2), bf16 requires Ampere-or-newer silicon, MDLM's own issue tracker shows even its 'no_flashattn' checkpoint demanded pip flash-attn plus Mamba CUDA extensions, and on Apple MPS torch.compile/float16/grad-accumulation gave zero benefit (launch-overhead-bound). The corpus draws the right conclusion (strip CUDA extensions) but understates that several of its recommended reference repos will not run as-is on the target machine class, and cross-platform (CPU/MPS/DirectML) training paths are essentially untested in all of them.",
+      "evidence": [
+        {
+          "title": "Flash Attention 2 doesn't build on Windows (Dao-AILab issue #553)",
+          "url": "https://github.com/Dao-AILab/flash-attention/issues/553"
+        },
+        {
+          "title": "kuleshov-group/mdlm issues (flash-attn/Mamba dependency friction)",
+          "url": "https://github.com/kuleshov-group/mdlm/issues"
+        }
+      ],
+      "strength": "high",
+      "weakensSynthesis": false
+    },
+    {
+      "claim": "Counter-counterclaim worth logging: the parallel-decoding pessimism for math is being actively eroded — dParallel (learned certainty-forcing distillation) reports GSM8K 256→30 steps (8.5x) with no accuracy loss, and MED/EB-Sampler/Prophet recover 2-3x training-free — but ALL such results are demonstrated on 7-8B instruct models with well-calibrated confidences; none are validated at the 10-150M laptop scale, where calibration is far worse. Speed recovery for a tiny math dLLM is plausible but unproven, and distillation adds a training stage to the plan.",
+      "evidence": [
+        {
+          "title": "dParallel: Learnable Parallel Decoding for dLLMs (OpenReview)",
+          "url": "https://openreview.net/forum?id=hVOcstAURb"
+        },
+        {
+          "title": "No Compute Left Behind: Rethinking Reasoning with Masked Diffusion Models (MED)",
+          "url": "https://arxiv.org/html/2510.19990"
+        }
+      ],
+      "strength": "medium",
+      "weakensSynthesis": false
+    }
+  ],
+  "claimsToSoften": [
+    "MMaDA 'GSM8K 86.1' must be retracted, not softened: 86.1 is MMaDA's POPE multimodal score; literature reports GSM8K 73.4, and the released MixCoT checkpoint independently measures ~48% zero-shot (arXiv 2510.02880) — ~30 points below LLaDA-8B-Instruct.",
+    "'Diffusion beats AR in data-constrained settings' → soften to: 'random-masking data augmentation gives multi-epoch gains, but a follow-up (arXiv 2510.04071) reproduces similar gains in AR models with MLP dropout + weight decay, and the crossover requires compute beyond a critical threshold a laptop may never reach; a tuned AR baseline with strong regularization is the mandatory control.'",
+    "'SMDM 1.1B achieves GSM8K competitive with Llama-2 7B' → Llama-2-7B scores only ~14-16% on GSM8K; 'competitive with a 7B' is a much lower bar than it sounds, and required augmented math data.",
+    "'LLaDA Base beats LLaMA3-8B Base on math (70.3 vs 48.7)' → self-reported table with framework-sensitive numbers (LLaDA's own docs show 70.0 lm-eval vs 71.9 OpenCompass); authors attribute math strength partly to data composition; contamination of the undisclosed 2.3T mix is unprobed while GSM1K checks show dLLMs dropping 2-7% (arXiv 2601.22954).",
+    "'Beyond Autoregression: 91.5% Countdown / 100% Sudoku proves diffusion mechanism beats AR on equation-style problems' → scope to task-specific fine-tuning on ~500k in-task problems; the general Dream-7B scores 16.0 on Countdown; these are search/constraint tasks, not GSM8K word problems, and the corpus's own DoT GSM8K result (32.6% < GPT-2-small CoT 40.7%) shows the advantage does not transfer.",
+    "'TinyGSM shows small models solve GSM8K-style math' → the mechanism is generating Python executed by an interpreter (top score also needs a 1.3B verifier); a pure-text dLLM without an executor should expect materially lower accuracy, or the plan must add a code-execution sandbox.",
+    "'Tiny repos validate the recipe trains stably at toy scale' → they validate the loss decreases; the two documented laptop-budget from-scratch diffusion runs produced gibberish (Goedecke M4 5-min D3PM; boesch.dev M2 Air 2h masked DLM). Shakespeare-style coherence after hours on an A100 is the demonstrated floor, and none of these artifacts do math.",
+    "'Grokking: pure arithmetic needs well under 1M params, trivially CPU-trainable' → grokking is hyperparameter-contingent (can fail entirely at wrong weight decay/data fraction) and its wall-clock is open-ended; treat as a research bet, not a plan line-item.",
+    "'Step-count saturation around 16-32 steps lets a small model budget steps per difficulty' → math is the documented worst case: GSM8K accuracy degrades at just 2 tokens/step and CPU inference needs 15-16 steps for arithmetic (slower than AR); saturation numbers come from 7-8B models and unrelated task mixes, not small math models.",
+    "'Prophet: up to 97% of GSM8K instances decodable at half the steps' → measured on 8B instruct models with good confidence calibration; unvalidated at 10-150M scale where calibration is poor — do not budget speed on it.",
+    "'Mercury/Gemini/Seed 1000-2100 tok/s validate the parallel-decoding ceiling' → all on H100/Blackwell datacenter GPUs with custom inference stacks, benchmarked against speed-tier rivals; serving analyses (Sangam) show the advantage exists only where spare GPU compute is idle at batch 1 — a laptop GPU has no such spare compute, so treat vendor tok/s as irrelevant to local expectations (Google's own open DiffusionGemma additionally concedes quality below its AR sibling).",
+    "'16x compute gap for masked diffusion' → a point estimate from one isoFLOP study at 1e19-1e21 FLOPs on general text; at laptop scale add training-variance instability (GSM8K SFT run-to-run swings of 50.6-62.0 across methods, arXiv 2511.18159) and locality-bias slow convergence (arXiv 2605.13026 claims a 4x fix), so the effective gap for a small math build is uncertain in both directions."
+  ],
+  "unresolvedDebates": [
+    "Existence proof gap: no documented instance (positive or negative) of a from-scratch, laptop-compute-only masked diffusion model achieving nontrivial accuracy on GSM8K-style word problems; the nearest anchor (125M MDM on TinyGSM, arXiv 2605.26106) used 4xA100x900k iters and never reports absolute accuracy. The build plan's central promise rests on interpolation between toy Shakespeare demos and datacenter runs.",
+    "Data-constrained advantage attribution: Prabhudesai et al. (diffusion-specific implicit augmentation) vs arXiv 2510.04071 (mostly generic stochastic regularization reproducible in AR with dropout/weight decay) — unresolved 'work in progress' dispute that determines whether choosing diffusion for a small fixed math corpus is scientifically justified or aesthetic.",
+    "Absorbing vs uniform/hybrid noise for a small-vocabulary math model: UDLM claims uniform wins at small vocab, GIDD claims hybrid enables self-correction, Sumi (arXiv 2606.19005) revives uniform from scratch, while every strong result at scale uses absorbing masking; no head-to-head exists at laptop scale on arithmetic.",
+    "Whether parallel-decoding speed can be recovered for math WITHOUT accuracy loss at small scale: dParallel/MED/EB-Sampler/Prophet succeed on 7-8B instruct models, ParallelBench and the k=2 GSM8K collapse argue the information-theoretic floor binds hardest on math; nothing tested below ~4B.",
+    "Whether GSM-Symbolic-style fragility invalidates small-model math scores: Apple's result (65% drops from irrelevant clauses) vs the 2026 LessWrong re-audit finding the effect largely disappears after removing genuinely ambiguous items — determines how honestly the project can claim its model 'solves' word problems versus matches templates.",
+    "Arithmetic length generalization in bidirectional masked diffusion: Abacus/position-coupling fixes are AR-only literature; unknown whether masked diffusion's any-order decoding helps or hurts digit-alignment, and whether RoPE-bidirectional small models generalize past trained operand lengths at all.",
+    "The Parallel-Sequential Contradiction (arXiv 2510.09544) and left-to-right convergence findings imply a math dLLM's denoising visualization may mostly show near-sequential commits — potentially undermining the product's core visual appeal of 'parallel refinement'; whether task/schedule design can make genuinely parallel math decoding visible without wrecking accuracy is open.",
+    "Contamination audit of flagship dLLM math anchors: LLaDA (2.3T) and Dream (580B) training mixes are undisclosed; given GSM1K drops of 2-7% measured for other diffusion models (arXiv 2601.22954), the true diffusion-vs-AR math gap at 7-8B is unmeasured on contamination-resistant benchmarks."
+  ]
+}

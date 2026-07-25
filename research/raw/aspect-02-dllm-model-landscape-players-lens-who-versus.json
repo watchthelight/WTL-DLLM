@@ -1,0 +1,276 @@
+{
+  "aspect": "DLLM model landscape & players — lens: Who / versus",
+  "findings": [
+    {
+      "claim": "LLaDA 8B (GSAI/Renmin University + Ant Group collaborators) is the canonical open from-scratch masked diffusion LLM: trained on 2.3T tokens using 0.13M H800 GPU-hours, 4096-token context, vanilla multi-head attention + RoPE (no causal mask), SFT on 4.5M pairs. Objective: mask ratio t ~ Uniform[0,1], cross-entropy computed only on masked tokens with 1/t weighting. Math profile is its standout: Base GSM8K 70.3 / MATH 31.4 vs LLaMA3-8B Base 48.7/16.0 (diffusion base beats AR peer on math), while Instruct GSM8K 69.4 trails LLaMA3-8B-Instruct 78.3 (post-training gap). First posted 2025-02-14.",
+      "url": "https://arxiv.org/abs/2502.09992",
+      "title": "Large Language Diffusion Models (arXiv:2502.09992)",
+      "tier": "S",
+      "date": "2025-02-14 (v3 2025-10-18)",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "The official LLaDA repo is unusually honest about pitfalls: pretraining crashed once at 1.2T tokens and was resumed with LR cut from 4e-4 to 1e-4; the repo states current sampling is SLOWER than autoregressive baselines (fixed-length context, no KV cache, best quality needs sampling steps ≈ response length). Family timeline: LLaDA-8B Base/Instruct (Feb 2025, MIT license), LLaDA 1.5 with VRPO preference optimization (May 2025; GSM8K +4.7, HumanEval +3.0, later ACL 2026), LLaDA-V vision (May 2025), LLaDA-MoE-7B-A1B (Sep 2025, first MoE dLLM), iLLaDA (Jun 2026, Apache 2.0).",
+      "url": "https://github.com/ML-GSAI/LLaDA",
+      "title": "GitHub - ML-GSAI/LLaDA: Official PyTorch implementation for Large Language Diffusion Models",
+      "tier": "S",
+      "date": "2025-02 through 2026-06 (repo updates)",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "Dream 7B (HKU NLP + Huawei Noah's Ark Lab; blog Apr 2025, paper Aug 2025) became the strongest open dLLM of mid-2025 by initializing from autoregressive Qwen2.5-7B weights (shift operation) plus context-adaptive token-level noise rescheduling, using only 580B tokens (~1/4 of LLaDA's data) from Dolma v1.7/OpenCoder/DCLM-Baseline. Base: GSM8K 77.2 / MATH 39.6 vs LLaDA 70.9/30.7. Planning tasks show diffusion's structural edge: Countdown 16.0 vs 6.2, Sudoku 81.0 vs 21.0 vs Qwen2.5-7B. But instruct-tier math still trails AR: Dream-Instruct MATH 39.2 vs Qwen2.5-7B-Instruct 75.5, GSM8K 81.0 vs 91.6.",
+      "url": "https://arxiv.org/abs/2508.15487",
+      "title": "Dream 7B: Diffusion Large Language Models (arXiv:2508.15487)",
+      "tier": "S",
+      "date": "2025-08-21 (blog 2025-04)",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "Mercury (Inception Labs) is the first commercial-scale dLLM (announced Feb 2025; tech report Jun 2025). Mercury Coder Mini hits 1109 tok/s and Small 737 tok/s on NVIDIA H100, claimed up to 10x faster than speed-optimized frontier models at comparable quality; ranked 2nd on quality and fastest overall on Copilot Arena; throughput independently verified by Artificial Analysis. Architecture, parameter counts, and training data are NOT disclosed — it is a product report, not a reproducible recipe.",
+      "url": "https://arxiv.org/abs/2506.17298",
+      "title": "Mercury: Ultra-Fast Language Models Based on Diffusion (arXiv:2506.17298)",
+      "tier": "S",
+      "date": "2025-06-17",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "Inception Labs is the commercial standard-bearer: founded 2024 in Palo Alto by Stefano Ermon (Stanford, co-inventor of diffusion techniques behind Midjourney/Sora), Aditya Grover (UCLA), and Volodymyr Kuleshov (Cornell); raised $50M (announced 2025-11-06) led by Menlo Ventures with Mayfield, Innovation Endeavors, NVentures (NVIDIA), M12 (Microsoft), Snowflake Ventures, and Databricks Investment participating — signaling infrastructure players hedging on the diffusion route.",
+      "url": "https://www.businesswire.com/news/home/20251106570339/en/Inception-Raises-$50M-to-Power-Diffusion-LLMs-Increasing-LLM-Speed-and-Efficiency-by-up-to-10X-and-Unlocking-Real-Time-Accessible-AI-Applications",
+      "title": "Inception Raises $50M to Power Diffusion LLMs (Business Wire release)",
+      "tier": "S",
+      "date": "2025-11-06",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "Mercury 2 (launched 2026-02-24) is billed as the first diffusion-based REASONING model and 'fastest reasoning LLM': >1,000 output tok/s (1,009 tok/s on NVIDIA Blackwell per coverage), end-to-end latency 1.7s vs 14.4s for Gemini 3 Flash and 23.4s for Claude Haiku 4.5 with reasoning enabled; priced $0.25/$0.75 per M input/output tokens via OpenAI-compatible API; Artificial Analysis publicly confirmed the >1,000 tok/s figure. Vendor-framed comparisons — treat quality parity claims cautiously.",
+      "url": "https://www.businesswire.com/news/home/20260224034496/en/Inception-Launches-Mercury-2-the-Fastest-Reasoning-LLM-5x-Faster-Than-Leading-Speed-Optimized-LLMs-with-Dramatically-Lower-Inference-Cost",
+      "title": "Inception Launches Mercury 2, the Fastest Reasoning LLM (Business Wire release)",
+      "tier": "S",
+      "date": "2026-02-24",
+      "confidence": "medium",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "Gemini Diffusion (Google DeepMind, unveiled at I/O 2025-05-20) claims 1,479 tok/s sampling (0.84s overhead) but was benchmarked only against Gemini 2.0 Flash-Lite — a small speed-tier model, not frontier: HumanEval 89.6 vs 90.2, LiveCodeBench 30.9 vs 28.5, AIME 2025 23.3 vs 20.0. It remained an experimental waitlist demo and never shipped as a production API through mid-2026 — Google's own positioning is 'used to help develop and refine future models.'",
+      "url": "https://deepmind.google/models/gemini-diffusion/",
+      "title": "Gemini Diffusion — Google DeepMind",
+      "tier": "S",
+      "date": "2025-05-20 (page current as of 2026-07)",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "Independent expert verification of the speed story: Simon Willison measured Gemini Diffusion firsthand at 857 tok/s (May 2025), comparing the feel to Cerebras running Llama3.1-70B at ~2,000 tok/s; in June 2026 he ran DiffusionGemma via NVIDIA's NIM API at 500+ tok/s (2,409 tokens in 4.4s) and noted Google made 'no further announcements' about Gemini Diffusion in the 13 months between the demo and the open-weight release.",
+      "url": "https://simonwillison.net/2025/May/21/gemini-diffusion/",
+      "title": "Gemini Diffusion — Simon Willison's Weblog (plus follow-up simonwillison.net/2026/Jun/10/diffusiongemma/)",
+      "tier": "A",
+      "date": "2025-05-21 and 2026-06-10",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "DiffusionGemma (released 2026-06-10) is Google's first open-weight text diffusion model: 26B Mixture-of-Experts with ~3.8B active params (HF id google/diffusiongemma-26B-A4B-it), Apache 2.0, weights on Hugging Face/Kaggle/Vertex AI; built on Gemma 4 + Gemini Diffusion research; generates 256 tokens per forward pass, >1,000 tok/s on a single H100, 'up to 4x faster' than comparable AR models. Google explicitly states it scores BELOW standard Gemma 4 on MMLU and coding and recommends Gemma 4 for quality-first production — an unusually candid quality-for-speed tradeoff admission.",
+      "url": "https://deepmind.google/models/gemma/diffusiongemma/",
+      "title": "DiffusionGemma — Google DeepMind",
+      "tier": "S",
+      "date": "2026-06-10",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "ByteDance's Seed team entered with Seed Diffusion Preview (2025-07-31; paper arXiv:2508.02193): an experimental code-focused dLLM hitting 2,146 tok/s inference — 5.4x faster than same-size AR models — while matching top AR models on code benchmarks and beating them on code editing. Techniques: two-stage diffusion training (mask + edit), constrained-order learning, and on-policy learning for parallel decoding. Stated goal: systematically validate discrete diffusion as the foundation framework for next-generation LMs. Parameter count undisclosed.",
+      "url": "https://seed.bytedance.com/en/blog/seed-research-seed-diffusion-preview-released-a-diffusion-language-model-delivering-breakthrough-2-146-tokens-s-inference-speed",
+      "title": "Seed Research | Seed Diffusion Preview Released (ByteDance Seed blog; arXiv:2508.02193)",
+      "tier": "S",
+      "date": "2025-07-31",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "Ant Group (inclusionAI) is the scale leader in open dLLMs: LLaDA-MoE (arXiv:2509.24389, Sep 2025) trained a 7B-total/1.4B-active MoE dLLM from scratch on ~20T tokens, surpassing LLaDA/LLaDA 1.5/Dream; LLaDA2.0 (arXiv:2512.15745, Dec 2025) shipped LLaDA2.0-mini (16B) and LLaDA2.0-flash (100B MoE) — the first 100B-parameter diffusion LM — built by 'smoothly' converting an existing AR model to diffusion rather than training from scratch, with the flash-CAP variant reaching 535 tok/s via parallel decoding.",
+      "url": "https://github.com/inclusionAI/LLaDA2.X",
+      "title": "GitHub - inclusionAI/LLaDA2.X: LLaDA2.0 diffusion language model series (Ant Group)",
+      "tier": "S",
+      "date": "2025-09 to 2025-12",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "Radical Numerics released RND1-Base (2025-10-09): a 30B sparse-MoE dLLM with 3B active params, converted from AR Qwen3-30B-A3B via 'simple, scalable AR-to-diffusion (A2D) conversion' with 500B tokens of continual pretraining — the largest open-weight base dLLM at release (weights, training details, and code all open). Scores: MMLU 57.2, GSM8K 72.1, MBPP 51.3. Together with Dream, RND1 and LLaDA2.0 establish AR-to-diffusion conversion (not from-scratch training) as the dominant cost-saving recipe of late 2025.",
+      "url": "https://www.radicalnumerics.ai/blog/rnd1",
+      "title": "RND1: Simple, Scalable AR-to-Diffusion Conversion — Radical Numerics",
+      "tier": "S",
+      "date": "2025-10-09",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "NVIDIA entered the model race with Nemotron-branded diffusion: 'Nemotron-Labs-Diffusion' (arXiv:2607.05722, submitted 2026-07-07; 26 authors incl. Song Han and Jan Kautz) is a tri-mode family (3B/8B/14B; base/instruct/VL) unifying autoregressive, diffusion, and self-speculation decoding in one architecture. The 8B decodes 6x more tokens per forward pass than Qwen3-8B at comparable accuracy and gets 4x throughput on a GB200 with SGLang; diffusion drafting + AR verification beats multi-token-prediction speculative decoding. Signals hybrid AR/diffusion convergence rather than pure-diffusion replacement.",
+      "url": "https://arxiv.org/abs/2607.05722",
+      "title": "Nemotron-Labs-Diffusion: A Tri-Mode Language Model Unifying Autoregressive, Diffusion, and Self-Speculation Decoding (arXiv:2607.05722)",
+      "tier": "S",
+      "date": "2026-07-07",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "The academic lineage that makes laptop-scale builds feasible runs through SEDD (Lou, Meng, Ermon — ICML 2024 Best Paper, arXiv:2310.16834): score-entropy loss for discrete diffusion, 25-75% perplexity reduction vs earlier language diffusion, competitive with/beating GPT-2, and a quality-compute knob (similar quality with 32x fewer network evaluations). Open modular code plus small/medium pretrained checkpoints on Hugging Face make it a canonical GPT-2-scale reference implementation — the realistic size class for consumer-hardware training.",
+      "url": "https://github.com/louaaron/Score-Entropy-Discrete-Diffusion",
+      "title": "GitHub - louaaron/Score-Entropy-Discrete-Diffusion [ICML 2024 Best Paper]",
+      "tier": "S",
+      "date": "2023-10 (paper) / 2024-07 (ICML award)",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "Block Diffusion (BD3-LM, Cornell Kuleshov group — ICLR 2025 Oral, arXiv:2503.09573) is the key 'versus'-resolving paradigm: it decomposes sequences into blocks, runs discrete diffusion within each block, and autoregression across blocks — restoring KV caching and variable-length generation that full-sequence dLLMs lack, with block size tuning the AR-vs-diffusion tradeoff. Trained GPT-2-scale checkpoints (OpenWebText, block sizes 4/8/16) are on Hugging Face. This lineage (via SDAR) underlies the strongest later diffusion reasoning models.",
+      "url": "https://github.com/kuleshov-group/bd3lms",
+      "title": "GitHub - kuleshov-group/bd3lms: Block Diffusion: Interpolating Between Autoregressive and Diffusion Language Models (ICLR 2025 Oral)",
+      "tier": "S",
+      "date": "2025-03 (arXiv) / 2025-04 (ICLR)",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "For math specifically, the state of the art among open dLLMs is the TraceRL/TraDo line (Gen-Verse, arXiv:2509.06949, ICLR 2026): trajectory-aware RL applied to block diffusion models yields TraDo-4B/8B; TraDo-8B-Instruct posts +6.1% relative over Qwen2.5-7B-Instruct and +51.3% relative over Llama3.1-8B-Instruct on math reasoning benchmarks (MATH500/AIME-class), and TraDo-8B-Thinking is the first 8B long-CoT diffusion model. The dLLM-RL GitHub framework ships SFT + RL recipes, KV-cache acceleration, and inference engines — the most directly reusable open stack for a math-specialized dLLM.",
+      "url": "https://github.com/Gen-Verse/dLLM-RL",
+      "title": "GitHub - Gen-Verse/dLLM-RL: Official code for TraceRL, powering the SOTA TraDo series (ICLR 2026)",
+      "tier": "S",
+      "date": "2025-09-08 (paper) / ICLR 2026",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "An inference-engine race is a proxy war among players: Ant Group open-sourced dInfer (Oct 2025), claiming ~1,011 tok/s average on HumanEval with LLaDA-MoE vs 91 tok/s for NVIDIA's Fast-dLLM and 294 tok/s for Qwen2.5-3B on vLLM — presented as the first open evidence of dLLM serving surpassing an AR baseline. The framework targets the three structural dLLM serving problems: high per-step compute, KV-cache invalidation under bidirectional attention, and quality loss from parallel decoding.",
+      "url": "https://www.scmp.com/tech/big-tech/article/3329138/ant-group-explores-ai-inference-framework-10-times-faster-nvidias-solution",
+      "title": "Ant Group explores AI inference framework that is 10 times faster than Nvidia's solution (SCMP)",
+      "tier": "C",
+      "date": "2025-10",
+      "confidence": "medium",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "The cleanest head-to-head science on 'diffusion vs AR' is CMU+Lambda's NeurIPS 2025 paper (arXiv:2507.15857): with fixed data reused over many epochs, masked diffusion models overtake AR models in validation loss and downstream performance (attributed to implicit data augmentation over token orderings/prediction tasks), but AR models win at low compute near the single-epoch Chinchilla-optimal point. Direct implication: at hobbyist compute budgets with unlimited fresh data AR is favored; diffusion's edge appears when you must repeat a limited dataset many times.",
+      "url": "https://arxiv.org/abs/2507.15857",
+      "title": "Diffusion Beats Autoregressive in Data-Constrained Settings (arXiv:2507.15857, NeurIPS 2025)",
+      "tier": "S",
+      "date": "2025-07-21",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "Practitioner pushback on the commercial hype (HN thread on Mercury's launch): Mercury benchmarked against dated opponents (GPT-4o-mini rather than 4.1/o3-class), which one commenter called 'an attempt to manipulate the optics'; doubts that diffusion supports chain-of-thought; a firsthand report that Mercury hallucinated and failed bug-finding that ChatGPT/Claude solved instantly; and one unverified allegation the demo was 'running Qwen on a traditional LLM pipeline... not even close to the 1,000 TPS figure.' Counterweight: commenters conceded 1,000+ tok/s on standard H100s (not Groq/Cerebras ASICs) is genuine progress and could weaken NVIDIA's serving lock-in.",
+      "url": "https://news.ycombinator.com/item?id=43851099",
+      "title": "Mercury: Commercial-scale diffusion language model | Hacker News",
+      "tier": "B",
+      "date": "2025 (launch-period thread)",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "Two survey papers map the whole field and its open problems: 'A Survey on Diffusion Language Models' (arXiv:2508.10875, v3 updated 2026-06-04, with companion VILA-Lab/Awesome-DLMs repo) and 'Discrete Diffusion in Large Language and Multimodal Models: A Survey' (arXiv:2506.13759, Jun 2025). Consensus framing: discrete (masked) diffusion has won over continuous-embedding approaches; industrial dLLMs report up to ~10x inference acceleration at AR-comparable quality; named open challenges are efficiency, long-sequence handling, and infrastructure/serving support — exactly the pain points a local build will hit.",
+      "url": "https://arxiv.org/abs/2508.10875",
+      "title": "A Survey on Diffusion Language Models (arXiv:2508.10875) + arXiv:2506.13759",
+      "tier": "S",
+      "date": "2025-08 (v3 2026-06-04)",
+      "confidence": "high",
+      "evidenceType": "direct"
+    }
+  ],
+  "contradictions": [
+    "Cross-paper benchmark numbers for the SAME model disagree wildly by eval protocol: LLaDA's own paper reports LLaDA-8B-Instruct GSM8K 69.4, while Dream's paper reports it at 78.6 under Dream's protocol (~9-point spread from shots/steps/decoding config). Two extractions of the Dream paper even flipped the Dream-vs-LLaDA instruct ordering (81.0 vs 78.6). Any head-to-head table for the meta-plan must pin the eval protocol; exact instruct-level orderings between LLaDA and Dream are protocol-sensitive.",
+    "Speed narrative vs local reality: all headline throughput numbers (Mercury 1,109 tok/s, Gemini Diffusion 1,479 tok/s, Seed 2,146 tok/s, DiffusionGemma >1,000 tok/s) are datacenter GPUs (H100/H20/Blackwell/GB200) with custom engines. The LLaDA repo itself concedes vanilla dLLM sampling is SLOWER than AR (no KV cache, steps ≈ response length). On a consumer laptop, a naive dLLM decodes slower than a same-size AR model unless block-diffusion/KV-cache-approximation tricks are used.",
+    "An HN commenter alleged Mercury's demo actually served Qwen on an AR pipeline and was 'not even close to 1,000 TPS' — unverified, and contradicted by Artificial Analysis independently confirming Mercury throughput on both Mercury 1 and Mercury 2.",
+    "'Diffusion beats autoregressive' (CMU/Lambda NeurIPS 2025) holds only in multi-epoch data-constrained regimes; AR wins near single-epoch Chinchilla-optimal compute. This contradicts blanket 'diffusion is simply better' framing in press coverage — and cuts against diffusion for low-compute laptop training unless data repetition is heavy.",
+    "Dream/LLaDA marketing touts math competitiveness with AR peers, but later work (e.g. DreamReasoner-8B, arXiv:2606.19257) states full-sequence dLLMs 'struggle to produce meaningful results on complex reasoning benchmarks' — the actual reasoning progress came from block diffusion + RL (SDAR/TraceRL/TraDo) and long-CoT curricula, not vanilla full-sequence dLLMs. Even where GSM8K looks close (Dream-Instruct 81.0 vs Qwen2.5 91.6), the MATH gap is enormous (39.2 vs 75.5).",
+    "Google's own behavior contradicts the hype cycle: Gemini Diffusion got a splashy I/O 2025 reveal (1,479 tok/s) then ~13 months of silence with no API; the eventual open release (DiffusionGemma, Jun 2026) is explicitly labeled experimental and admitted to score below Gemma 4 on MMLU/coding — while startups (Inception) simultaneously claim production-ready parity. Both cannot be fully right about diffusion's current quality frontier.",
+    "Ant's dInfer claims (10x faster than NVIDIA's Fast-dLLM, first dLLM-beats-AR serving) are vendor-benchmarked on Ant's own LLaDA-MoE and reported mainly via press; no independent replication found."
+  ],
+  "coverage": {
+    "attempted": [
+      "LLaDA large language diffusion model arXiv 2502.09992",
+      "Dream 7B diffusion language model HKU NLP",
+      "Mercury Inception Labs diffusion LLM technical report arXiv",
+      "Gemini Diffusion Google DeepMind experimental text diffusion model",
+      "diffusion language model survey arXiv 2025 discrete diffusion LLM review",
+      "Seed Diffusion ByteDance 2146 tokens per second",
+      "LLaDA-MoE LLaDA2.0 Ant Group",
+      "LLaDA 8B Dream 7B GSM8K benchmark comparison",
+      "RND1 Radical Numerics 30B",
+      "SEDD score entropy ICML 2024 best paper / MDLM",
+      "diffusion LLM criticism overhyped Hacker News Mercury",
+      "TraDo SDAR trust region policy optimization diffusion reasoning",
+      "Inception Labs funding $50M Stefano Ermon",
+      "Simon Willison Gemini Diffusion impressions",
+      "DiffusionGemma release date open weights",
+      "Block diffusion BD3-LM Cornell ICLR 2025",
+      "Gemini Diffusion API release status 2026",
+      "LLaDA 1.5 VRPO / LLaDA-V / MMaDA",
+      "'Mercury 2' Inception launch 2026",
+      "dInfer Ant Group vs Fast-dLLM NVIDIA",
+      "Diffusion beats autoregressive data-constrained CMU",
+      "Nemotron diffusion tri-mode NVIDIA (arXiv 2607.05722)",
+      "Fetches: arXiv abs/html for 2502.09992, 2508.15487, 2506.17298, 2607.05722; ML-GSAI/LLaDA repo; HKU Dream blog; DeepMind Gemini Diffusion + DiffusionGemma pages; Simon Willison posts; HN threads 43851099 + 44489690; thenewstack Mercury 2 article; survey 2508.10875"
+    ],
+    "useful": [
+      "All seven assigned query areas produced primary sources",
+      "arXiv/GitHub fetches for LLaDA (compute numbers, training crash, sampling caveats)",
+      "Dream paper fetch (exact GSM8K/MATH/planning tables, AR-init recipe)",
+      "DeepMind official pages (Gemini Diffusion benchmarks vs Flash-Lite; DiffusionGemma specs and quality admission)",
+      "HN thread 43851099 (practitioner criticism)",
+      "Simon Willison posts (independent speed measurements, timeline of Google silence)",
+      "Business Wire releases (Inception funding, Mercury 2 launch)",
+      "Search-surfaced newer players: RND1, LLaDA2.0 100B, Seed Diffusion, Nemotron-Labs-Diffusion, dInfer"
+    ],
+    "failed": [
+      "Exa MCP search tools not available in this environment — fell back to WebSearch + WebFetch",
+      "WebFetch of HN thread 44489690 (Mercury tech-report thread) — HTTP 429 rate limit; substituted thread 43851099",
+      "WebFetch of thenewstack.io Mercury 2 article — page body not retrievable (nav/boilerplate only); substituted Business Wire + The Decoder coverage",
+      "Query 'commercial diffusion LLM overhyped criticism' returned mostly promotional/vendor content; criticism had to be extracted from HN directly",
+      "Could not confirm Dream 7B GPU count/hours (paper omits them) or Seed Diffusion parameter count (undisclosed)"
+    ]
+  },
+  "gaps": [
+    "Dream 7B training compute (GPU type/count/days) is not disclosed in the paper — only the 580B-token figure; cost of the AR-init recipe cannot be precisely budgeted from primary sources.",
+    "Mercury and Gemini Diffusion disclose no architecture, parameter counts, or training data — the two most prominent commercial dLLMs are unreproducible black boxes; only throughput and benchmark tables are public.",
+    "No published consumer-laptop tokens/sec measurements for LLaDA/Dream/DiffusionGemma were found (only datacenter numbers plus the LLaDA repo's qualitative 'slower than AR' admission); the local-inference expectation for this project rests on inference, not measured data.",
+    "The claim that DiffusionGemma fits in ~18GB VRAM when NVFP4-quantized comes from C-tier secondary coverage (digitalapplied.com), not Google's page — needs verification before being load-bearing for laptop feasibility.",
+    "No rigorous third-party quality audit of Mercury 2's 'first diffusion reasoning model' claim found beyond Artificial Analysis throughput confirmation.",
+    "LLaDA2.0-flash (100B) evaluation numbers are self-reported by Ant Group; no independent evals located.",
+    "I recalled community critique of the CMU data-constrained scaling fits existing but could not locate/verify it in this pass — omitted rather than asserted.",
+    "MMaDA (multimodal diffusion) and Mercury general-chat (non-coder) models were surfaced only as names; details not verified in this pass."
+  ],
+  "practitionerReality": "Practitioners consistently confirm the SPEED story on hosted/datacenter hardware and consistently puncture the QUALITY story. Simon Willison measured Gemini Diffusion at 857 tok/s firsthand and DiffusionGemma at 500+ tok/s via NVIDIA NIM, likening the feel to Cerebras-class serving. HN users found Mercury impressive for greenfield code generation speed but reported hallucination and failed bug-finding where ChatGPT/Claude succeeded, and flagged that its benchmark opponents (GPT-4o-mini era) were stale at launch. For the local-laptop builder the reality inverts the marketing: open dLLM weights exist at friendly licenses (LLaDA MIT, iLLaDA/DiffusionGemma Apache 2.0, Dream on HF) and MoE variants keep active params small (LLaDA-MoE ~1-1.4B active, RND1 3B active, DiffusionGemma ~3.8B active), but there is no llama.cpp-class mature local tooling — the fast engines (dInfer, Fast-dLLM) target datacenter GPUs, and the LLaDA repo itself admits vanilla sampling is slower than AR because bidirectional attention breaks KV caching and quality wants steps ≈ response length. The realistic laptop-trainable reference points are GPT-2-scale SEDD/MDLM/BD3-LM checkpoints and repos, and the realistic architecture choice for speed on weak hardware is block diffusion (BD3-LM/SDAR lineage), which is also where the best open math-reasoning results (TraDo via TraceRL) live. Field convergence by mid-2026: AR-to-diffusion conversion beats from-scratch training on cost (Dream, RND1, LLaDA2.0), and hybrids (NVIDIA tri-mode, block diffusion) are eclipsing pure full-sequence diffusion.",
+  "bestSources": [
+    {
+      "title": "Large Language Diffusion Models (arXiv:2502.09992) + ML-GSAI/LLaDA GitHub",
+      "url": "https://arxiv.org/abs/2502.09992",
+      "why": "The canonical open from-scratch dLLM recipe with real numbers a builder can scale down from (2.3T tokens, 0.13M H800 GPU-hours, t~U[0,1] masked CE objective, 1/t weighting), plus the repo's honest engineering notes (training crash + fix, sampling slower than AR). Every subsequent open model defines itself against LLaDA."
+    },
+    {
+      "title": "Dream 7B: Diffusion Large Language Models (arXiv:2508.15487 / HKU NLP blog)",
+      "url": "https://arxiv.org/abs/2508.15487",
+      "why": "Best documented head-to-head tables (Dream vs LLaDA vs Qwen2.5 vs LLaMA3 on GSM8K/MATH/planning) and proof that AR-weight initialization cuts training data ~4x — the single most important cost-reduction trick for a low-budget diffusion build."
+    },
+    {
+      "title": "Gen-Verse/dLLM-RL (TraceRL / TraDo series, arXiv:2509.06949, ICLR 2026)",
+      "url": "https://github.com/Gen-Verse/dLLM-RL",
+      "why": "The open SOTA stack for exactly this project's target domain: math reasoning with diffusion LMs — SFT + RL recipes, KV-cache-accelerated inference, and the TraDo models that beat same-size AR instruct models on MATH500."
+    },
+    {
+      "title": "A Survey on Diffusion Language Models (arXiv:2508.10875, v3 Jun 2026) + Awesome-DLMs repo",
+      "url": "https://arxiv.org/abs/2508.10875",
+      "why": "The maintained map of the whole player landscape and open problems (efficiency, long sequences, infrastructure), updated within two months of today — the fastest way to keep the meta-plan's model inventory current."
+    },
+    {
+      "title": "Mercury: Commercial-scale diffusion language model | Hacker News",
+      "url": "https://news.ycombinator.com/item?id=43851099",
+      "why": "Densest practitioner counterweight to vendor claims: stale-benchmark criticism, CoT skepticism, firsthand failure reports, and the strongest praise that survives scrutiny (1,000+ tok/s on commodity H100s is real) — calibrates the honest feasibility envelope."
+    }
+  ]
+}

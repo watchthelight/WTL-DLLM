@@ -1,0 +1,242 @@
+{
+  "aspect": "Math datasets & data strategy for a laptop-scale diffusion LLM specialized in arithmetic/algebra/GSM8K-style problems (Evidence lens)",
+  "findings": [
+    {
+      "claim": "GSM8K is the canonical grade-school math benchmark: 8.5K human-written word problems (7,473 train / 1,319 test on HF), 2-8 solution steps, natural-language solutions with calculator annotations delimited by << >> and the final numeric answer after a '####' token — the parsing convention virtually every eval harness expects. Distributed as JSONL with 'question'/'answer' fields; an alternative 'Socratic' config adds auto-generated subquestions before each step.",
+      "url": "https://github.com/openai/grade-school-math",
+      "title": "GitHub - openai/grade-school-math",
+      "tier": "S",
+      "date": "2021-10 (repo; verified 2026-07)",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "GSM8K is MIT-licensed and ubiquitous: the HF dataset page (openai/gsm8k) shows MIT license, 'main' and 'socratic' configs, and ~956,975 downloads in the last month — meaning heavy contamination pressure on any model that saw web data, but zero-friction availability for a from-scratch model.",
+      "url": "https://huggingface.co/datasets/openai/gsm8k",
+      "title": "openai/gsm8k · Datasets at Hugging Face",
+      "tier": "S",
+      "date": "2021 dataset; page accessed 2026-07",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "DeepMind's mathematics_dataset (v1.0, Apache-2.0) is a local Python generator producing school-level Q/A pairs across modules including arithmetic (pairwise ops, mixed expressions), algebra (linear equations, polynomial roots, sequences), and numbers (place value, rounding, primality). It ships 2 million pairs per module, questions capped at 160 chars and answers at 30 chars, with explicit train-easy/train-medium/train-hard splits 'which allows training models via a curriculum'. Generation runs locally via 'python -m mathematics_dataset.generate --filter=linear_1d'; pre-generated data is on a Google Cloud Storage bucket. This is the strongest fit for unlimited, contamination-free, curriculum-ready arithmetic/algebra data on a laptop.",
+      "url": "https://github.com/google-deepmind/mathematics_dataset",
+      "title": "GitHub - google-deepmind/mathematics_dataset",
+      "tier": "S",
+      "date": "2019 (v1.0); repo verified 2026-07 — historical relevance explicit (still the standard generator)",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "OpenWebMath is the open math pretraining corpus: 14.7B tokens / 6.3M documents (27.4 GB) extracted from Common Crawl with LaTeX-preserving extraction, quality filtering and dedup; ODC-By 1.0 license; top domains include stackexchange.com (9.55% of chars), nature.com, physicsforums.com. 1.4B-parameter models trained on it 'surpass the performance of models trained on over 20x the amount of general language data'.",
+      "url": "https://arxiv.org/abs/2310.06786",
+      "title": "OpenWebMath: An Open Dataset of High-Quality Mathematical Web Text (arXiv 2310.06786; HF: open-web-math/open-web-math)",
+      "tier": "S",
+      "date": "2023-10-10 (ICLR 2024)",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "Full OpenWebMath-style pretraining (14.7B tokens at 1.4B params) is far beyond consumer-laptop compute; for this project it is a subsetting/mixing resource at best, while generator-based and small SFT corpora are the laptop-feasible path. (Inference from OpenWebMath's experimental scale vs. the project's hardware envelope.)",
+      "url": "https://huggingface.co/datasets/open-web-math/open-web-math",
+      "title": "open-web-math/open-web-math · Datasets at Hugging Face",
+      "tier": "S",
+      "date": "2023-10; page accessed 2026-07",
+      "confidence": "high",
+      "evidenceType": "inference"
+    },
+    {
+      "claim": "TinyGSM (CMU/Microsoft) is 12.3M GPT-3.5-generated GSM8K-style problems paired with Python solutions (~1.8B tokens). Finetuning a 1.3B generator plus a 1.3B verifier reaches 81.5% on GSM8K, beating the GPT-3.5 teacher (77.4%); before this, 'the smallest model size so far required to break the 80% barrier on the GSM8K benchmark remains to be 34B'. Key claimed lesson: 'high-quality datasets may be the key for small language models to acquire mathematical reasoning.'",
+      "url": "https://arxiv.org/abs/2312.09241",
+      "title": "TinyGSM: achieving >80% on GSM8k with small language models (arXiv 2312.09241)",
+      "tier": "S",
+      "date": "2023-12-14",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "TinyGSM is actually downloadable: HF dataset TinyGSM/TinyGSM has 11,846,109 rows, 3.75 GB parquet, MIT license, two fields ('question' string, 'code' string with Python solutions), ~1,280 downloads/month. Note the row count (11.85M) is slightly below the paper's 12.3M headline.",
+      "url": "https://huggingface.co/datasets/TinyGSM/TinyGSM",
+      "title": "TinyGSM/TinyGSM · Datasets at Hugging Face",
+      "tier": "S",
+      "date": "2023-12 dataset; page accessed 2026-07",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "MetaMathQA is a 395K-sample, MIT-licensed augmentation of GSM8K+MATH training sets using four bootstrap methods (Answer Augmentation, Rephrasing, Self-Verification, FOBAR backward questions), with the HF card explicitly stating 'None of the augmented data is from the testing set.' Finetuning LLaMA-2-7B on it yields 66.4-66.5% GSM8K (+11.5 pts over same-size SOTA at the time); 13B reaches 72.3%, 70B 82.3%. Secondary sources report the split as ~240K GSM8K-derived / ~155K MATH-derived (not confirmed on primary pages).",
+      "url": "https://arxiv.org/abs/2309.12284",
+      "title": "MetaMath: Bootstrap Your Own Mathematical Questions for Large Language Models (arXiv 2309.12284; HF: meta-math/MetaMathQA)",
+      "tier": "S",
+      "date": "2023-09-21 (ICLR 2024 spotlight)",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "Teaching Arithmetic to Small Transformers (10.6M-param char-level nanoGPT: 6 layers, 6 heads, 384-dim) gives the exact laptop-scale data-format evidence: on 3-digit addition, plain 'a+b=c' format plateaus ~85% even with 10,000 samples; reversing the output digits (least-significant first) reaches ~100% with ~2,500 samples via a sharp phase transition (1,000-4,000 samples); simplified scratchpad (digit sums + carries) needs ~2,000; detailed scratchpad needs only ~1,000. They also used balanced digit sampling (all 100 1-digit, 900 2-digit, 9,000 3-digit) rather than uniform random operands. CoT-style intermediate steps 'significantly improves accuracy, sample complexity, and convergence speed'.",
+      "url": "https://arxiv.org/html/2307.03381",
+      "title": "Teaching Arithmetic to Small Transformers (arXiv 2307.03381)",
+      "tier": "S",
+      "date": "2023-07-07",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "Tokenization direction materially affects arithmetic: Singh & Strouse (DeepMind) show right-to-left number tokenization (enforced by comma-separating digits at inference) 'leads to largely improved performance' over standard left-to-right chunking in GPT-3.5/4; L2R errors follow stereotyped, systematic patterns; and 'the gap between tokenization directions decreases when models are scaled' — i.e., tokenization choice matters most at exactly the small scale this project targets. LLaMA/PaLM-style single-digit tokenization is the contrasting design.",
+      "url": "https://arxiv.org/abs/2402.14903",
+      "title": "Tokenization counts: the impact of tokenization on arithmetic in frontier LLMs (arXiv 2402.14903)",
+      "tier": "S",
+      "date": "2024-02-22",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "Probing evidence supports digit-level number handling: LLMs internally 'encode numbers using digit representations in base 10' — reconstructing a number's value directly from activations generally fails while digit-by-digit base-10 reconstruction succeeds with high accuracy — supporting a digit/character-level tokenizer for a small from-scratch math model.",
+      "url": "https://arxiv.org/html/2410.11781",
+      "title": "Language Models Encode Numbers Using Digit Representations in Base 10 (arXiv 2410.11781)",
+      "tier": "S",
+      "date": "2024-10",
+      "confidence": "medium",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "GSM8K-Aug is the de-facto training corpus for diffusion LMs on math: 384,623 training samples extending the GSM8K train set with simplified equation-only CoT (created by Deng et al.'s Implicit Chain of Thought work); DCoLT filtered it to 382,553 examples after dropping samples exceeding 64 tokens or with invalid format. The short (≤64-token) CoT sequences are exactly what fits fixed-length diffusion training on constrained hardware. Data is downloadable from the implicit_chain_of_thought repo (with 4x4 and 5x5 multiplication datasets, format '[input]||[chain-of-thought] #### [output]').",
+      "url": "https://arxiv.org/html/2505.10446",
+      "title": "Reinforcing the Diffusion Chain of Lateral Thought with Diffusion Language Models (DCoLT, arXiv 2505.10446); data at github.com/da03/implicit_chain_of_thought",
+      "tier": "S",
+      "date": "2025-05",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "Diffusion of Thoughts (NeurIPS 2024) established the diffusion-math training pipeline this project can copy: finetune pretrained diffusion LMs (Plaid 1B, downloadable from igul222/plaid releases; SEDD via Docker image) on 4x4/5x5 multiplication + GSM8K-Aug from the Implicit-CoT repo; Plaid 1B finetuning ran 120,000 steps at batch size 128. Per DCoLT's comparison table, SEDD + DoT reaches 53.5% on GSM8K-Aug, and search-surfaced reporting says DoT on SEDD-medium beats similar-sized GPT2-medium with CoT by ~10% on GSM8K.",
+      "url": "https://github.com/HKUNLP/diffusion-of-thoughts",
+      "title": "GitHub - HKUNLP/diffusion-of-thoughts (paper: arXiv 2402.07754, NeurIPS 2024)",
+      "tier": "S",
+      "date": "2024-02 (paper) / repo verified 2026-07",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "iGSM (Meta FAIR/CMU, ICLR 2025) is direct proof that fully synthetic GSM-style data suffices for from-scratch small models: a GPT-2-like model pretrained only on the iGSM synthetic grade-school-math generator achieves 99% accuracy in-distribution and generalizes out-of-distribution to longer reasoning lengths than seen in training; model depth correlates with reasoning performance. The generator code is open at facebookresearch/iGSM, so unlimited fresh, contamination-free word problems can be generated locally.",
+      "url": "https://arxiv.org/pdf/2407.20311",
+      "title": "Physics of Language Models: Part 2.1, Grade-School Math and the Hidden Reasoning Process (arXiv 2407.20311; code: github.com/facebookresearch/iGSM)",
+      "tier": "S",
+      "date": "2024-07 (ICLR 2025)",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "GSM8K scores are partially inflated by contamination/overfitting: on the freshly commissioned GSM1k (matched to GSM8K style, human solve rates, and step counts), models drop up to 8% vs their GSM8K scores, 'several families of models show[ing] evidence of systematic overfitting across almost all model sizes', with Spearman's r^2 = 0.36 between a model's probability of generating GSM8K examples and its GSM8K-GSM1k gap; frontier models show minimal overfitting. Data-strategy implication: never let augmented/rephrased test-adjacent data into training, and expect real capability to be below GSM8K-measured capability.",
+      "url": "https://arxiv.org/abs/2405.00332",
+      "title": "A Careful Examination of Large Language Model Performance on Grade School Arithmetic (GSM1k, arXiv 2405.00332, NeurIPS 2024 D&B)",
+      "tier": "S",
+      "date": "2024-05-01 (final 2024-11-22)",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "GSM-Symbolic (Apple) generates GSM8K variants from symbolic templates and found every tested LLM (including GPT-4 and Llama 3) drops significantly when names/numbers are varied or irrelevant clauses are added, showing high variance across instantiations of the same question — evidence for building a templated, perturbation-based eval set for a math model rather than trusting a single static test set.",
+      "url": "https://machinelearning.apple.com/research/gsm-symbolic",
+      "title": "GSM-Symbolic: Understanding the Limitations of Mathematical Reasoning in Large Language Models (Apple ML Research)",
+      "tier": "S",
+      "date": "2024-10",
+      "confidence": "medium",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "Orca-Math-200K (Microsoft) is a drop-in alternative SFT set: 200,035 rows, MIT license, plain 'question'/'answer' string fields with natural-language solutions generated by Azure GPT4-Turbo via a multi-agent setup; card notes 'This dataset is not intended for use in educational systems or organizations.' Paired paper (arXiv 2402.14830) used it to specialize a 7B SLM for grade-school math.",
+      "url": "https://huggingface.co/datasets/microsoft/orca-math-word-problems-200k",
+      "title": "microsoft/orca-math-word-problems-200k · Datasets at Hugging Face",
+      "tier": "S",
+      "date": "2024-02; page accessed 2026-07",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "OpenMathInstruct-2 (NVIDIA) provides the best published data-strategy ablations for math SFT: 14M question-solution pairs (~600K unique questions) generated with Llama-3.1 models, released 'under a commercially permissive license'. Findings: excessively verbose solutions are detrimental to SFT performance; data from a strong teacher outperforms equally-sized data from a weak student; 'SFT is robust to low-quality solutions, allowing for imprecise data filtering'; and 'question diversity is crucial for achieving data scaling gains'. Finetuning Llama-3.1-8B on it gave +15.9 absolute on MATH (51.9%→67.8%).",
+      "url": "https://arxiv.org/abs/2410.01560",
+      "title": "OpenMathInstruct-2: Accelerating AI for Math with Massive Open-Source Instruction Data (arXiv 2410.01560)",
+      "tier": "S",
+      "date": "2024-10-02",
+      "confidence": "high",
+      "evidenceType": "direct"
+    }
+  ],
+  "coverage": {
+    "attempted": [
+      "GSM8K dataset openai github huggingface (assigned)",
+      "DeepMind mathematics dataset github arithmetic modules (assigned)",
+      "OpenWebMath arXiv dataset (assigned)",
+      "TinyGSM synthetic math dataset arXiv small model (assigned)",
+      "synthetic arithmetic curriculum generation language model training (assigned)",
+      "number tokenization digit-level accuracy arithmetic study (assigned)",
+      "MetaMathQA augmentation GSM8K finetuning (assigned)",
+      "diffusion language model math GSM8K DoT/LLaDA/SEDD dataset (follow-up)",
+      "Orca-Math 200K Microsoft (follow-up)",
+      "GSM-Symbolic / GSM1k contamination (follow-up)",
+      "iGSM Physics of Language Models synthetic GSM from scratch (follow-up)",
+      "TinyGSM huggingface release availability (follow-up)",
+      "12 targeted WebFetch crawls: openai/grade-school-math, google-deepmind/mathematics_dataset, arXiv 2312.09241, 2309.12284, 2310.06786, 2307.03381 (abs+html), 2402.14903, 2405.00332, 2410.01560, 2505.10446 html, HKUNLP/diffusion-of-thoughts, da03/implicit_chain_of_thought, HF pages for gsm8k/MetaMathQA/open-web-math/TinyGSM/orca-math, meta-math.github.io"
+    ],
+    "useful": [
+      "All 7 assigned queries produced primary sources",
+      "Diffusion-math follow-up surfaced GSM8K-Aug (the key bridge dataset) and DCoLT hardware/accuracy numbers",
+      "iGSM query gave the strongest from-scratch synthetic-data evidence",
+      "GSM1k/GSM-Symbolic queries gave the contamination counter-evidence",
+      "HF page fetches confirmed licenses (MIT for GSM8K/MetaMathQA/TinyGSM/Orca-Math; ODC-By 1.0 for OpenWebMath; Apache-2.0 for DeepMind generator)"
+    ],
+    "failed": [
+      "'synthetic arithmetic curriculum generation' query returned mostly tangential hits (USPTO patents, code-model curriculum paper, arXiv IDs with implausible future dates) — curriculum evidence came instead from DeepMind dataset splits and Teaching Arithmetic's balanced sampling",
+      "arxiv.org/html/2402.07754v3 (DoT HTML) returned 404, so DoT's own full results table (Plaid 1B per-task accuracies) was not extracted; GSM8K-Aug numbers taken from DCoLT's comparison instead",
+      "meta-math.github.io lacked the per-source composition counts (GSM vs MATH split only found in secondary summaries)",
+      "Exa MCP search was not available in this environment; used WebSearch + WebFetch"
+    ]
+  },
+  "contradictions": [
+    "Headline vs deployable: TinyGSM's 81.5% GSM8K requires TWO 1.3B models (generator + verifier selecting among multiple candidates); single-model laptop-scale accuracy is materially lower. Similarly DCoLT's LLaDA gains used 16 H800 GPUs (~63 GPU-days for the math phase) — data efficiency (15K questions) does not equal compute efficiency.",
+    "Benchmark trust: MetaMathQA/TinyGSM-style GSM8K-derived augmentation drives big GSM8K gains, but GSM1k (up to 8% drops, r^2=0.36 with GSM8K memorization) and GSM-Symbolic (drops under name/number perturbation) show part of such gains can be benchmark proximity rather than reasoning. MetaMathQA explicitly excludes test-set data, mitigating direct leakage but not distributional overfitting.",
+    "Tokenization: controlled studies favor single-digit/right-to-left tokenization for arithmetic, yet Llama-3-style multi-digit tokens still reach near-100% on simple addition at scale, and Singh & Strouse found the R2L-vs-L2R gap shrinks as models scale — the choice matters most at the small scale this project lives at, and matters less if the model were larger.",
+    "AR-specific tricks vs diffusion: the strongest sample-efficiency result (reversed-digit output, ~2,500 samples to 100% on 3-digit addition) is motivated by least-significant-digit-first NEXT-TOKEN prediction. A masked diffusion model decodes bidirectionally and any-order, so this benefit may not transfer — no study was found testing reversed/scratchpad formats under a diffusion objective (flagged as gap).",
+    "Data quality doctrine: TinyGSM/Orca-Math argue 'high-quality data is the key', while OpenMathInstruct-2's ablations found SFT is robust to low-quality solutions and imprecise filtering — reconciled by their finding that QUESTION diversity and solution brevity, not solution perfection, drive gains. For this project that favors generator-based diverse questions with short clean CoTs (exactly the GSM8K-Aug ≤64-token equation-only format).",
+    "Corpus scale: OpenWebMath proves 14.7B-token math-web pretraining beats 20x general data at 1.4B params — but that recipe is orders of magnitude beyond laptop budget, directly contradicting any plan to 'pretrain on OpenWebMath' locally; the evidenced laptop path is synthetic generators (DeepMind mathematics_dataset, iGSM) plus small SFT sets."
+  ],
+  "practitionerReality": "What builders actually do at this scale: (1) GSM8K is a trivial download (MIT, ~8.5K JSONL rows) and its '#### answer' + '<<calc>>' conventions are what lm-evaluation-harness and every paper parse — keep them. (2) The diffusion-LM math lineage (DoT, DCoLT) does not train on raw GSM8K; it trains on GSM8K-Aug — 384,623 GPT-4-augmented examples with equation-only CoT filtered to ≤64 tokens — downloadable from da03/implicit_chain_of_thought and proven to take a ~400M SEDD to ~53-57% on GSM8K-Aug. Short fixed-length sequences are a gift for diffusion training on small VRAM. (3) For pure arithmetic/algebra, nobody at laptop scale downloads corpora — they generate: DeepMind's mathematics_dataset (Apache-2.0, 2M pairs/module, built-in easy/medium/hard curriculum) and iGSM both run locally and eliminate contamination worries. (4) Teaching Arithmetic's numbers set realistic expectations: a 10.6M-param char-level model needs only ~1,000-2,500 well-formatted samples for perfect 3-digit addition, but plain formatting caps it at ~85% forever — data format is the leverage, not data volume. (5) Character/digit-level tokenization is the practitioner default for small math models (used by Teaching Arithmetic; supported by probing and tokenization-direction studies). (6) If GSM8K-style word problems are in scope, evidence says useful accuracy has only been demonstrated at 350M-1.3B params with 100Ks-millions of synthetic examples (TinyGSM, MetaMathQA, GSM8K-Aug) — on a laptop expect the arithmetic/algebra tiers to work well and word problems to be the stretch goal.",
+  "gaps": [
+    "No study found on whether autoregressive data-format tricks (reversed digits, scratchpad carries) help or hurt under a masked-diffusion objective — the single biggest untested assumption when porting the Teaching Arithmetic recipe to a DLLM.",
+    "MetaMathQA's exact composition split (~240K GSM8K-derived vs ~155K MATH-derived) appears only in secondary summaries (e.g. HackerNoon reprint); primary HF card lists the 7 augmentation type categories but not per-source counts.",
+    "DoT paper's own full results table (Plaid 1B per-task GSM8K accuracy, self-consistency numbers) could not be extracted (arXiv HTML 404); GSM8K-Aug diffusion numbers were sourced from DCoLT's comparison table instead.",
+    "GSM8K-Aug licensing is unstated (derived from MIT GSM8K via GPT-4 augmentation; da03 repo shows no license) — fine for local research use, unclear for redistribution.",
+    "No published token-count for the GSM8K corpus itself (needed for precise training-budget math); only row counts are documented.",
+    "No direct evidence that DeepMind's train-easy/medium/hard curriculum ORDERING improves small-model outcomes vs shuffled training — the splits exist for curriculum use, but a controlled curriculum-vs-shuffled ablation at <100M params was not found.",
+    "Orca-Math paper's iterative preference-learning details verified only at abstract level; whether its natural-language answer format (no Python) trains better than TinyGSM's code format for a non-code-executing diffusion model is untested."
+  ],
+  "bestSources": [
+    {
+      "title": "Teaching Arithmetic to Small Transformers (arXiv 2307.03381)",
+      "url": "https://arxiv.org/html/2307.03381",
+      "why": "The only source with exact sample-efficiency numbers at the project's actual scale (10.6M-param char-level nanoGPT): reverse format ~2,500 samples to 100% on 3-digit addition vs plain format plateauing at ~85%; dictates the data-formatting strategy and sets honest expectations."
+    },
+    {
+      "title": "GitHub - google-deepmind/mathematics_dataset",
+      "url": "https://github.com/google-deepmind/mathematics_dataset",
+      "why": "Apache-2.0 local generator with 2M pairs/module, arithmetic+algebra modules, and built-in easy/medium/hard curriculum splits — the unlimited, contamination-free, zero-download data workhorse for laptop training."
+    },
+    {
+      "title": "DCoLT (arXiv 2505.10446) + da03/implicit_chain_of_thought data repo",
+      "url": "https://arxiv.org/html/2505.10446",
+      "why": "Nails GSM8K-Aug as the proven diffusion-LM math corpus with exact numbers (384,623 samples, ≤64-token equation-only CoT, filtered 382,553) plus the download location and diffusion-model accuracy anchors (SEDD+DoT 53.5%, +DCoLT 57.0%)."
+    },
+    {
+      "title": "openai/grade-school-math (GitHub) + openai/gsm8k (HF)",
+      "url": "https://github.com/openai/grade-school-math",
+      "why": "Canonical benchmark and format spec (####, <<calc>>, Socratic variant, MIT, 7,473/1,319 split) that the eval harness and every comparison number depend on."
+    },
+    {
+      "title": "OpenMathInstruct-2 (arXiv 2410.01560)",
+      "url": "https://arxiv.org/abs/2410.01560",
+      "why": "Best controlled ablations on math SFT data strategy: solution brevity beats verbosity, strong-teacher data beats weak, SFT tolerates noisy solutions, and question diversity — not solution polish — drives scaling gains."
+    }
+  ]
+}

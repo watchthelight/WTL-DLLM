@@ -1,0 +1,350 @@
+{
+  "milestones": [
+    {
+      "date": "2021-02",
+      "event": "Argmax Flows & Multinomial Diffusion (Hoogeboom et al., NeurIPS 2021): first categorical-noise diffusion directly on discrete text, no continuous embedding — the direct predecessor of D3PM",
+      "url": "https://arxiv.org/abs/2102.05379"
+    },
+    {
+      "date": "2021-07-07",
+      "event": "D3PM (Austin et al., NeurIPS 2021) founds discrete diffusion: categorical transition matrices Q_t including the absorbing [MASK] state; explicitly frames BERT as a one-step diffusion model",
+      "url": "https://arxiv.org/abs/2107.03006"
+    },
+    {
+      "date": "2021-10",
+      "event": "ARDM (ICLR 2022) proves order-agnostic autoregressive models and absorbing discrete diffusion are special cases of one model class — the seed of the 'masked diffusion = any-order AR' equivalence",
+      "url": "https://arxiv.org/abs/2110.02037"
+    },
+    {
+      "date": "2022-02",
+      "event": "MaskGIT (CVPR 2022) originates confidence-based parallel unmasking with the cosine mask schedule — the direct ancestor of every modern dLLM decoder loop",
+      "url": "https://openaccess.thecvf.com/content/CVPR2022/papers/Chang_MaskGIT_Masked_Generative_Image_Transformer_CVPR_2022_paper.pdf"
+    },
+    {
+      "date": "2022-05",
+      "event": "Campbell et al. (NeurIPS 2022): first continuous-time (CTMC) formulation of discrete denoising diffusion with tau-leaping sampling — the mathematical backbone later reused by SEDD",
+      "url": "https://arxiv.org/abs/2205.14987"
+    },
+    {
+      "date": "2023-01-09",
+      "event": "Sander Dieleman (DeepMind) publishes the canonical diagnosis of why text diffusion lags image diffusion; verdict 'still too early to consider diffusion a serious alternative to autoregression at scale' — later overturned",
+      "url": "https://sander.ai/2023/01/09/diffusion-language.html"
+    },
+    {
+      "date": "2023-05",
+      "event": "TinyStories: sub-10M-parameter models generate fluent, grammatical English when domain-restricted — the feasibility lever behind any laptop-scale specialized model (incl. a math dLLM)",
+      "url": "https://arxiv.org/abs/2305.07759"
+    },
+    {
+      "date": "2023-05",
+      "event": "Plaid (NeurIPS 2023) measures a scale-invariant ~64x compute tax for continuous embedding-space diffusion LMs vs AR — the number that discredited the continuous route",
+      "url": "https://arxiv.org/abs/2305.18619"
+    },
+    {
+      "date": "2023-10-25",
+      "event": "SEDD posted: score-entropy discrete diffusion cuts perplexity 25-75% vs prior diffusion LMs; first diffusion LM competitive with GPT-2 at matched size",
+      "url": "https://arxiv.org/abs/2310.16834"
+    },
+    {
+      "date": "2023-12",
+      "event": "TinyGSM: a 125M model reaches 63.1% GSM8K (1.3B generator+verifier: 81.5%) via 12.3M synthetic problems — proof that synthetic math data substitutes for parameters at small scale; corpus is public",
+      "url": "https://arxiv.org/abs/2312.09241"
+    },
+    {
+      "date": "2024-02",
+      "event": "Diffusion-of-Thought (NeurIPS 2024): tiny from-scratch diffusion model hits 100% on 4x4/5x5 digit multiplication at ~27x GPT-2-CoT throughput, but Plaid-1B DoT gets only 32.6% GSM8K — math wins are task-shaped",
+      "url": "https://arxiv.org/abs/2402.07754"
+    },
+    {
+      "date": "2024-06-06",
+      "event": "RADD proves the absorbing-diffusion concrete score factorizes into (time-independent conditional of clean data) x (analytic scalar): time conditioning is unnecessary, denoiser outputs cacheable (ICLR 2025)",
+      "url": "https://arxiv.org/abs/2406.03736"
+    },
+    {
+      "date": "2024-06-06",
+      "event": "MD4 (DeepMind, NeurIPS 2024) independently reduces masked diffusion to a weighted cross-entropy integral; proves ELBO schedule-invariance; shows cosine schedule fixes sampling (ImageNet-64 FID 70 to 17)",
+      "url": "https://arxiv.org/abs/2406.04329"
+    },
+    {
+      "date": "2024-06-11",
+      "event": "MDLM (NeurIPS 2024): SUBS parameterization Rao-Blackwellizes the ELBO into time-weighted masked-LM cross-entropy — becomes the canonical training objective and reference codebase (kuleshov-group/mdlm)",
+      "url": "https://arxiv.org/abs/2406.07524"
+    },
+    {
+      "date": "2024-07",
+      "event": "SEDD wins ICML 2024 Best Paper — mainstream legitimation of discrete diffusion language modeling",
+      "url": "https://github.com/louaaron/Score-Entropy-Discrete-Diffusion"
+    },
+    {
+      "date": "2024-09-04",
+      "event": "'MDMs are Secretly Time-Agnostic Masked Models' (ICLR 2025): training and sampling provably time-free; exposes the float32 Gumbel sampling bug that silently lowered temperature and inflated prior diffusion-beats-GPT-2 generative-perplexity claims",
+      "url": "https://arxiv.org/abs/2409.02908"
+    },
+    {
+      "date": "2024-10",
+      "event": "Beyond Autoregression / MGDM (ICLR 2025): 6M-303M from-scratch diffusion models crush same-size AR on Countdown (91.5% vs 45.8%) and Sudoku (100% vs 20.7%) — mechanism-level (not scale) advantage on search/constraint math",
+      "url": "https://arxiv.org/abs/2410.14157"
+    },
+    {
+      "date": "2024-10-23",
+      "event": "DiffuGPT/DiffuLLaMA (ICLR 2025) establishes AR-to-diffusion adaptation: attention-mask annealing + shift operation converts GPT-2/LLaMA-2-7B into diffusion LMs with <200B tokens",
+      "url": "https://arxiv.org/abs/2410.17891"
+    },
+    {
+      "date": "2024-10-24",
+      "event": "SMDM (ICLR 2025): first MDM scaling law — ~16x compute gap vs AR at equal validation loss but identical scaling rate; 1.1B MDM competitive with Llama-2 7B on GSM8K; 92% vs 0% on reversal tasks",
+      "url": "https://arxiv.org/abs/2410.18514"
+    },
+    {
+      "date": "2024-12",
+      "event": "UDLM (ICLR 2025) formalizes the absorbing-vs-uniform noise fork: uniform noise enables continuous self-editing and stronger guidance, and the gap closes/reverses on small vocabularies — relevant to arithmetic-vocab math models",
+      "url": "https://arxiv.org/abs/2412.10193"
+    },
+    {
+      "date": "2025-02-14",
+      "event": "LLaDA 8B posted (ICML 2025): first from-scratch masked diffusion LLM competitive with LLaMA3 8B (2.3T tokens, 0.13M H800 GPU-hours); Base GSM8K 70.3 vs LLaMA3-8B Base 48.7; MIT-licensed weights; GUIDELINES.md becomes the canonical minimal training recipe",
+      "url": "https://arxiv.org/abs/2502.09992"
+    },
+    {
+      "date": "2025-02",
+      "event": "Inception Labs announces Mercury — first commercial-scale dLLM (tech report 2025-06-17: Mercury Coder Mini 1109 tok/s on H100, claimed up to 10x faster than speed-optimized frontier models; architecture undisclosed)",
+      "url": "https://arxiv.org/abs/2506.17298"
+    },
+    {
+      "date": "2025-02",
+      "event": "Feng et al. (ICML 2025) prove the metric-dependent efficiency theorem: near-optimal perplexity with length-independent steps, but sequence-level correctness (whole-answer math) needs steps scaling linearly with length — the core feasibility caveat for a math dLLM",
+      "url": "https://arxiv.org/abs/2502.09622"
+    },
+    {
+      "date": "2025-03-12",
+      "event": "Block Diffusion / BD3-LM (ICLR 2025 Oral): AR across blocks + diffusion within blocks restores KV caching and variable-length generation; identifies gradient variance as diffusion's likelihood handicap; paradigm behind later diffusion reasoning models",
+      "url": "https://arxiv.org/abs/2503.09573"
+    },
+    {
+      "date": "2025-03",
+      "event": "ReMDM adds a principled remasking backward process to pretrained MDMs — true inference-time compute scaling and the self-correction that base absorbing-state samplers lack",
+      "url": "https://arxiv.org/abs/2503.00307"
+    },
+    {
+      "date": "2025-03",
+      "event": "GIDD (ICML 2025) generalizes masked diffusion to hybrid mask+uniform noise, unlocking self-correction of already-generated tokens at compute-matched SOTA quality",
+      "url": "https://arxiv.org/abs/2503.04482"
+    },
+    {
+      "date": "2025-04-02",
+      "event": "Dream 7B released (HKU NLP + Huawei): strongest open dLLM of mid-2025, AR-initialized from Qwen2.5-7B with only 580B tokens (~1/4 LLaDA's data); Countdown 16.0 / Sudoku 81.0 vs Qwen2.5-7B's 6.2/21.0",
+      "url": "https://hkunlp.github.io/blog/2025/dream/"
+    },
+    {
+      "date": "2025-04",
+      "event": "d1 (diffu-GRPO): first RL post-training recipe for dLLM reasoning — LLaDA-8B-Instruct GSM8K 78.2 to 82.1 on 8x A100-80GB; establishes that dLLM RL is multi-GPU-only",
+      "url": "https://arxiv.org/abs/2504.12216"
+    },
+    {
+      "date": "2025-05-20",
+      "event": "Google unveils Gemini Diffusion at I/O 2025: claims 1,479 tok/s (Simon Willison measures 857 tok/s hands-on 2025-05-21); benchmarked only against Flash-Lite; remains an experimental waitlist demo, never a production API",
+      "url": "https://deepmind.google/models/gemini-diffusion/"
+    },
+    {
+      "date": "2025-05",
+      "event": "Fast-dLLM (NVIDIA): approximate KV cache (PrefixCache/DualCache) + confidence-thresholded parallel decoding — 8.1x on GSM8K (up to 27.6x) with <1-point accuracy loss; caching becomes standard practice",
+      "url": "https://arxiv.org/abs/2505.22618"
+    },
+    {
+      "date": "2025-07-21",
+      "event": "'Diffusion Beats Autoregressive in Data-Constrained Settings' (CMU+Lambda, NeurIPS 2025): with repeated data diffusion overtakes AR (data-reuse half-life ~513 vs ~32 epochs); decision rule: compute-constrained pick AR, data-constrained pick diffusion",
+      "url": "https://arxiv.org/abs/2507.15857"
+    },
+    {
+      "date": "2025-07-31",
+      "event": "ByteDance Seed Diffusion Preview: code dLLM at 2,146 tok/s (5.4x same-size AR) matching top AR code models; stated goal to validate discrete diffusion as the next-generation LM foundation",
+      "url": "https://seed.bytedance.com/en/blog/seed-research-seed-diffusion-preview-released-a-diffusion-language-model-delivering-breakthrough-2-146-tokens-s-inference-speed"
+    },
+    {
+      "date": "2025-09-08",
+      "event": "TraceRL/TraDo (Gen-Verse, ICLR 2026): trajectory-aware RL on block diffusion yields TraDo-4B/8B — SOTA open dLLM math line (+6.1% over Qwen2.5-7B-Instruct on math) and first 8B long-CoT diffusion model; dLLM-RL framework open-sourced",
+      "url": "https://github.com/Gen-Verse/dLLM-RL"
+    },
+    {
+      "date": "2025-09",
+      "event": "Ant Group LLaDA-MoE-7B-A1B (arXiv 2509.24389): first MoE dLLM trained from scratch (~20T tokens), surpassing LLaDA 1.5 and Dream",
+      "url": "https://github.com/inclusionAI/LLaDA2.X"
+    },
+    {
+      "date": "2025-10-09",
+      "event": "Radical Numerics RND1-Base: 30B-A3B sparse MoE converted from AR Qwen3-30B via A2D with 500B tokens — largest open-weight base dLLM at release, with fully open weights/code/recipe",
+      "url": "https://www.radicalnumerics.ai/blog/rnd1"
+    },
+    {
+      "date": "2025-10",
+      "event": "Ant Group open-sources dInfer: ~1,011 tok/s average on HumanEval with LLaDA-MoE vs 91 tok/s NVIDIA Fast-dLLM — first open evidence of dLLM serving surpassing an AR baseline",
+      "url": "https://www.scmp.com/tech/big-tech/article/3329138/ant-group-explores-ai-inference-framework-10-times-faster-nvidias-solution"
+    },
+    {
+      "date": "2025-11-06",
+      "event": "Inception raises $50M (Menlo Ventures lead; NVIDIA NVentures, Microsoft M12, Snowflake Ventures, Databricks participating) — infrastructure incumbents hedge on the diffusion route",
+      "url": "https://www.businesswire.com/news/home/20251106570339/en/Inception-Raises-$50M-to-Power-Diffusion-LLMs-Increasing-LLM-Speed-and-Efficiency-by-up-to-10X-and-Unlocking-Real-Time-Accessible-AI-Applications"
+    },
+    {
+      "date": "2025-11",
+      "event": "tiny-diffusion (Nathan Barry): 365-line, 10.7M-param char-level masked diffusion model — exactly 5 changes to a nanochat GPT — with step-by-step denoising visualization; Show HN thread includes simonw's live curses-UI port (the target project's closest existing artifact)",
+      "url": "https://github.com/nathan-barry/tiny-diffusion"
+    },
+    {
+      "date": "2025-12",
+      "event": "LLaDA2.0 (Ant Group, arXiv 2512.15745): LLaDA2.0-flash (100B MoE) is the first 100B-parameter diffusion LM, built by 'smoothly' converting an existing AR model; flash-CAP variant reaches 535 tok/s",
+      "url": "https://github.com/inclusionAI/LLaDA2.X"
+    },
+    {
+      "date": "2026-02-24",
+      "event": "Mercury 2 launches: first diffusion-based reasoning LLM — >1,000 tok/s on NVIDIA Blackwell (1,009 tok/s confirmed by Artificial Analysis), 1.7s end-to-end latency vs 14.4s Gemini 3 Flash, $0.25/$0.75 per M tokens, 128K context",
+      "url": "https://www.businesswire.com/news/home/20260224034496/en/Inception-Launches-Mercury-2-the-Fastest-Reasoning-LLM-5x-Faster-Than-Leading-Speed-Optimized-LLMs-with-Dramatically-Lower-Inference-Cost"
+    },
+    {
+      "date": "2026-05-21",
+      "event": "NVIDIA Nemotron-Labs-Diffusion tech report (arXiv 2607.05722 posted 2026-07-07): tri-mode 3B/8B/14B open-weights family unifying AR, diffusion, and self-speculation decoding — diffusion drafts + AR verifies, 'lossless vs AR at temperature 0', ~865 tok/s on B200, ~112 tok/s on DGX Spark",
+      "url": "https://arxiv.org/abs/2607.05722"
+    },
+    {
+      "date": "2026-06-10",
+      "event": "DiffusionGemma released: Google's first open-weight text diffusion model (26B MoE, ~3.8B active, Apache 2.0, HF/Kaggle/Vertex; NVFP4-quantized fits ~18GB VRAM); >1,000 tok/s on one H100, 256 tokens per forward pass; Google candidly ranks it below Gemma 4 on quality",
+      "url": "https://deepmind.google/models/gemma/diffusiongemma/"
+    },
+    {
+      "date": "2026-06-24",
+      "event": "iLLaDA (Apache 2.0): the unchanged masked objective scaled to 12T from-scratch tokens with fully bidirectional attention + 25B-token 12-epoch SFT; +14.5 MATH / +16.5 HumanEval over LLaDA instruct, competitive with Qwen2.5 7B — from-scratch bidirectional training re-validated",
+      "url": "https://arxiv.org/abs/2606.25331"
+    }
+  ],
+  "recentChanges": [
+    {
+      "change": "Recipe shift: AR-to-diffusion (A2D) conversion displaced from-scratch pretraining as the dominant cost-saving path — DiffuGPT/DiffuLLaMA (Oct 2024) -> Dream 7B from Qwen2.5 (Apr 2025) -> RND1 30B from Qwen3 (Oct 2025) -> LLaDA2.0 100B by AR conversion (Dec 2025). For a small build this means converting GPT-2/DistilBERT-class checkpoints is the cheap validated route",
+      "date": "2024-10 to 2025-12",
+      "url": "https://www.radicalnumerics.ai/blog/rnd1"
+    },
+    {
+      "change": "Objective consensus locked in at ICLR 2025: time conditioning removed (RADD proof + MDLM ablation + time-agnostic paper), canonical build = plain bidirectional Transformer + 1/t-weighted masked cross-entropy; SEDD demoted from implementation target to theory reference (its repo still has open NaN/instability issues)",
+      "date": "2024-06 to 2025-04",
+      "url": "https://arxiv.org/abs/2406.03736"
+    },
+    {
+      "change": "Inference stack matured from 'KV caching impossible' to mandatory caching+parallel toolkits: Fast-dLLM (May 2025, 8-27.6x), EB-Sampler (May 2025, 2-3x on math), dLLM-Cache (Jun 2025, 4-5x measured on RTX 4090), Prophet early-commit (Aug 2025, up to 3.4x on GSM8K)",
+      "date": "2025-05 to 2025-08",
+      "url": "https://arxiv.org/abs/2505.22618"
+    },
+    {
+      "change": "Serving proxy war opened: Ant's dInfer claims ~1,011 tok/s with LLaDA-MoE (~10x NVIDIA Fast-dLLM) — first open dLLM-beats-AR-serving evidence (Oct 2025); by Jul 2026 work like Sangam (arXiv 2607.04206) targets serving dLLMs on the standard AR inference stack",
+      "date": "2025-10 to 2026-07",
+      "url": "https://arxiv.org/abs/2607.04206"
+    },
+    {
+      "change": "RL post-training for dLLM math went from nonexistent to a full stack in months: d1/diffu-GRPO (Apr 2025) -> wd1 no-SFT (Jul 2025, 84.5% GSM8K claim after 20 RL steps) -> MMaDA UniGRPO (May 2025) -> TraceRL/TraDo SOTA (Sep 2025, ICLR 2026). Recipes immature; compute floors dropping but still multi-GPU",
+      "date": "2025-04 to 2025-09",
+      "url": "https://github.com/Gen-Verse/dLLM-RL"
+    },
+    {
+      "change": "Parallel-decoding reality checks landed specifically for math: fixed 2-tok/step drops LLaDA GSM8K 76.95%->62.31%; ParallelBench derives information-theoretic limits; 'Beyond Surface Reasoning' shows reversion to sequential decoding on hard problems (Parallel-Sequential Contradiction); entropy-gated MED recovers 2.7x safely — adaptive gating is now the accepted answer",
+      "date": "2025-10",
+      "url": "https://arxiv.org/abs/2510.04767"
+    },
+    {
+      "change": "Data-constrained crossover result reframed hobbyist strategy: diffusion beats AR when a small unique corpus is re-epoched heavily (data-reuse half-life ~513 vs ~32 epochs; AR saturates ~4 epochs) — exactly the laptop math-specialist regime (small synthetic corpus, many epochs). Follow-up (arXiv 2510.04071) attributes it to masking-as-regularization",
+      "date": "2025-07-21",
+      "url": "https://arxiv.org/abs/2507.15857"
+    },
+    {
+      "change": "Training instability was quantified and given named fixes: variance decomposition + P-POTS/MIRROR lift MDM GSM8K SFT from 50.6-53.7% to 58.6-62.0% with near-AR run-to-run variance (Nov 2025); bell-shaped timestep sampling reaches equal validation ~4x faster (paper submitted 2026-05-13, revised 2026-07-23)",
+      "date": "2025-11 to 2026-07",
+      "url": "https://arxiv.org/abs/2511.18159"
+    },
+    {
+      "change": "Minimal-implementation wave made the from-scratch path trivial: 'BERT is just a single text diffusion step' RoBERTa post (2025-10-20), tiny-diffusion 365 lines with denoising visualizer (Nov 2025), nanoLLaDA ~500-line full pipeline, gumran/language-diffusion <80 lines, and the unifying ZHZisZZ/dllm toolkit incl. BERT-Chat (arXiv 2602.22661, Feb 2026)",
+      "date": "2025-10 to 2026-02",
+      "url": "https://github.com/nathan-barry/tiny-diffusion"
+    },
+    {
+      "change": "Open-dLLM scale race: 8B dense from scratch (Feb 2025) -> first MoE dLLM 7B-A1B on ~20T tokens (Sep 2025) -> 30B-A3B open base (Oct 2025) -> 100B LLaDA2.0-flash (Dec 2025) -> Google 26B-A4B open weights (Jun 2026)",
+      "date": "2025-02 to 2026-06",
+      "url": "https://github.com/inclusionAI/LLaDA2.X"
+    },
+    {
+      "change": "Commercial/industrial validation accelerated sharply: Mercury announce (Feb 2025) -> Gemini Diffusion demo (May 2025) -> Seed Diffusion (Jul 2025) -> Inception $50M with NVIDIA/Microsoft/Snowflake/Databricks money (Nov 2025) -> Mercury 2 first diffusion reasoning model (Feb 2026) -> NVIDIA Nemotron tri-mode open weights (May-Jul 2026). Every major infra player now has a diffusion-LM position",
+      "date": "2025-02 to 2026-07",
+      "url": "https://www.businesswire.com/news/home/20260224034496/en/Inception-Launches-Mercury-2-the-Fastest-Reasoning-LLM-5x-Faster-Than-Leading-Speed-Optimized-LLMs-with-Dramatically-Lower-Inference-Cost"
+    },
+    {
+      "change": "Field converging on AR/diffusion hybrids rather than pure diffusion: block diffusion (Mar 2025, restores KV cache + variable length) -> semi-AR block decoding is the default for LLaDA/Dream instruct math -> Nemotron unifies AR+diffusion+self-speculation in one architecture with lossless-vs-AR diffusion drafting — the 'versus' framing is dissolving into 'both in one model'",
+      "date": "2025-03 to 2026-07",
+      "url": "https://huggingface.co/blog/nvidia/nemotron-labs-diffusion"
+    },
+    {
+      "change": "Local/consumer dLLM inference became real: dLLM-Cache benchmarked on RTX 4090 (Jun 2025, 29.75 tok/s GSM8K); diffuse-cpp GGUF CPU port of LLaDA-8B (2026: 27.7 tok/s on easy prompts but ~0.6x llama.cpp on multi-step math — math is the worst case for step-count reduction); DiffusionGemma NVFP4 ~18GB VRAM with NVIDIA RTX/NIM local acceleration (Jun 2026)",
+      "date": "2025-06 to 2026-06",
+      "url": "https://huggingface.co/diffuse-cpp/LLaDA-8B-Instruct-GGUF"
+    },
+    {
+      "change": "Variable-length generation — the top structural handicap for math CoT — got a dedicated fix wave: rho-EOS training-free bidirectional EOS control (arXiv 2601.22527, Jan 2026), length regularization (arXiv 2602.07546, Feb 2026), iLLaDA native variable-length generation (Jun 2026), alongside block diffusion",
+      "date": "2026-01 to 2026-06",
+      "url": "https://arxiv.org/pdf/2602.07546"
+    },
+    {
+      "change": "Theory caught up to practice: MDM objective proven to decompose exactly into weighted learned-order AR losses (Nov 2025); product-of-marginals root cause of few-step quality loss formalized (Dec 2025); reversal-curse mitigation proven mechanistic, not artifact (Feb 2026); decoding-order work incl. The Flexibility Trap (ICML 2026) shows learned orders trend left-to-right on math",
+      "date": "2025-11 to 2026-02",
+      "url": "https://arxiv.org/abs/2511.19152"
+    },
+    {
+      "change": "The AR-side efficiency baseline moved under diffusion's feet: modded-nanogpt record #84 trains GPT-2-124M quality in 1.32 min on 8xH100 with <400M tokens (2026-05-21); single-RTX-4090 port does it in ~90 min — this Muon/FlexAttention/FP8 trick registry is the local comparison bar and the borrowable software stack for a laptop diffusion build",
+      "date": "2026-05-21",
+      "url": "https://github.com/KellerJordan/modded-nanogpt"
+    },
+    {
+      "change": "Survey consensus published and actively maintained (v3 2026-06-04): discrete masked diffusion has won over continuous-embedding approaches; named open challenges — efficiency, long sequences, serving infrastructure — are exactly the pain points a local build hits",
+      "date": "2026-06-04",
+      "url": "https://arxiv.org/abs/2508.10875"
+    }
+  ],
+  "obsoleteClaims": [
+    "'Too early to consider diffusion a serious alternative to autoregression at scale' (Dieleman, Jan 2023) — obsolete since LLaDA 8B matched LLaMA3 8B from scratch (Feb 2025), Mercury shipped commercially (2025), and Google released open-weight DiffusionGemma (Jun 2026). The underlying statistical-efficiency critique survives as the measured ~16x compute gap, but the categorical verdict is dead.",
+    "'Text diffusion needs ~64x more compute than AR' — Plaid's 64x (May 2023) applies only to continuous embedding-space diffusion. Masked discrete diffusion measured ~16x (SMDM, Oct 2024), and the gap inverts entirely in data-constrained many-epoch regimes (Jul 2025). Quoting 64x for a masked-diffusion build is a category error.",
+    "'Diffusion LMs need timestep conditioning, adaLN, and SDE machinery' — RADD (Jun 2024) proved and MDLM ablations confirmed time conditioning is unnecessary for absorbing-state diffusion; the modern build is a plain bidirectional Transformer trained with 1/t-weighted masked cross-entropy (a few lines on top of any AR codebase, per LLaDA GUIDELINES.md).",
+    "'SEDD score entropy is the objective to implement' — superseded for implementation by MDLM/MD4/RADD masked cross-entropy (MDLM ~17% better PPL bound; all four RADD losses beat SEDD; SEDD repo has 18-month-old open NaN/instability issues). SEDD remains the theory reference only.",
+    "'Diffusion sampling is inherently faster than AR' (the marketing claim) — vanilla dLLM decoding is ~10x SLOWER than same-size AR on the same hardware (LLaDA-8B: 6.7 tok/s on A100, 6.95 tok/s on RTX 4090, vs ~90-140 tok/s for 8B AR at Q4); the LLaDA repo itself admits this. Headline 1,000+ tok/s figures are datacenter H100/B200 numbers with custom engines and parallel decoding. Speed requires caching + adaptive parallel unmasking as designed-in features.",
+    "Pre-Sept-2024 'diffusion beats GPT-2 on generative perplexity' evaluations — partly an artifact of a float32 Gumbel categorical-sampling bug that silently lowered effective temperature (arXiv 2409.02908). Use float64 Gumbel when evaluating any new model.",
+    "'Parallel decoding is a free speedup' — for math it is not: fixed 2-tokens/step drops GSM8K 76.95%->62.31%; theory (Feng et al., Feb 2025) shows sequence-level correctness requires steps scaling linearly with length, erasing the parallelism advantage. Only adaptive entropy/confidence gating (MED, EB-Sampler, Prophet) preserves accuracy.",
+    "'Any-order generation is a reasoning advantage' — decoding-order research through 2025-2026 (incl. The Flexibility Trap, ICML 2026) shows performant configurations trend near-left-to-right on math, and arbitrary order can actively narrow reasoning by dodging high-uncertainty tokens. Math builds should default to semi-AR small blocks with in-block confidence ordering.",
+    "'Diffusion LLMs self-correct during generation' — standard absorbing-state samplers freeze tokens once committed; no revision is possible. Self-correction only exists with add-ons: ReMDM remasking (Mar 2025), GIDD hybrid mask+uniform noise (Mar 2025), or uniform-noise UDLM variants. Do not assume the base recipe edits its own output.",
+    "'KV caching is impossible with bidirectional diffusion' — true for exact caching of the vanilla formulation, but obsolete in practice: approximate caching (Fast-dLLM PrefixCache/DualCache May 2025, dLLM-Cache Jun 2025) and block diffusion (Mar 2025, exact KV cache across blocks) restored it; block-level caching is now standard in serious stacks.",
+    "'From-scratch pretraining is the only path to a capable dLLM' — AR-to-diffusion conversion (DiffuGPT/DiffuLLaMA Oct 2024; Dream Apr 2025; RND1 Oct 2025; LLaDA2.0 Dec 2025) is now the dominant, validated, far cheaper recipe. (iLLaDA Jun 2026 shows from-scratch still works, but it costs 12T tokens.)",
+    "'BERT-family models are non-generative' — masked diffusion is literally generative BERT with variable masking rate (stated in D3PM 2021, operationalized by MDLM 2024); a practitioner turned RoBERTa into a text diffusion generator in 30 minutes of fine-tuning (Oct 2025), and ZHZisZZ/dllm ships BERT-Chat as a supported path.",
+    "'Gemini Diffusion is about to ship as a product' — after the May 2025 I/O demo Google made no further announcements for 13 months, never shipped a production API, and its own positioning is research feeding future models; the June 2026 open-weight DiffusionGemma is explicitly ranked below Gemma 4 on quality by Google itself.",
+    "'Diffusion is better at math than AR' (over-read from LLaDA Base GSM8K 70.3 vs LLaMA3-8B Base 48.7) — instruct-tier math still trails AR peers (Dream-Instruct MATH 39.2 vs Qwen2.5-7B-Instruct 75.5; LLaDA-Instruct GSM8K 69.4 vs 78.3), base-model wins are partly training-data composition, and PSC (Oct 2025) shows dLLMs revert to sequential decoding on hard reasoning. The real, durable diffusion advantages are narrower: search/constraint tasks (Countdown, Sudoku), reversal robustness, and data-constrained training.",
+    "'Fixed-length generation canvas is an unavoidable dLLM property' — now addressed by block diffusion (Mar 2025), rho-EOS training-free EOS control (Jan 2026), length regularization (Feb 2026), and iLLaDA's variable-length generation (Jun 2026); a 2026 build should not hardcode the LLaDA-v1 fixed-canvas limitation.",
+    "'Consumer hardware cannot run dLLM inference at all' — CPU GGUF ports (diffuse-cpp LLaDA-8B) and RTX 4090 benchmarks exist; the surviving caveat is task-shaped: multi-step math needs 15+ denoising steps and can run slower than an equal-size AR model on CPU, so laptop feasibility hinges on small models plus caching/adaptive samplers, not on ports of 8B models."
+  ],
+  "upcoming": [
+    {
+      "date": "2026-12-06 to 2026-12-12",
+      "event": "NeurIPS 2026 (Sydney ICC; satellite venues Atlanta Dec 8-13 and Paris Dec 9-13) — the expected peer-review landing zone for the 2026 dLLM preprint wave (iLLaDA, Nemotron-Labs-Diffusion, Looped Diffusion/PUMA, discreteness-theory, MDM training-acceleration, and serving papers like Sangam). Verified via neurips.cc."
+    },
+    {
+      "date": "2026-07 (just concluded) / proceedings rolling out",
+      "event": "ICML 2026 (Seoul, Jul 6-11) and ACL 2026 (San Diego, Jul 2-7) both concluded within the past three weeks — dLLM-Cache and The Flexibility Trap appeared at ICML 2026, LLaDA 1.5's VRPO at ACL 2026; camera-ready versions and talks are becoming citable now and may revise preprint numbers."
+    },
+    {
+      "date": "no date announced",
+      "event": "Inception Labs post-$50M roadmap: scaling the Mercury 2 reasoning platform and OpenAI-compatible API; vendor quality-parity claims still await independent practitioner benchmarking (HN testers report reasoning failures at max effort)."
+    },
+    {
+      "date": "no date announced",
+      "event": "Google's stated positioning: Gemini Diffusion research and DiffusionGemma are 'used to help develop and refine future models' — expect diffusion-based decoding inside future Gemini/Gemma releases rather than a standalone Gemini Diffusion production API; NVIDIA is actively optimizing DiffusionGemma for local RTX PCs (RTX AI Garage), which directly improves the consumer-laptop inference story."
+    },
+    {
+      "date": "no date announced",
+      "event": "ByteDance Seed's stated goal to 'systematically validate discrete diffusion as the foundation framework for next-generation LMs' implies a scaled successor to Seed Diffusion Preview (Jul 2025); parameter counts and timeline undisclosed."
+    },
+    {
+      "date": "no date announced",
+      "event": "Ant Group's LLaDA2.X series and dInfer inference framework remain under active development (repo cadence roughly quarterly since Sep 2025); ML-GSAI continues the LLaDA line post-iLLaDA. Watch both repos for the next open-weight and serving releases."
+    }
+  ]
+}

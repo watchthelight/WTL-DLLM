@@ -1,0 +1,257 @@
+{
+  "aspect": "Reference codebases & minimal implementations for discrete diffusion language models (evidence / how-to-build)",
+  "findings": [
+    {
+      "claim": "kuleshov-group/mdlm is the canonical research-grade PyTorch reference for masked diffusion LMs (NeurIPS 2024 'Simple and Effective Masked Diffusion Language Models', arXiv 2406.07524). Apache-2.0, ~702 stars. Includes DiT, AR-transformer, and Mamba backbones; OpenWebText and LM1B pipelines; a 'ddpm_cache' sampler claimed ~3-4x faster than prior diffusion sampling plus 25-30x faster semi-autoregressive decoding; and in-repo baseline implementations of SEDD and D3PM. Code split: main.py, diffusion.py, noise_schedule.py, dataloader.py, models/, configs/ on PyTorch Lightning. README examples reference A5000 and RTX 3090 GPUs, i.e., prosumer hardware, with pretrained OpenWebText checkpoints on HuggingFace.",
+      "url": "https://github.com/kuleshov-group/mdlm",
+      "title": "GitHub - kuleshov-group/mdlm: [NeurIPS 2024] Simple and Effective Masked Diffusion Language Model",
+      "tier": "S",
+      "date": "June 2024 (paper); repo maintained with issues closed through March 2026",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "louaaron/Score-Entropy-Discrete-Diffusion is the official SEDD implementation (ICML 2024 Best Paper, arXiv 2310.16834), MIT license, ~739 stars. Cleanly modular (noise_lib.py schedules, graph_lib.py forward process, sampling.py, model/), with small and medium pretrained checkpoints on HuggingFace and both unconditional and prefix/suffix conditional sampling scripts. However, training was done on 8x80GB GPU nodes with DDP — far beyond laptop scale — so it serves as a reading/sampling reference, not a local training recipe.",
+      "url": "https://github.com/louaaron/Score-Entropy-Discrete-Diffusion",
+      "title": "GitHub - louaaron/Score-Entropy-Discrete-Diffusion (SEDD, ICML 2024 Best Paper)",
+      "tier": "S",
+      "date": "2024 (paper); issue activity into January 2026",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "SEDD's issue tracker is direct practitioner evidence of discrete-diffusion training instability: issue #9 'Loss nan while training small model' (Jul 2024) and #8 'Unstable training' (Jun 2024) remain OPEN 18+ months later, alongside #18 (possible typo in the paper's Appendix B DWDSE pseudocode weight for Q_absorb) and #21 (question on normalizing the Q_uniform matrix by dimension). A from-scratch builder copying SEDD's score-entropy loss should expect NaN/stability landmines that the simpler masked-CE (MDLM/LLaDA-style) objective avoids.",
+      "url": "https://github.com/louaaron/Score-Entropy-Discrete-Diffusion/issues",
+      "title": "Issues - louaaron/Score-Entropy-Discrete-Diffusion",
+      "tier": "B",
+      "date": "June 2024 - January 2026 (open issues)",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "ML-GSAI/LLaDA (arXiv 2502.09992, ~3.9k stars) is the flagship 8B masked-diffusion LLM repo but releases NO training framework or data — only inference (generate.py, get_log_likelihood.py, chat.py), a Gradio demo (app.py) with animated unmasking output, and lm-evaluation-harness evaluation (May 2025) plus batch inference (Oct 2025). Models are MIT-licensed. The README explicitly points builders to GUIDELINES.md and the SMDM repo for training, and admits sampling is currently slower than AR baselines due to fixed context length, no KV-cache, and step count tied to response length.",
+      "url": "https://github.com/ML-GSAI/LLaDA",
+      "title": "GitHub - ML-GSAI/LLaDA: Official PyTorch implementation for Large Language Diffusion Models",
+      "tier": "S",
+      "date": "February 2025 (paper); repo updated October 2025",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "LLaDA's GUIDELINES.md is the single most concrete minimal-change training recipe found: (1) take any AR transformer codebase and simply remove the causal mask from self-attention; (2) reserve a mask token (id 126336 in LLaDA); (3) per sequence sample t~U[0,1] and mask each position with probability p_mask=(1-eps)t+eps with eps=0.001; (4) loss = cross-entropy on masked positions only, each token's CE divided by its p_mask, averaged over batch; (5) ~1% of pretraining data uses random sequence lengths from [1,4096]; (6) for SFT: never add noise to the prompt, mask only response tokens, and normalize loss by answer length (accounting for padding) instead of 1/p_mask. This is directly implementable pseudocode for a from-scratch build.",
+      "url": "https://github.com/ML-GSAI/LLaDA/blob/main/GUIDELINES.md",
+      "title": "LLaDA GUIDELINES.md - pre-training and fine-tuning guidelines",
+      "tier": "S",
+      "date": "2025",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "ML-GSAI/SMDM (ICLR 2025 'Scaling up Masked Diffusion Models on Text', Apache-2.0, ~384 stars) is the open training codebase LLaDA points to: full Lightning-based pretraining scripts for ARMs, MDMs, and MDMs with stochastic sequence length, trained on SlimPajama-627B at 170M-1.1B params using 8-16 GPUs. It establishes the first MDM scaling law (rate comparable to AR with a small compute gap), and its 1.1B MDM beats 1.1B TinyLlama on several zero-shot benchmarks and is competitive with 7B Llama-2 on GSM8K when trained with augmented math data — the strongest existing evidence that masked diffusion + GSM8K-style math works, but at ~1B scale, not 10M scale.",
+      "url": "https://github.com/ML-GSAI/SMDM",
+      "title": "GitHub - ML-GSAI/SMDM: Scaling up Masked Diffusion Models on Text (ICLR 2025)",
+      "tier": "S",
+      "date": "ICLR 2025",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "nathan-barry/tiny-diffusion is the closest existing artifact to the user's target project: a 365-line, 10.7M-parameter character-level text diffusion model on Tiny Shakespeare (MIT, ~923 stars), built by modifying the nanochat GPT with exactly 5 changes: add a mask token to vocab, switch causal to bidirectional attention, train on unmasking instead of next-token prediction, compute loss only on masked tokens, and generate via confidence-based parallel decoding. The repo ships a 313-line GPT twin (~80% code overlap) for side-by-side comparison, plus visualize.py that renders step-by-step denoising. Training: 10,000 iters in ~20 minutes on an A100 — implying feasibility on a mid-range laptop GPU (hours) and plausibly overnight CPU runs at reduced size (this extrapolation is inference, not measured).",
+      "url": "https://github.com/nathan-barry/tiny-diffusion",
+      "title": "GitHub - nathan-barry/tiny-diffusion: A character-level language diffusion model trained on Tiny Shakespeare",
+      "tier": "S",
+      "date": "November 2025 (v2 simplified ~1000 to ~400 lines)",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "The tiny-diffusion Show HN thread (Nov 2025) contains practitioner detail relevant to the UI goal: simon willison (simonw) ported the project's matplotlib diffusion-process demo to a curses terminal UI showing live denoising — proof the real-time unmasking visualization is a solved, small problem. The thread also surfaces the fixed-length limitation (model unmasks a predefined [MASK] region; variable-length output is handled imperfectly via confidence-aware parallel decoding), notes the ReLU-squared activation was inherited from the nanoGPT-speedrun lineage rather than chosen deliberately, and points to NVIDIA's Fast-dLLM for inference acceleration.",
+      "url": "https://news.ycombinator.com/item?id=45876742",
+      "title": "Show HN: Tiny Diffusion - A character-level text diffusion model from scratch | Hacker News",
+      "tier": "B",
+      "date": "November 2025",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "Lukas-Xue/nanoLLaDA is a ~500-line minimal LLaDA-style masked diffusion pipeline (Apache-2.0, ~110 stars) covering the FULL lifecycle a builder needs: tokenizer training, distributed pretraining loop, iterative-unmasking generation, SFT, CORE-benchmark evaluation, and a tutorial.ipynb walkthrough. Its headline run is a 477M model trained on ~9.2B tokens of ClimbMix in ~55 hours on 4x NVIDIA L4 (23GB) — above laptop scale at that size, but the code scales down (configs from 20M) and is the best single 'read this end to end' reference for a from-scratch build.",
+      "url": "https://github.com/Lukas-Xue/nanoLLaDA",
+      "title": "GitHub - Lukas-Xue/nanoLLaDA: The most bare-bones masked diffusion language model on earth",
+      "tier": "S",
+      "date": "2025-2026 (post-nanochat, exact date unverified)",
+      "confidence": "medium",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "cloneofsimo/d3pm is a ~400-LOC faithful PyTorch recreation of the original D3PM paper (Structured Denoising Diffusion Models in Discrete State-Spaces, 2021) with a self-contained runner and a CIFAR-10 DiT variant (~308 stars). Useful specifically for understanding the uniform-transition-matrix formulation and the discrete posterior math that the newer masked-only repos skip; the maintainer documents deliberate simplifications (no truncated logistic reparameterization, inverse-linear beta schedule).",
+      "url": "https://github.com/cloneofsimo/d3pm",
+      "title": "GitHub - cloneofsimo/d3pm: Minimal D3PM implementation",
+      "tier": "S",
+      "date": "2024 (exact last update unverified)",
+      "confidence": "medium",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "google-deepmind/md4 is the official JAX implementation of 'Simplified and Generalized Masked Diffusion for Discrete Data' (NeurIPS 2024, arXiv 2406.04329; Apache-2.0, ~161 stars), covering text (OpenWebText, FineWeb-EDU) and images (CIFAR-10, ImageNet-64) with one config-driven entry point. Documented setup is 8x A100 at batch 128 (or 8 TPU v5litepod chips at batch 32) — a clean reference for the continuous-time masked objective and its generalized (GenMD4) state-dependent masking, but JAX and multi-accelerator assumptions make it a reading reference rather than a laptop template.",
+      "url": "https://github.com/google-deepmind/md4",
+      "title": "GitHub - google-deepmind/md4: Simplified and Generalized Masked Diffusion for Discrete Data",
+      "tier": "S",
+      "date": "NeurIPS 2024",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "kuleshov-group/bd3lms (Block Diffusion / BD3-LMs, ICLR 2025 oral; Apache-2.0, ~1.0k stars) is explicitly 'built off of MDLM' and solves two documented weaknesses of vanilla masked diffusion that a builder will hit: fixed-length generation (BD3-LM generates arbitrary-length sequences as multiples of a block size) and no KV caching (sampling.kv_cache=true supported). Block size interpolates between AR (small blocks) and full diffusion (large blocks). HuggingFace checkpoints include BD3-LMs at block sizes 4/8/16 plus baseline MDLM and SEDD models, and the codebase inherits MDLM's Lightning structure.",
+      "url": "https://github.com/kuleshov-group/bd3lms",
+      "title": "GitHub - kuleshov-group/bd3lms: Block Diffusion: Interpolating Between Autoregressive and Diffusion Language Models (ICLR 2025)",
+      "tier": "S",
+      "date": "ICLR 2025 (March 2025)",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "ZHZisZZ/dllm ('dLLM: Simple Diffusion Language Modeling', arXiv 2602.22661; Apache-2.0, ~2.7k stars) is the current unifying open toolkit: HuggingFace transformers.Trainer-based pipelines for pretraining, SFT, and GRPO RL across LLaDA (incl. MoE), Dream, Tiny-A2D (AR-to-diffusion adaptation), BERT-Chat (turning an encoder BERT into a chat diffusion model — a notably cheap path to a small working DLM), and Edit Flows; LoRA/DeepSpeed/FSDP support; lm-evaluation-harness integration; Fast-dLLM cached inference; and an interactive chat.py. Documented examples assume 8-GPU nodes (evaluation ~4 GPUs), so laptop use means scaling configs down or LoRA.",
+      "url": "https://github.com/ZHZisZZ/dllm",
+      "title": "GitHub - ZHZisZZ/dllm: dLLM: Simple Diffusion Language Modeling",
+      "tier": "S",
+      "date": "February 2026 (paper); active 2026",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "pengzhangzhi/Open-dLLM (Open-dCoder, 0.5B; Apache-2.0, ~645 stars) claims to be the first diffusion-LLM release opening the ENTIRE stack — pretraining code (VeOmni/torchrun), data pipeline (FineCode on HuggingFace), evaluation (HumanEval/MBPP/infilling via lm-eval-harness + custom), inference, and checkpoints — with a README comparison table showing LLaDA and Dream release only inference/weights. Initialization is continued pretraining from Qwen2.5-Coder. For a builder, it is the most complete end-to-end pretraining example at sub-1B scale, albeit for code rather than math.",
+      "url": "https://github.com/pengzhangzhi/Open-dLLM",
+      "title": "GitHub - pengzhangzhi/Open-dLLM: Open diffusion language model for code generation",
+      "tier": "S",
+      "date": "2025 (exact release date unverified)",
+      "confidence": "medium",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "HKUNLP/DiffuLLaMA (ICLR 2025 'Scaling Diffusion Language Models via Adaptation from Autoregressive Models'; Apache-2.0, ~401 stars) provides the cheapest documented route to a working diffusion LM: continual pretraining that converts existing AR checkpoints (GPT-2 ~127M/medium to DiffuGPT; LLaMA-7B to DiffuLLaMA) using attention-mask annealing (gradual causal-to-bidirectional transition) and a shift operation, in under 200B tokens total, with full training code, LoRA fine-tuning, and evaluation released (llamafactory-cli + DeepSpeed ZeRO). Adapting GPT-2-small this way is far closer to laptop-feasible than from-scratch pretraining at equal quality.",
+      "url": "https://github.com/HKUNLP/DiffuLLaMA",
+      "title": "GitHub - HKUNLP/DiffuLLaMA: Scaling Diffusion Language Models via Adaptation from Autoregressive Models (ICLR 2025)",
+      "tier": "S",
+      "date": "February 2025 (ICLR 2025)",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "DreamLM/Dream (Dream 7B, arXiv 2508.15487; Apache-2.0, ~1.3k stars) releases inference, evaluation, SFT code (single-node 8-GPU), Gradio demo, and a diffusion_generate() API whose remasking strategies ('origin', 'maskgit_plus', 'topk_margin', 'entropy') plus token/logits hooks are a ready-made menu of sampling algorithms to reimplement in a small model and to drive a denoising-visualization UI. Stated requirement of a 20GB+ VRAM GPU puts running Dream itself outside most consumer laptops.",
+      "url": "https://github.com/DreamLM/Dream",
+      "title": "GitHub - DreamLM/Dream: Dream 7B - Diffusion Large Language Models",
+      "tier": "S",
+      "date": "April 2025 (release); August 2025 (paper)",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "HKUNLP/diffusion-of-thoughts (NeurIPS 2024 'Diffusion of Thoughts', ~213 stars) is the main existing codebase for the exact target task — math reasoning with diffusion LMs: it fine-tunes Plaid-1B and SEDD on GSM8K and 4x4/5x5 digit multiplication, with train.py, batch evaluation, DPM-Solver acceleration, and self-consistency decoding, demonstrating a compute-vs-reasoning-accuracy tradeoff and self-correction behavior. Evidence that GSM8K fine-tuning of a pretrained discrete diffusion checkpoint works, but at ~1B params (GPU class), not laptop-pretraining scale.",
+      "url": "https://github.com/HKUNLP/diffusion-of-thoughts",
+      "title": "GitHub - HKUNLP/diffusion-of-thoughts: Chain-of-Thought Reasoning in Diffusion Language Models (NeurIPS 2024)",
+      "tier": "S",
+      "date": "NeurIPS 2024",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "Recent training-dynamics literature identifies concrete pitfalls a from-scratch builder inherits silently: 'Understanding and Accelerating the Training of Masked Diffusion Language Models' (arXiv 2605.13026, submitted May 13 2026, revised Jul 23 2026) attributes slow MDM training to locality bias under uniform timestep sampling and shows bell-shaped time sampling reaches equal validation performance ~4x faster on LM1B. Complementarily, ML-GSAI/RADD (ICLR 2025, ~84 stars, built on SEDD, 162M/405M checkpoints) proves time-conditioning of the network is UNNECESSARY for absorbing diffusion — removing it enables caching and unifies the objective with any-order AR — a major architecture simplification for a minimal build (matches MDLM issue #26 confusion about sigma vs t inputs).",
+      "url": "https://arxiv.org/abs/2605.13026",
+      "title": "Understanding and Accelerating the Training of Masked Diffusion Language Models (arXiv 2605.13026); corroborating repo: github.com/ML-GSAI/RADD",
+      "tier": "S",
+      "date": "May-July 2026 (paper); RADD ICLR 2025",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "MDLM's issue tracker (all issues closed, #24-#36, 2025-2026) documents the practical friction points of reusing research repos on consumer machines: unpinned PyTorch versions (#24, #31), a 'no_flashattn' checkpoint that still required pip install flash_attn (#28) — flash-attn is notoriously painful on Windows/consumer GPUs — causal_conv1d_cuda import errors from the Mamba dependency (#25), a forward() keyword-argument bug (#27), and one paper-reproduction complaint that was resolved (#29). Implication for the build plan: strip optional CUDA-extension dependencies (flash-attn, Mamba) from any laptop-targeted reimplementation.",
+      "url": "https://github.com/kuleshov-group/mdlm/issues",
+      "title": "Issues - kuleshov-group/mdlm",
+      "tier": "B",
+      "date": "April 2025 - March 2026",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "VILA-Lab/Awesome-DLMs (~1.2k stars), the companion repo to 'A Survey on Diffusion Language Models' (arXiv 2508.10875), is an actively maintained (into 2026) index of DLM papers, codebases, training/inference frameworks (e.g., Fast-dLLM KV-cache acceleration, speculative/parallel decoding), benchmarks, and demos — the best single hub for discovering further reference implementations beyond those listed here. Also surfaced but not deeply verified: scxue/AO-GPT-MDM, a nanoGPT-based repo training any-order GPT as a masked diffusion model (lead for AR-architecture-reuse).",
+      "url": "https://github.com/VILA-Lab/Awesome-DLMs",
+      "title": "GitHub - VILA-Lab/Awesome-DLMs: A Survey on Diffusion Language Models (companion repo)",
+      "tier": "S",
+      "date": "August 2025 (survey); maintained into 2026",
+      "confidence": "high",
+      "evidenceType": "direct"
+    }
+  ],
+  "contradictions": [
+    "Prestige vs. buildability: SEDD won ICML 2024 Best Paper and looks like the natural starting point, but its score-entropy/CTMC machinery (graph_lib, DWDSE loss) has open NaN/instability issues since mid-2024 and was trained on 8x80GB nodes, while the MDLM/MD4/LLaDA line shows a plain weighted masked cross-entropy matches or beats it. The field's own follow-ups (MDLM, RADD) argue SEDD's complexity is unnecessary — a from-scratch builder should copy the masked-CE recipe, not SEDD.",
+    "Time-conditioning contradiction: SEDD/MDLM architectures feed a timestep/sigma embedding into the network (and MDLM issue #26 shows users confused by sigma-vs-t), while RADD (ICLR 2025) proves time-conditioning is unnecessary for absorbing diffusion. Minimal implementations (tiny-diffusion) already drop it.",
+    "Scale vs. the math goal: SMDM's GSM8K competitiveness required a 1.1B model trained on SlimPajama-scale data with augmented math sets, and Diffusion-of-Thoughts fine-tunes 1B-class models on GPUs; nothing verified demonstrates GSM8K-level word-problem solving from a laptop-trainable (~10-100M) diffusion model. Laptop demos (tiny-diffusion, 10.7M char-level Shakespeare) prove mechanism, not reasoning capability. Arithmetic/algebra at small scale is plausible but unevidenced in these repos.",
+    "Flagship openness gap: LLaDA (3.9k stars) and Dream release inference + weights but NO pretraining code or data, while much smaller projects (SMDM, Open-dLLM, nanoLLaDA, dllm) release full training stacks — the most-starred repos are the least useful for learning to train.",
+    "Fixed-length generation: vanilla masked diffusion (LLaDA, tiny-diffusion) generates into a fixed pre-allocated mask region and lacks KV caching (LLaDA README admits slower-than-AR sampling); BD3-LM exists specifically to restore variable length and KV cache, at the cost of a more complex block formulation.",
+    "Hardware claims vary by an order of magnitude for the 'same' method: SEDD 8x80GB, MD4 8xA100, nanoLLaDA 4xL4 for 55h at 477M, MDLM examples on A5000/3090, tiny-diffusion 20 min on one A100 at 10.7M — the objective is the same; parameter count and dataset size dominate feasibility."
+  ],
+  "practitionerReality": "GitHub issues are the richest pitfall source; no canonical 'common bugs in discrete diffusion' write-up exists. Observed reality: (1) NaN losses and unstable training are reported and left open on SEDD; the community response was to abandon that objective for weighted masked CE rather than fix it. (2) Dependency hell dominates consumer-hardware complaints — flash-attn required even by a 'no_flashattn' MDLM checkpoint, causal_conv1d/Mamba CUDA extension import errors, unpinned torch versions; a laptop build should use pure PyTorch SDPA attention and zero custom CUDA extensions. (3) The loss-weighting term 1/p_mask blows up variance at small mask probabilities; LLaDA's eps=0.001 floor and the 2026 bell-shaped-time-sampling result (~4x faster convergence) are the practical mitigations. (4) The denoising-visualization UI is already solved twice at toy scale: tiny-diffusion's visualize.py (matplotlib step-by-step) and simonw's curses terminal port from the HN thread — both trivially portable to a web UI. (5) The proven minimal path practitioners actually ship: take a nanoGPT/nanochat-class model, make the 5 tiny-diffusion changes (mask token, bidirectional attention, unmasking objective, masked-only loss, confidence-based parallel decoding), train on a small corpus; 10.7M params trains in ~20 A100-minutes, so a mid-range laptop GPU trains it in hours and CPU-only overnight at reduced size (extrapolation, unbenchmarked).",
+  "coverage": {
+    "attempted": [
+      "Direct fetch: github.com/kuleshov-group/mdlm (+issues)",
+      "Direct fetch: github.com/louaaron/Score-Entropy-Discrete-Diffusion (+issues)",
+      "Direct fetch: github.com/ML-GSAI/LLaDA (+GUIDELINES.md)",
+      "Direct fetch: github.com/ML-GSAI/SMDM",
+      "WebSearch: minimal masked diffusion language model implementation nanoGPT style github",
+      "WebSearch: tiny text diffusion language model from scratch blog post 2025",
+      "WebSearch: discrete diffusion language model implementation pitfalls bugs masked diffusion training",
+      "WebSearch: dllm library github diffusion language model training finetuning evaluation toolkit LLaDA Dream",
+      "WebSearch: nathan barry blog language diffusion model tiny shakespeare write-up",
+      "Direct fetch: nanoLLaDA, tiny-diffusion, beyond-nanogpt, cloneofsimo/d3pm, google-deepmind/md4, bd3lms, ZHZisZZ/dllm, DreamLM/Dream, HKUNLP/DiffuLLaMA, pengzhangzhi/Open-dLLM, HKUNLP/diffusion-of-thoughts, VILA-Lab/Awesome-DLMs, ML-GSAI/RADD, arxiv.org/abs/2605.13026, HN item 45876742"
+    ],
+    "useful": [
+      "All four seed repo queries (fetched directly, all confirmed with rich detail)",
+      "minimal nanoGPT-style query (found nanoLLaDA, AO-GPT-MDM, beyond-nanogpt negative result)",
+      "tiny text diffusion query (found nathan-barry/tiny-diffusion + HN thread — best single find)",
+      "pitfalls query (surfaced arXiv 2605.13026 and carry-over-unmasking/tokenization claims; GitHub issue trackers supplied the practitioner half)",
+      "dllm library query (found ZHZisZZ/dllm, Open-dLLM, Fast-dLLM, Awesome-DLMs)"
+    ],
+    "failed": [
+      "Exa MCP unavailable in this environment (fell back to WebSearch+WebFetch)",
+      "No standalone blog post by Nathan Barry explaining tiny-diffusion (repo+HN only)",
+      "No dedicated 'common bugs in discrete diffusion implementations' article found — evidence had to be assembled from issue trackers and papers",
+      "CPU-only training benchmarks for any repo: none published anywhere found"
+    ]
+  },
+  "gaps": [
+    "No verified CPU-only training time for any discrete diffusion implementation; all laptop/CPU feasibility statements are extrapolations from the 20-A100-minutes/10.7M-param tiny-diffusion data point.",
+    "No minimal implementation specialized for math (arithmetic/algebra/GSM8K) at laptop scale exists; Diffusion-of-Thoughts (1B-class) is the smallest math-focused codebase found. The math specialization will have to be original work combining tiny-diffusion-style code with SMDM's augmented-GSM8K training idea.",
+    "nanoLLaDA's exact creation/last-update date and code quality are unverified beyond the README; treat as promising but young (110 stars).",
+    "scxue/AO-GPT-MDM (any-order GPT as MDM on nanoGPT) surfaced but was not fetched in depth — lead worth following for the AR-code-reuse path.",
+    "cloneofsimo/d3pm license and last-update not confirmed from the page.",
+    "Star counts are point-in-time (2026-07-25) and drift; treat as magnitude indicators.",
+    "Expected but not found: a Karpathy-style canonical video/tutorial for discrete diffusion LMs, and any Windows-specific setup guide for these repos (flash-attn friction suggests one is needed)."
+  ],
+  "bestSources": [
+    {
+      "title": "nathan-barry/tiny-diffusion (GitHub)",
+      "url": "https://github.com/nathan-barry/tiny-diffusion",
+      "why": "Closest existing artifact to the target build: 365 LOC, 10.7M params, trains in minutes on one GPU, ships a paired GPT for diffing the exact 5 changes AR-to-diffusion, includes step-by-step denoising visualization, MIT-licensed, validated by a substantive HN thread."
+    },
+    {
+      "title": "LLaDA GUIDELINES.md (ML-GSAI/LLaDA)",
+      "url": "https://github.com/ML-GSAI/LLaDA/blob/main/GUIDELINES.md",
+      "why": "The exact training recipe in pseudocode — masking distribution, eps floor, 1/p_mask loss weighting, SFT prompt-preservation and answer-length normalization — written by the team that scaled the method to 8B; directly transcribable into a from-scratch trainer."
+    },
+    {
+      "title": "kuleshov-group/mdlm (GitHub)",
+      "url": "https://github.com/kuleshov-group/mdlm",
+      "why": "Canonical research-grade reference: clean separation of diffusion.py/noise_schedule.py/sampler, in-repo SEDD and D3PM baselines for comparison, cached sampler, consumer-GPU-referencing configs, and the codebase BD3-LM later built on."
+    },
+    {
+      "title": "ZHZisZZ/dllm (GitHub)",
+      "url": "https://github.com/ZHZisZZ/dllm",
+      "why": "The maintained unifying toolkit (2.7k stars, Feb 2026 paper): HF-Trainer pipelines for LLaDA/Dream/BERT-Chat/A2D, SFT+GRPO, lm-eval-harness, chat interface — the best map of what a complete DLM stack contains and a source of scale-down recipes (BERT-Chat, Tiny-A2D)."
+    },
+    {
+      "title": "Lukas-Xue/nanoLLaDA (GitHub)",
+      "url": "https://github.com/Lukas-Xue/nanoLLaDA",
+      "why": "Only ~500-LOC codebase covering the full lifecycle (tokenizer, pretrain, SFT, eval, tutorial notebook) in nanoGPT style with published compute numbers (477M / 4xL4 / 55h), making it the best end-to-end study text between toy (tiny-diffusion) and research (mdlm) scale."
+    }
+  ]
+}

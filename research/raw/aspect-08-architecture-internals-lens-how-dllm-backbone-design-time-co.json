@@ -1,0 +1,265 @@
+{
+  "aspect": "Architecture internals — lens: How (DLLM backbone design, time conditioning, mask-token mechanics, BERT relationship, tokenizer/vocab choices for math)",
+  "findings": [
+    {
+      "claim": "LLaDA (the flagship open masked-diffusion LLM) is architecturally a completely standard Transformer whose only structural change vs an autoregressive LLM is removing the causal attention mask: a 'mask predictor' Transformer takes a partially masked sequence and predicts all masked tokens simultaneously with full bidirectional attention, trained by 'a forward data masking process and a reverse generation process, parameterized by a Transformer to predict masked tokens' optimizing a likelihood lower bound.",
+      "url": "https://arxiv.org/abs/2502.09992",
+      "title": "Large Language Diffusion Models (LLaDA), Nie et al.",
+      "tier": "S",
+      "date": "2025-02-14 (v3 2025-10-18)",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "LLaDA deliberately uses vanilla multi-head attention instead of grouped-query attention because bidirectional diffusion breaks KV caching: 'We use vanilla multi-head attention instead of grouped query attention for simplicity, as LLaDA is incompatible with KV caching, resulting in a different number of key and value heads.' Design implication for a from-scratch build: GQA/MQA buys nothing in a pure (non-block) masked diffusion model.",
+      "url": "https://arxiv.org/html/2502.09992v3",
+      "title": "Large Language Diffusion Models (LLaDA), Sec. 2.2",
+      "tier": "S",
+      "date": "2025 (v3 2025-10-18)",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "Exact LLaDA-8B architecture from the official HuggingFace config.json: d_model 4096, n_layers 32, n_heads 32, n_kv_heads 32 (i.e., no GQA), mlp_hidden_size 12288, activation silu (SwiGLU-family), layer_norm_type rms (eps 1e-5), RoPE with theta 500000, max_sequence_length 4096, block_type 'llama', vocab_size 126464, mask_token_id 126336, eos/pad 126081, flash_attention false. This is a directly copyable reference for a scaled-down clone.",
+      "url": "https://huggingface.co/GSAI-ML/LLaDA-8B-Base/resolve/main/config.json",
+      "title": "GSAI-ML/LLaDA-8B-Base config.json",
+      "tier": "S",
+      "date": "2025 (model released Feb 2025)",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "The official LLaDA training guidelines show the entire from-scratch recipe is a few lines on top of any AR codebase: sample t~U[0,1], p_mask=(1-eps)*t+eps, replace sampled positions with reserved mask id 126336 (noisy_batch = torch.where(masked_indices, 126336, input_ids)), compute cross-entropy only on masked positions divided by p_mask (the 1/t ELBO weighting), remove the causal mask ('simply removing the causal mask from the self-attention mechanism'); plus a robustness trick: 'We set 1% of the pre-training data to a random length uniformly sampled from [1, 4096]'; for SFT, prompts are never noised and loss is normalized by answer length.",
+      "url": "https://github.com/ML-GSAI/LLaDA/blob/main/GUIDELINES.md",
+      "title": "LLaDA GUIDELINES.md (official training guidelines)",
+      "tier": "S",
+      "date": "2025",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "Time conditioning is provably unnecessary for masked (absorbing-state) diffusion: RADD (ICLR 2025) shows the concrete score decomposes into time-independent conditional probabilities of clean data times an analytic time-dependent scalar, so 'a dedicated diffusion model without time-condition' matches or beats time-conditioned models, and the time-independent network output can be cached across sampling steps whenever no token changes, cutting NFEs. The LLaDA repo states this is 'the theoretical justification for LLaDA's unmodified use of the Transformer architecture.'",
+      "url": "https://arxiv.org/abs/2406.03736",
+      "title": "Your Absorbing Discrete Diffusion Secretly Models the Conditional Distributions of Clean Data (RADD)",
+      "tier": "S",
+      "date": "2024-06 (ICLR 2025)",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "MDLM empirically confirmed the same thing before the proof: 'On OWT, we train with and without time step conditioning' and 'models trained with and without time conditioning attain similar perplexities on OWT' — so a from-scratch build can skip time embeddings and adaLN modulation entirely and use a plain pre-LN encoder-style transformer.",
+      "url": "https://arxiv.org/abs/2406.07524",
+      "title": "Simple and Effective Masked Diffusion Language Models (MDLM), Sahoo et al., NeurIPS 2024",
+      "tier": "S",
+      "date": "2024-06 (NeurIPS 2024)",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "MDLM's backbone lineage, if you do want the DiT-style option: 'We utilize the transformer architecture from Lou et al. (2023) [SEDD], which augments the diffusion transformer (Peebles & Xie, 2023) with rotary embeddings (Su et al., 2021)' — i.e., DDiT = encoder transformer + RoPE + (optional) adaLN time conditioning; experiments used 110M params, GPT-2 tokenizer for OpenWebText and bert-base-uncased tokenizer for LM1B, context length 1024.",
+      "url": "https://s-sahoo.com/mdlm/",
+      "title": "MDLM project page + paper (Simple and Effective Masked Diffusion Language Models)",
+      "tier": "S",
+      "date": "2024-06",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "MDLM's SUBS parameterization gives two implementation-level output-head rules that simplify the loss to weighted masked cross-entropy: (1) Zero Masking Probabilities — 'we substitute the logit index corresponding to the [MASK] token with −∞' so the network can never predict MASK; (2) Carry-Over Unmasking — the network output is substituted 'to simply copy unmasked inputs', so already-revealed tokens are passed through unchanged. With these, the continuous-time NELBO becomes a Rao-Blackwellized mixture of classical MLM losses.",
+      "url": "https://arxiv.org/abs/2406.07524",
+      "title": "MDLM Sec. 3 (SUBS parameterization)",
+      "tier": "S",
+      "date": "2024-06",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "A second ICLR 2025 paper proves the equivalence from the sampling side too: 'both training and sampling of MDMs are theoretically free from the time variable... and are instead equivalent to masked models'; its first-hitting sampler (FHS) is theoretically equivalent to the original MDM generation process with a ~20x speedup; it also warns that reported MDM generative-perplexity wins partly 'exploit inaccurate categorical sampling' under low floating-point precision (a Gumbel-sampling numerical pitfall to avoid when evaluating your own model).",
+      "url": "https://arxiv.org/abs/2409.02908",
+      "title": "Masked Diffusion Models are Secretly Time-Agnostic Masked Models and Exploit Inaccurate Categorical Sampling",
+      "tier": "S",
+      "date": "2024-09 (ICLR 2025)",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "The BERT relationship, stated by the lab that built MDLM: masked diffusion is 'essentially BERT with a randomized masking rate — but unlike BERT, the resulting model is generative. You can think of masked diffusion as a generative BERT.' The ELBO's inner term 'is exactly the BERT loss', differing only in averaging over all masking rates t~U[0,1] with 1/t normalization instead of BERT's fixed ~15% rate. The post also catalogs production architecture variants: encoder + lightweight iterative decoder (Gemma Diffusion, Nemotron Diffusion) and block diffusion, which restores KV caching by diffusing block-by-block conditioned on previously generated tokens.",
+      "url": "https://kuleshov-group.github.io/blog/blog/2026/how-to-build-a-diffusion-language-model/",
+      "title": "Kuleshov Group — How to Build a Diffusion Language Model",
+      "tier": "A",
+      "date": "2026",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "BERT weights can directly initialize a discrete diffusion LM: DiffusionBERT (ACL 2023) showed 'pre-trained denoising language models (e.g., BERT) can be used as a good initialization that accelerates convergence' for the reverse process, investigated several designs for incorporating the time step into BERT, and proposed a token-frequency-aware ('spindle') noise schedule — significant improvement over D3PM and Diffusion-LM on perplexity/BLEU.",
+      "url": "https://aclanthology.org/2023.acl-long.248/",
+      "title": "DiffusionBERT: Improving Generative Masked Language Models with Diffusion Models",
+      "tier": "S",
+      "date": "2023-07 (ACL 2023)",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "You can convert an existing AR checkpoint instead of training from scratch: DiffuGPT/DiffuLLaMA (ICLR 2025) adapt GPT-2 (127M/355M) and LLaMA-7B into masked diffusion LMs via continual pretraining using 'less than 200B tokens', exploiting connections between AR and diffusion objectives; resulting models outperform earlier diffusion LMs and can infill without prompt reordering. For a laptop build, adapting a small pretrained GPT-2 is a legitimate shortcut path.",
+      "url": "https://arxiv.org/abs/2410.17891",
+      "title": "Scaling Diffusion Language Models via Adaptation from Autoregressive Models (DiffuGPT/DiffuLLaMA)",
+      "tier": "S",
+      "date": "2024-10 (ICLR 2025)",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "Dream 7B confirms AR-init at scale and documents the key alignment trick: it was initialized from Qwen2.5 7B weights ('using the weights from the existing autoregressive (AR) model serves as a non-trivial initialization... more effective than training from scratch'), and 'the model predicts all the masked tokens in a shifted manner, allowing for maximally architectural alignment and weight initialization with AR models' (shifted prediction keeps the AR output-head weight alignment). It adds context-adaptive token-level noise rescheduling that 'dynamically reassigns the noise level for each token based on the corrupted context'; trained on 580B tokens with fully bidirectional attention.",
+      "url": "https://hkunlp.github.io/blog/2025/dream/",
+      "title": "Dream 7B — HKU NLP Group blog (paper: arXiv 2508.15487)",
+      "tier": "A",
+      "date": "2025 (paper 2025-08)",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "From-scratch masked diffusion scales predictably and does math: SMDM established 'the first scaling law for MDMs, demonstrating a scaling rate comparable to autoregressive models' with a relatively small compute gap; a 1.1B MDM achieved 'competitive math reasoning ability with the 7B Llama-2 model on the GSM8K dataset' and breaks the reversal curse that afflicts much larger AR models. The LLaDA authors explicitly point people to SMDM's open-sourced training framework for training their own model — directly relevant reference code for a math-specialized DLLM.",
+      "url": "https://arxiv.org/abs/2410.18514",
+      "title": "Scaling up Masked Diffusion Models on Text (SMDM), Nie et al.",
+      "tier": "S",
+      "date": "2024-10 (v3 2025-02)",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "Context on the conditioning mechanism text models inherited then discarded: the original image DiT (Peebles & Xie, ICCV 2023) conditions on timestep via adaLN-Zero (zero-initialized adaptive LayerNorm modulation), which outperformed cross-attention and in-context conditioning while adding negligible FLOPs and drove SOTA ImageNet FID 2.27. Text masked-diffusion work (SEDD→MDLM→RADD/LLaDA) progressively showed this whole apparatus is droppable for absorbing-state text diffusion — the number of masked tokens already encodes the noise level.",
+      "url": "https://openaccess.thecvf.com/content/ICCV2023/papers/Peebles_Scalable_Diffusion_Models_with_Transformers_ICCV_2023_paper.pdf",
+      "title": "Scalable Diffusion Models with Transformers (DiT), Peebles & Xie",
+      "tier": "S",
+      "date": "2022-12 (ICCV 2023)",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "Number tokenization measurably decides arithmetic ability: 'Tokenization counts' (Singh & Strouse, DeepMind) found LLaMA/PaLM use single-digit tokenization while GPT-3.5/4 use 1-3 digit tokens; forcing right-to-left grouping (via commas) 'leads to largely improved performance' on arithmetic, L2R errors follow stereotyped patterns, and the R2L-vs-L2R gap shrinks with model scale — implying tokenization choice matters MOST at the small scales of a laptop build.",
+      "url": "https://arxiv.org/abs/2402.14903",
+      "title": "Tokenization counts: the impact of tokenization on arithmetic in frontier LLMs",
+      "tier": "S",
+      "date": "2024-02",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "Practitioner census and magnitudes for digit tokenization (Max Buckley, guest post on Beren's blog): single-digit tokenizers — Mistral, Llama 1-2, Gemma; L2R 3-digit chunks — GPT-3.5/4/4o, Gemini 1.5, Llama 3; R2L 3-digit — Claude 3+. Forcing R2L on 7-9 digit addition raised GPT-3.5 from 50.3% to 97% and Claude 2.1 from 28.3% to 100%. For a small math-specialized model, single-digit tokenization is the simplest scheme with the best small-scale evidence; R2L 3-digit is the efficient alternative.",
+      "url": "https://www.beren.io/2024-07-07-Right-to-Left-Integer-Tokenization/",
+      "title": "Right to Left (R2L) Integer Tokenization — Beren's blog (Max Buckley)",
+      "tier": "A",
+      "date": "2024-07-07",
+      "confidence": "high",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "Vocabulary size should shrink with model size: NeurIPS 2024 vocabulary scaling laws find optimal vocab parameters scale as (non-vocab params)^γ with γ≈0.83<1; verified predictions: ~3B non-vocab params → 39-43K optimal vocab, 7B → 62-67K, 70B → 212-231K (Llama2-70B's 32K vocab judged ~7x too small); raising a 3B model's vocab 32K→43K at equal FLOPs improved ARC-Challenge 29.1→32.0. Extrapolating the power law downward, a tens-of-millions-parameter laptop model wants a vocabulary in the low thousands-to-~16K range, else the embedding+head matrix dominates the parameter budget — with a math-only corpus (digits, operators, small English vocab) pushing it even lower.",
+      "url": "https://arxiv.org/abs/2407.13623",
+      "title": "Scaling Laws with Vocabulary: Larger Models Deserve Larger Vocabularies (NeurIPS 2024)",
+      "tier": "S",
+      "date": "2024-07 (NeurIPS 2024)",
+      "confidence": "high",
+      "evidenceType": "inference"
+    },
+    {
+      "claim": "Masked diffusion LMs work in severely data-constrained small-scale regimes: a BabyLM 2025 entry trained masked diffusion LMs under the 100M-word limit with frequency-informed masking (prioritizing rare tokens) and varied NELBO noise weighting, achieving 'performance competitive to hybrid autoregressive-masked baselines' — direct evidence that the architecture is viable at consumer-hardware training scales, not just at 100B+ token scale.",
+      "url": "https://arxiv.org/abs/2509.05056",
+      "title": "Masked Diffusion Language Models with Frequency-Informed Training",
+      "tier": "S",
+      "date": "2025-09",
+      "confidence": "medium",
+      "evidenceType": "direct"
+    },
+    {
+      "claim": "MDLM's official repo is a working reference implementation whose config surface documents the architecture decisions: backbones 'DiT, AR transformer, and Mamba' (backbone=dit / hf_dit), parameterization=subs for the SUBS loss, optional time_conditioning=True kept only for the SEDD baseline, model=small with model.length=1024 context; it also implements a low-discrepancy sampler that reduces ELBO variance during training — a train-stability trick worth copying.",
+      "url": "https://github.com/kuleshov-group/mdlm",
+      "title": "kuleshov-group/mdlm (NeurIPS 2024 official code)",
+      "tier": "S",
+      "date": "2024 (maintained)",
+      "confidence": "high",
+      "evidenceType": "direct"
+    }
+  ],
+  "coverage": {
+    "attempted": [
+      "LLaDA architecture transformer bidirectional attention mask token diffusion (WebSearch)",
+      "MDLM Simple and Effective Masked Diffusion Language Models DiT rotary time conditioning (WebSearch)",
+      "absorbing discrete diffusion time conditioning unnecessary RADD (WebSearch)",
+      "masked diffusion models secretly time-agnostic first hitting sampler (WebSearch)",
+      "DiT adaLN-Zero Peebles Xie conditioning architecture (WebSearch)",
+      "BERT masked language model generative diffusion DiffusionBERT variable masking ratio (WebSearch)",
+      "tokenization arithmetic single digit right-to-left grouping (WebSearch)",
+      "vocabulary size scaling laws small model optimal vocab (WebSearch)",
+      "Dream 7B Qwen2.5 initialization shift (WebSearch)",
+      "Fetches: arXiv 2502.09992 (abs+html v3), arXiv 2406.07524 (html), s-sahoo.com/mdlm, kuleshov-group blog, github kuleshov-group/mdlm, github ML-GSAI/LLaDA + GUIDELINES.md raw, HF LLaDA-8B-Base config.json, beren.io R2L post, arXiv 2402.14903, arXiv 2407.13623 (html, twice), github sail-sg/scaling-with-vocab, arXiv 2410.17891, arXiv 2410.18514, aclanthology 2023.acl-long.248, hkunlp.github.io Dream blog, arXiv 2509.05056"
+    ],
+    "useful": [
+      "All nine searches returned primary sources",
+      "LLaDA html v3 (vanilla MHA quote, time-free quote)",
+      "LLaDA GUIDELINES.md (full training recipe with code)",
+      "HF config.json (exact 8B architecture numbers)",
+      "MDLM html + project page (DDiT, SUBS, time-conditioning ablation, tokenizers)",
+      "Kuleshov Group how-to blog (BERT framing, ELBO, production variants)",
+      "RADD search results (time-free proof, NFE caching)",
+      "2409.02908 (time-agnostic equivalence, FHS, sampling-precision pitfall)",
+      "beren.io + 2402.14903 (digit tokenization schemes and magnitudes)",
+      "2407.13623 html (verified vocab table rows 3B/7B/70B, γ≈0.83)",
+      "SMDM abstract (scaling law, GSM8K claim)",
+      "Dream blog (AR init, shifted prediction)",
+      "DiffusionBERT abstract (BERT init)",
+      "2509.05056 (BabyLM-scale viability)"
+    ],
+    "failed": [
+      "Exa MCP tools not present in this environment (fell back to WebSearch/WebFetch)",
+      "arxiv.org/html/2406.07524v5 returned 404 (v-less URL worked)",
+      "arXiv abs page for LLaDA returned abstract only (no architecture table); Appendix B.2 table for LLaDA-1B could not be extracted from the html either — worked around via HF config.json for 8B",
+      "github sail-sg/scaling-with-vocab README had no numeric table",
+      "First fetch of 2407.13623 produced an internally inconsistent small-model vocab table (33M→37-43K but 3B→37-43K while 1B→81-91K) — discarded as unreliable extraction; only the re-verified 3B/7B/70B rows are reported"
+    ]
+  },
+  "contradictions": [
+    "Time conditioning: D3PM/SEDD/DiT lineage builds adaLN time conditioning into the backbone, and DiffusionBERT (2023) spent effort on 'designs of incorporating the time step into BERT' — but MDLM's ablation (no perplexity difference), RADD's proof, and 2409.02908's equivalence result all establish it is unnecessary for ABSORBING (mask-based) diffusion specifically. The resolution: the number of visible mask tokens already encodes the noise level. Caution: this time-free property is derived for absorbing/masked diffusion; it does not automatically transfer to uniform-state or other corruption processes.",
+    "KV cache: LLaDA states flatly it is 'incompatible with KV caching', yet SMDM reports MDMs 'match ARMs in performance while being 1.4 times faster during sampling' using KV-cache acceleration, and the Kuleshov blog describes block diffusion supporting KV caching. Resolution: pure full-sequence bidirectional diffusion has no KV cache; block/semi-autoregressive variants restore it at the cost of some bidirectionality.",
+    "Sampling quality claims: 2409.02908 argues part of MDMs' reported generative-perplexity advantage comes from numerically inaccurate categorical (Gumbel) sampling at low float precision — a direct challenge to sample-quality claims in earlier MDM papers; any home-built evaluation should use float64 Gumbel or exact categorical sampling to avoid fooling itself.",
+    "Digit tokenization: single-digit tokenization has the best evidence at small scale (and is what Llama 1-2/Mistral/Gemma chose), but frontier models moved to 3-digit chunks for sequence-length efficiency and Singh & Strouse show the tokenization-direction gap shrinks with scale — so advice from frontier-model practice (3-digit chunks) is arguably wrong for a tiny laptop model, where single-digit is safer.",
+    "Vocabulary size: the scaling-law paper's headline ('larger models deserve larger vocabularies', Llama2-70B should be 216K+) is routinely quoted as 'use bigger vocabs', but its power law equally implies sub-100M-parameter models should use far SMALLER vocabularies than the customary 32-50K — the headline and the small-model implication point in opposite directions depending on scale."
+  ],
+  "practitionerReality": "The practitioner consensus across LLaDA's official GUIDELINES.md, the Kuleshov Group blog, and the Dream team is that a masked diffusion LM is not an exotic architecture — it is a standard LLaMA-style decoder with the causal mask deleted, one reserved [MASK] vocab id, and a modified loss (cross-entropy on masked positions only, weighted 1/t, with t~U[0,1] sampled per sequence). LLaDA's guidelines literally show the pretraining loop in ~10 lines of PyTorch and say to start 'from an existing autoregressive model training code'. No time embedding, no adaLN, no special heads are needed (MDLM ablation + RADD proof); the two output-head tricks that matter are setting the [MASK] logit to -inf and carrying over unmasked tokens. Working open reference code exists at every scale: kuleshov-group/mdlm (110M, GPT-2 tokenizer, 1024 context, Hydra configs), ML-GSAI/SMDM (the training framework the LLaDA authors recommend, with GSM8K math results at 1.1B), and ML-GSAI/LLaDA (inference + guidelines). Two proven shortcuts for limited compute: initialize from a pretrained AR checkpoint (DiffuGPT converted GPT-2 127M/355M; Dream 7B from Qwen2.5 with shifted prediction to keep weight alignment), and note that a BabyLM entry trained competitive masked-diffusion models on only 100M words — consistent with laptop-scale feasibility. For the math specialization, the tokenizer is a first-class architecture decision: single-digit number tokenization (Llama-1/2 style) or right-to-left 3-digit grouping, plus a small vocabulary (low thousands for a math-heavy corpus) so the embedding matrix does not dominate a tens-of-millions-parameter model.",
+  "gaps": [
+    "LLaDA-1B architecture table (Appendix B.2: layers/dims for the 1B variant) could not be extracted from any fetched version — only the 8B config is verified via HuggingFace config.json; the 1B numbers would be the more useful reference point for a laptop-scale clone.",
+    "Compute-optimal vocabulary predictions below 3B non-vocab parameters could not be verified from the paper's table (one extraction was internally inconsistent and was discarded); the small-model guidance (low-thousands vocab for a ~10-50M model) rests on extrapolating the γ≈0.83 power law, not on published rows.",
+    "DiffuGPT/DiffuLLaMA's specific adaptation mechanics (attention-mask annealing schedule, exact logit-shift implementation) were only confirmed at abstract level plus the Dream blog's 'shifted manner' statement; the step-by-step annealing recipe was not extracted from the paper body.",
+    "No primary source was found that studies digit/number tokenization effects specifically in DIFFUSION language models — all tokenization-arithmetic evidence (Singh & Strouse, Buckley) comes from autoregressive models; transfer to masked diffusion is plausible but unverified.",
+    "Quantified overhead of keeping adaLN/time conditioning (parameter count %, wall-clock cost) was not found — sources establish it is unnecessary but not what it costs if kept.",
+    "DiffusionBERT's conclusion about WHICH time-incorporation design won (including whether time-agnostic BERT was best) was not extracted beyond 'we investigate several designs'."
+  ],
+  "bestSources": [
+    {
+      "title": "LLaDA GUIDELINES.md + HF config.json (ML-GSAI)",
+      "url": "https://github.com/ML-GSAI/LLaDA/blob/main/GUIDELINES.md",
+      "why": "The single most build-actionable source: exact pretraining/SFT loss code (p_mask=(1-eps)t+eps, mask id 126336, CE/p_mask weighting, 1% random-length trick) plus, via the companion config.json, every architecture hyperparameter of a proven DLLM to scale down."
+    },
+    {
+      "title": "Simple and Effective Masked Diffusion Language Models (MDLM) — paper + project page + repo",
+      "url": "https://arxiv.org/abs/2406.07524",
+      "why": "Defines the modern minimal recipe at buildable scale (110M): DDiT = encoder transformer + RoPE, SUBS parameterization (-inf mask logit, carry-over unmasking), Rao-Blackwellized weighted-CE objective, and the time-conditioning ablation showing identical perplexity without it."
+    },
+    {
+      "title": "Your Absorbing Discrete Diffusion Secretly Models the Conditional Distributions of Clean Data (RADD)",
+      "url": "https://arxiv.org/abs/2406.03736",
+      "why": "The theoretical keystone: proves time conditioning is unnecessary for masked diffusion, licensing the use of a completely vanilla transformer and enabling output caching across sampling steps — the reason LLaDA's architecture is 'unmodified'."
+    },
+    {
+      "title": "Kuleshov Group — How to Build a Diffusion Language Model",
+      "url": "https://kuleshov-group.github.io/blog/blog/2026/how-to-build-a-diffusion-language-model/",
+      "why": "Authoritative synthesis from the MDLM authors that frames the whole design space: masked diffusion as 'generative BERT' with randomized masking rate, the ELBO-as-BERT-loss identity, and production variants (encoder-decoder, block diffusion with KV cache) — ideal conceptual scaffolding for a build plan."
+    },
+    {
+      "title": "Tokenization counts (Singh & Strouse) + Beren's blog R2L post",
+      "url": "https://arxiv.org/abs/2402.14903",
+      "why": "Together they settle the math-specialization tokenizer decision with numbers: single-digit vs L2R vs R2L 3-digit schemes across model families, 22-70 point arithmetic accuracy swings, and the finding that tokenization choice matters most at small scale — exactly the laptop regime."
+    }
+  ]
+}

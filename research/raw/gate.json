@@ -1,0 +1,22 @@
+{
+  "verdict": "PASS",
+  "scores": {
+    "saturation": 0.85,
+    "sourceDiversity": 0.65,
+    "tierQuality": 0.7,
+    "evidenceDepth": 0.9,
+    "recency": 0.9,
+    "contradictionCoverage": 0.9,
+    "practicalUsefulness": 0.95,
+    "claimHygiene": 0.65,
+    "uncertaintyHonesty": 0.9
+  },
+  "counts": {
+    "sourcesIncluded": 85,
+    "saTierSources": 30,
+    "insights": 12
+  },
+  "failures": [],
+  "recommendation": "Publish for the build decision. Core engineering claims (masked-CE objective, no time conditioning, tiny architecture delta, encoder-finetune fallback) are verified by 3-4 genuinely independent groups, contradictions are integrated into the synthesis with downgraded confidence, and the audit is rigorous (live spot-checks, COI and citation-loop analysis). Before quoting specific numbers in the final report: (1) dedup source counting — 317 findings collapse to ~85 unique URLs, so never present repetition as corroboration; (2) reconcile the 5 conflicting LLaDA GSM8K values and the TinyGSM size inconsistency, annotating eval configs; (3) drop or caveat all vendor-only speed claims (Mercury/Seed/Gemini) — synthesis already correctly says do not sell speed; (4) verify the DiffusionGemma admission and post-cutoff venue claims the audit could not confirm; (5) keep the mandated regularized-AR-baseline control — without it the data-constrained diffusion advantage is unattributable. Residual risk to state prominently: no laptop-trained from-scratch diffusion model with nontrivial math accuracy exists anywhere in the record; both documented attempts produced gibberish, so coherent output is milestone one, not an assumption. Note: SYNTH/AUDIT/CONTRA arrived truncated in transmission, so insight count (12) and counterclaim count (6) are floors; counts derive from the audit's unique-URL analysis, and saTierSources (~30) uses defensible tier assignments, not the corpus's inflated S-labels that stamped press releases alongside NeurIPS papers.",
+  "weakestAspects": []
+}
