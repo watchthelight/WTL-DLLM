@@ -44,6 +44,7 @@ def ar_generate(model, tok, prompt_ids, canvas_len):
 def run_eval(ckpt: Path, level: int, split: str, steps=None, ordering="confidence",
              temperature=0.0, seed=0, limit=None, weights="raw",
              data_dir: Path = None) -> dict:
+    ckpt = Path(ckpt).resolve()
     device = "cuda" if torch.cuda.is_available() else "cpu"
     model, tok, ck = load_ckpt(ckpt, weights=weights, device=device)
     data_dir = data_dir or ROOT / "runs" / "data"
@@ -72,7 +73,8 @@ def run_eval(ckpt: Path, level: int, split: str, steps=None, ordering="confidenc
 
     n = len(rows)
     result = {
-        "ckpt": str(ckpt.relative_to(ROOT)), "mode": ck["mode"], "weights": weights,
+        "ckpt": str(ckpt.relative_to(ROOT)) if ckpt.is_relative_to(ROOT) else str(ckpt),
+        "mode": ck["mode"], "weights": weights,
         "level": level, "split": split, "n": n,
         "steps": steps if steps is not None else "canvas",
         "ordering": ordering if ck["mode"] != "ar" else "left-to-right",
