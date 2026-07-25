@@ -22,7 +22,7 @@ Reading guide: *heldout* is a 10% slice of the problem space the model never tra
 
 Also measured here, because the literature only knew it at 7–8B scale: at 10M params, *random* unmasking order beats *confidence* order on hard inputs (0.112 vs 0.084). Tiny models are confidently wrong; their confidence isn't worth ordering by. On easy inputs every ordering ties at 1.000, even at 2 denoising steps.
 
-Level 2 (multiplication) and level 3 (multi-digit carries, precedence) results land in `docs/results/results.md` as their runs finish.
+The other levels sharpen the story (`docs/results/levels.md` has the full table). L3 — multi-digit carries — generalizes at 96–97% for both architectures and holds ~80% even on censored digits: carrying is an algorithm, and algorithms transfer. L2 — multiplication — sits at 21.5% heldout for *both* models, which is exactly what commutativity buys you when unseen facts aren't derivable; a 10M model does not invent multiplication. And the infill everyone builds diffusion demos around had to be earned: the SFT-style objective never trains operand positions, so a mixed objective was added — after which operand infill grades 200/200 equation-valid with solve accuracy intact. Per-step latency: 5.3ms on the GPU, 6.8ms on CPU — realtime with room to spare.
 
 ## How it works, in ten lines
 

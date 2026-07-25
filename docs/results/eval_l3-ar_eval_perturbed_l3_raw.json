@@ -1,0 +1,72 @@
+{
+  "ckpt": "runs\\ckpt\\l3-ar\\step0020000.pt",
+  "mode": "ar",
+  "weights": "raw",
+  "level": 3,
+  "split": "eval_perturbed",
+  "n": 2000,
+  "steps": "canvas",
+  "ordering": "left-to-right",
+  "temperature": 0.0,
+  "seed": 0,
+  "date": "2026-07-25",
+  "accuracy": 0.7945,
+  "wellformed": 1.0,
+  "counts": {
+    "correct": 1589,
+    "wrong": 411,
+    "malformed": 0
+  },
+  "bad_examples": [
+    {
+      "problem": "8+9*9=89",
+      "generated": "2998",
+      "verdict": "wrong"
+    },
+    {
+      "problem": "8+8*8=72",
+      "generated": "5677",
+      "verdict": "wrong"
+    },
+    {
+      "problem": "9+9*9=90",
+      "generated": "2999",
+      "verdict": "wrong"
+    },
+    {
+      "problem": "8+9*8=80",
+      "generated": "5287",
+      "verdict": "wrong"
+    },
+    {
+      "problem": "9+9*8=81",
+      "generated": "5288",
+      "verdict": "wrong"
+    },
+    {
+      "problem": "9+8*8=73",
+      "generated": "5578",
+      "verdict": "wrong"
+    },
+    {
+      "problem": "9+9*8=81",
+      "generated": "5288",
+      "verdict": "wrong"
+    },
+    {
+      "problem": "8+8*8=72",
+      "generated": "5677",
+      "verdict": "wrong"
+    },
+    {
+      "problem": "739+3228=3967",
+      "generated": "4967",
+      "verdict": "wrong"
+    },
+    {
+      "problem": "8+8*8=72",
+      "generated": "5677",
+      "verdict": "wrong"
+    }
+  ]
+}

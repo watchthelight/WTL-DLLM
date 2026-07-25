@@ -1,0 +1,72 @@
+{
+  "ckpt": "runs\\ckpt\\l3-ar\\step0020000.pt",
+  "mode": "ar",
+  "weights": "raw",
+  "level": 3,
+  "split": "eval_heldout",
+  "n": 2000,
+  "steps": "canvas",
+  "ordering": "left-to-right",
+  "temperature": 0.0,
+  "seed": 0,
+  "date": "2026-07-25",
+  "accuracy": 0.974,
+  "wellformed": 1.0,
+  "counts": {
+    "correct": 1948,
+    "wrong": 52,
+    "malformed": 0
+  },
+  "bad_examples": [
+    {
+      "problem": "5+3*3=14",
+      "generated": "10",
+      "verdict": "wrong"
+    },
+    {
+      "problem": "3+3*6=21",
+      "generated": "15",
+      "verdict": "wrong"
+    },
+    {
+      "problem": "5+3*3=14",
+      "generated": "10",
+      "verdict": "wrong"
+    },
+    {
+      "problem": "3+3*6=21",
+      "generated": "15",
+      "verdict": "wrong"
+    },
+    {
+      "problem": "6+4*4=22",
+      "generated": "20",
+      "verdict": "wrong"
+    },
+    {
+      "problem": "3+3*6=21",
+      "generated": "15",
+      "verdict": "wrong"
+    },
+    {
+      "problem": "6+4*4=22",
+      "generated": "20",
+      "verdict": "wrong"
+    },
+    {
+      "problem": "5+3*3=14",
+      "generated": "10",
+      "verdict": "wrong"
+    },
+    {
+      "problem": "2+3*6=20",
+      "generated": "19",
+      "verdict": "wrong"
+    },
+    {
+      "problem": "3+3*6=21",
+      "generated": "15",
+      "verdict": "wrong"
+    }
+  ]
+}

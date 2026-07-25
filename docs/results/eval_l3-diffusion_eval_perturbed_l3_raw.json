@@ -1,0 +1,72 @@
+{
+  "ckpt": "runs\\ckpt\\l3-diffusion\\step0020000.pt",
+  "mode": "diffusion",
+  "weights": "raw",
+  "level": 3,
+  "split": "eval_perturbed",
+  "n": 2000,
+  "steps": "canvas",
+  "ordering": "confidence",
+  "temperature": 0.0,
+  "seed": 0,
+  "date": "2026-07-25",
+  "accuracy": 0.807,
+  "wellformed": 1.0,
+  "counts": {
+    "correct": 1614,
+    "wrong": 386,
+    "malformed": 0
+  },
+  "bad_examples": [
+    {
+      "problem": "8+9*9=89",
+      "generated": "49",
+      "verdict": "wrong"
+    },
+    {
+      "problem": "8+8*8=72",
+      "generated": "49",
+      "verdict": "wrong"
+    },
+    {
+      "problem": "9+9*9=90",
+      "generated": "39",
+      "verdict": "wrong"
+    },
+    {
+      "problem": "8+9*8=80",
+      "generated": "49",
+      "verdict": "wrong"
+    },
+    {
+      "problem": "9+9*8=81",
+      "generated": "49",
+      "verdict": "wrong"
+    },
+    {
+      "problem": "9+8*8=73",
+      "generated": "49",
+      "verdict": "wrong"
+    },
+    {
+      "problem": "9+9*8=81",
+      "generated": "49",
+      "verdict": "wrong"
+    },
+    {
+      "problem": "8+8*8=72",
+      "generated": "49",
+      "verdict": "wrong"
+    },
+    {
+      "problem": "8+8*8=72",
+      "generated": "49",
+      "verdict": "wrong"
+    },
+    {
+      "problem": "8+8*9=80",
+      "generated": "49",
+      "verdict": "wrong"
+    }
+  ]
+}
