@@ -107,8 +107,8 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--ckpt", type=Path, required=True)
     ap.add_argument("--level", type=int, default=1)
-    ap.add_argument("--split", default="eval_perturbed",
-                    choices=["eval", "eval_perturbed"])
+    ap.add_argument("--split", default="eval_heldout",
+                    choices=["eval", "eval_heldout", "eval_perturbed"])
     ap.add_argument("--steps", type=int, default=None)
     ap.add_argument("--ordering", default="confidence")
     ap.add_argument("--temperature", type=float, default=0.0)

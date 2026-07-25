@@ -70,3 +70,21 @@ def test_leakage_check_catches_plant():
     a = set(_batch(1, 3000, seed=1))
     b = set(_batch(1, 3000, seed=2))
     assert a & b, "identical bands should collide; disjointness must come from bands, not luck"
+
+
+def test_build_splits_disjoint(tmp_path):
+    import json
+
+    from dllm.data.build import build_level, is_heldout
+
+    info = build_level(1, n_train=3000, n_eval=200, seed=11, out=tmp_path)
+    assert info["eval_heldout"] == 200
+
+    def texts(name):
+        return {json.loads(l)["text"] for l in (tmp_path / f"{name}_l1.jsonl").read_text().splitlines()}
+
+    train, held, pert = texts("train"), texts("eval_heldout"), texts("eval_perturbed")
+    assert not train & held, "heldout leaked into train"
+    assert not train & pert, "perturbed leaked into train"
+    assert all(is_heldout(s) for s in held)
+    assert not any(is_heldout(s) for s in train)
