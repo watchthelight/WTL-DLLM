@@ -13,11 +13,34 @@ from pathlib import Path
 import torch
 
 from dllm.config import PRESETS, TrainDefaults, default_preset
-from dllm.data.generator import CANVAS, prompt_len
+from dllm.data.build import is_heldout
+from dllm.data.generator import CANVAS, MathGen, prompt_len
 from dllm.model import Tokenizer, Transformer
 from dllm.model.objective import ar_loss, diffusion_loss
 
 ROOT = Path(__file__).resolve().parents[2]
+
+
+class FreshBatcher:
+    """Never-repeating stream for --data fresh; skips heldout instances so the
+    eval_heldout claim survives fresh sampling too."""
+
+    def __init__(self, level: int, tok: Tokenizer, seed: int):
+        self.gen = MathGen(seed * 7919, level)
+        self.level, self.tok = level, tok
+        self.canvas = CANVAS[level]
+
+    def batch(self, n: int, device):
+        texts = []
+        while len(texts) < n:
+            s = self.gen.sample()
+            if not is_heldout(s):
+                texts.append(s)
+        ids = torch.tensor([self.tok.encode(t, canvas=self.canvas) for t in texts],
+                           dtype=torch.long, device=device)
+        plens = torch.tensor([prompt_len(t, self.level) for t in texts],
+                             dtype=torch.long, device=device)
+        return ids, plens
 
 
 def load_corpus(level: int, tok: Tokenizer, data_dir: Path):
@@ -85,6 +108,7 @@ def main():
     ap.add_argument("--lr", type=float, default=None)
     ap.add_argument("--run-name", default=None)
     ap.add_argument("--data-dir", type=Path, default=ROOT / "runs" / "data")
+    ap.add_argument("--data", choices=["frozen", "fresh"], default="frozen")
     ap.add_argument("--resume", action="store_true")
     ap.add_argument("--seed", type=int, default=1)
     args = ap.parse_args()
@@ -102,8 +126,10 @@ def main():
     torch.manual_seed(args.seed)
 
     tok = Tokenizer.from_file(args.data_dir / "vocab.json")
-    data, plens = load_corpus(args.level, tok, args.data_dir)
-    data, plens = data.to(device), plens.to(device)
+    fresh = FreshBatcher(args.level, tok, args.seed) if args.data == "fresh" else None
+    if fresh is None:
+        data, plens = load_corpus(args.level, tok, args.data_dir)
+        data, plens = data.to(device), plens.to(device)
     canvas = CANVAS[args.level]
 
     model = Transformer(preset, len(tok), causal=(args.mode == "ar")).to(device)
@@ -120,7 +146,7 @@ def main():
         start = ck["step"]
         print(f"resumed {run} at step {start}")
 
-    n = data.shape[0]
+    n = 0 if fresh else data.shape[0]
     gen = torch.Generator(device=device).manual_seed(args.seed + start)
     eval_prompts = None
     t0 = time.time()
@@ -129,8 +155,11 @@ def main():
     for step in range(start + 1, args.steps + 1):
         for g in opt.param_groups:
             g["lr"] = lr_at(step, args.steps, cfg) * (lr / cfg.lr)
-        idx = torch.randint(0, n, (preset.batch_size,), device=device, generator=gen)
-        x, pl = data[idx], plens[idx]
+        if fresh:
+            x, pl = fresh.batch(preset.batch_size, device)
+        else:
+            idx = torch.randint(0, n, (preset.batch_size,), device=device, generator=gen)
+            x, pl = data[idx], plens[idx]
         with torch.autocast(device_type="cuda", dtype=torch.bfloat16, enabled=use_bf16):
             loss = (diffusion_loss(model, x, prompt_lens=pl, antithetic=True, generator=gen)
                     if args.mode == "diffusion" else ar_loss(model, x, prompt_lens=pl))
