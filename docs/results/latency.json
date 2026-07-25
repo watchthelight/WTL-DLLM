@@ -1,0 +1,13 @@
+{
+  "cuda": {
+    "ms_per_generation": 31.79,
+    "ms_per_step": 5.3,
+    "steps_avg": 6.0
+  },
+  "cpu": {
+    "ms_per_generation": 40.69,
+    "ms_per_step": 6.78,
+    "steps_avg": 6.0
+  },
+  "note": "l1 canvas 12, confidence ordering, frame capture on; light concurrent eval load on gpu"
+}
