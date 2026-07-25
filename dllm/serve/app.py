@@ -89,6 +89,12 @@ async def _stream(ws: WebSocket, req: GenRequest):
     if req.infill:
         pre = [tok.t2i[c] for c in req.infill["prefix"]]
         suf = [tok.t2i[c] for c in req.infill["suffix"]]
+        # pad the canvas to the training shape (content + eos + pad tail) so the
+        # positions the model sees match the distribution it learned
+        canvas = req.canvas_len or CANVAS[1]
+        tail = canvas - (len(pre) + req.infill["hole_len"] + len(suf))
+        if tail > 0:
+            suf = suf + [tok.eos_id] + [tok.pad_id] * (tail - 1)
         _, frames = await loop.run_in_executor(None, lambda: infill(
             STATE["model"], tok, pre, suf, req.infill["hole_len"],
             steps=req.steps, ordering=req.ordering, temperature=req.temperature,

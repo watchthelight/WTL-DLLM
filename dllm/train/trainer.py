@@ -109,6 +109,9 @@ def main():
     ap.add_argument("--run-name", default=None)
     ap.add_argument("--data-dir", type=Path, default=ROOT / "runs" / "data")
     ap.add_argument("--data", choices=["frozen", "fresh"], default="frozen")
+    ap.add_argument("--prompt-mode", choices=["protect", "mix"], default="protect",
+                    help="protect: never mask the question (sft-style). mix: half the "
+                         "batches drop protection so operand infill gets trained too")
     ap.add_argument("--resume", action="store_true")
     ap.add_argument("--seed", type=int, default=1)
     args = ap.parse_args()
@@ -160,9 +163,12 @@ def main():
         else:
             idx = torch.randint(0, n, (preset.batch_size,), device=device, generator=gen)
             x, pl = data[idx], plens[idx]
+        pl_step = pl
+        if args.prompt_mode == "mix" and step % 2 == 0:
+            pl_step = None  # unconditional batch: any position may be masked
         with torch.autocast(device_type="cuda", dtype=torch.bfloat16, enabled=use_bf16):
-            loss = (diffusion_loss(model, x, prompt_lens=pl, antithetic=True, generator=gen)
-                    if args.mode == "diffusion" else ar_loss(model, x, prompt_lens=pl))
+            loss = (diffusion_loss(model, x, prompt_lens=pl_step, antithetic=True, generator=gen)
+                    if args.mode == "diffusion" else ar_loss(model, x, prompt_lens=pl_step))
         if loss is None:
             continue
         opt.zero_grad(set_to_none=True)
