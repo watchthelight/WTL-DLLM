@@ -1,0 +1,32 @@
+{
+  "ckpt": "runs\\ckpt\\g2-ar\\step0020000.pt",
+  "mode": "ar",
+  "weights": "raw",
+  "level": 1,
+  "split": "eval_heldout",
+  "n": 2000,
+  "steps": "canvas",
+  "ordering": "left-to-right",
+  "temperature": 0.0,
+  "seed": 0,
+  "date": "2026-07-25",
+  "accuracy": 0.999,
+  "wellformed": 1.0,
+  "counts": {
+    "correct": 1998,
+    "wrong": 2,
+    "malformed": 0
+  },
+  "bad_examples": [
+    {
+      "problem": "43+57=100",
+      "generated": "90",
+      "verdict": "wrong"
+    },
+    {
+      "problem": "43+57=100",
+      "generated": "90",
+      "verdict": "wrong"
+    }
+  ]
+}

@@ -1,0 +1,85 @@
+{
+  "ckpt": "runs\\ckpt\\g1-diffusion\\step0020000.pt",
+  "level": 1,
+  "limit": 500,
+  "best": {
+    "ordering": "random",
+    "steps": 8,
+    "accuracy": 0.112,
+    "wellformed": 0.994
+  },
+  "grid": [
+    {
+      "ordering": "random",
+      "steps": 8,
+      "accuracy": 0.112,
+      "wellformed": 0.994
+    },
+    {
+      "ordering": "random",
+      "steps": 4,
+      "accuracy": 0.104,
+      "wellformed": 0.994
+    },
+    {
+      "ordering": "random",
+      "steps": 2,
+      "accuracy": 0.108,
+      "wellformed": 0.994
+    },
+    {
+      "ordering": "confidence",
+      "steps": 8,
+      "accuracy": 0.084,
+      "wellformed": 0.994
+    },
+    {
+      "ordering": "confidence",
+      "steps": 4,
+      "accuracy": 0.092,
+      "wellformed": 0.994
+    },
+    {
+      "ordering": "confidence",
+      "steps": 2,
+      "accuracy": 0.094,
+      "wellformed": 0.994
+    },
+    {
+      "ordering": "margin",
+      "steps": 8,
+      "accuracy": 0.084,
+      "wellformed": 0.994
+    },
+    {
+      "ordering": "margin",
+      "steps": 4,
+      "accuracy": 0.094,
+      "wellformed": 0.994
+    },
+    {
+      "ordering": "margin",
+      "steps": 2,
+      "accuracy": 0.094,
+      "wellformed": 0.994
+    },
+    {
+      "ordering": "entropy",
+      "steps": 8,
+      "accuracy": 0.088,
+      "wellformed": 0.994
+    },
+    {
+      "ordering": "entropy",
+      "steps": 4,
+      "accuracy": 0.096,
+      "wellformed": 0.994
+    },
+    {
+      "ordering": "entropy",
+      "steps": 2,
+      "accuracy": 0.104,
+      "wellformed": 0.994
+    }
+  ]
+}

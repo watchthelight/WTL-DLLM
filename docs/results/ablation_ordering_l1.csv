@@ -1,0 +1,13 @@
+ordering,steps,accuracy,wellformed
+random,8,0.112,0.994
+random,4,0.104,0.994
+random,2,0.108,0.994
+confidence,8,0.084,0.994
+confidence,4,0.092,0.994
+confidence,2,0.094,0.994
+margin,8,0.084,0.994
+margin,4,0.094,0.994
+margin,2,0.094,0.994
+entropy,8,0.088,0.994
+entropy,4,0.096,0.994
+entropy,2,0.104,0.994
