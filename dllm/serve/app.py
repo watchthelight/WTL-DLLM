@@ -109,7 +109,16 @@ async def _stream(ws: WebSocket, req: GenRequest):
 
     for f in frames:
         if f.get("done"):
-            f["verdict"] = grade(problem, f.get("answer", ""), level) if problem else "n/a"
+            # sampler's answer is the full decoded canvas; grade only the region
+            # the model actually generated
+            full = f.get("answer", "")
+            if problem:
+                plen = prompt_len(problem, level)
+                f["answer"] = full[plen:]
+                f["verdict"] = grade(problem, f["answer"], level)
+            else:
+                f["answer"] = full[len(text):] if not req.infill else full
+                f["verdict"] = "n/a"
         await ws.send_text(json.dumps(f))
         if req.throttle_ms:
             await asyncio.sleep(req.throttle_ms / 1000)
