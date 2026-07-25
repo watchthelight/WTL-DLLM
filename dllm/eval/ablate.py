@@ -20,6 +20,8 @@ def main():
     ap.add_argument("--limit", type=int, default=500)
     ap.add_argument("--canvas-steps", type=int, required=True,
                     help="the canvas-length step count for this level (full budget)")
+    ap.add_argument("--split", default="eval_perturbed",
+                    choices=["eval", "eval_heldout", "eval_perturbed"])
     args = ap.parse_args()
 
     grid_steps = sorted({args.canvas_steps, max(args.canvas_steps // 2, 1),
@@ -27,13 +29,13 @@ def main():
     rows = []
     for ordering in ORDERINGS:
         for steps in grid_steps:
-            r = run_eval(args.ckpt, args.level, "eval_perturbed", steps=steps,
+            r = run_eval(args.ckpt, args.level, args.split, steps=steps,
                          ordering=ordering, limit=args.limit)
             rows.append({"ordering": ordering, "steps": steps,
                          "accuracy": r["accuracy"], "wellformed": r["wellformed"]})
             print(f"{ordering:>10} @ {steps:>2} steps -> acc {r['accuracy']:.3f}  wf {r['wellformed']:.3f}")
 
-    out_csv = ROOT / "docs" / "results" / f"ablation_ordering_l{args.level}.csv"
+    out_csv = ROOT / "docs" / "results" / f"ablation_ordering_l{args.level}_{args.split}.csv"
     with open(out_csv, "w", newline="") as f:
         w = csv.DictWriter(f, fieldnames=["ordering", "steps", "accuracy", "wellformed"])
         w.writeheader()
@@ -41,8 +43,8 @@ def main():
 
     best = max(rows, key=lambda r: r["accuracy"])
     summary = {"ckpt": str(args.ckpt), "level": args.level, "limit": args.limit,
-               "best": best, "grid": rows}
-    (ROOT / "docs" / "results" / f"ablation_ordering_l{args.level}.json").write_text(
+               "split": args.split, "best": best, "grid": rows}
+    (ROOT / "docs" / "results" / f"ablation_ordering_l{args.level}_{args.split}.json").write_text(
         json.dumps(summary, indent=2) + "\n")
     print(f"\nbest: {best}")
     print(f"-> {out_csv}")
