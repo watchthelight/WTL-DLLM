@@ -40,5 +40,7 @@ Speed claims of any kind. Self-correction claims (committed tokens are frozen an
 ## Success
 
 - **G1 coherence** — ≥95% well-formed outputs on 200 held-out L1 prompts, reported next to the AR twin's number.
-- **G2 accuracy** — target ≥90% exact-match on L1 *perturbed* eval; the real number ships regardless. L2/L3 attempted if L1 lands; L4/L5 stretch.
+- **G2 accuracy** — target ≥90% exact-match on L1 unseen-instance eval (`eval_heldout`); the real number ships regardless. L2/L3 attempted if L1 lands; L4/L5 stretch.
 - **G3 demo** — the full loop live on this machine, smooth, honest.
+
+*Amended 2026-07-25:* G2's headline moved from the digit-band `eval_perturbed` split to the new `eval_heldout` split (unseen instances, full digit coverage, md5 holdout). The band split censored digits 8/9 from training operands entirely, which tests extrapolation — a known open problem — rather than generalization to new problems. Both numbers still get reported; see `docs/journal/2026-07-25-eval-design.md`.
