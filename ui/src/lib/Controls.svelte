@@ -130,6 +130,12 @@
     padding: 6px 8px;
     font-size: 0.85rem;
     transition: border-color var(--dur-fast) var(--ease-smooth);
+    accent-color: var(--sage);
+  }
+  input[type="range"] {
+    padding: 0;
+    background: none;
+    border: none;
   }
   select:hover,
   input:hover {
