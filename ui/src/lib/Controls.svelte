@@ -129,7 +129,6 @@
     border-radius: var(--radius);
     padding: 6px 8px;
     font-size: 0.85rem;
-    transition: border-color var(--dur-fast) var(--ease-smooth);
     accent-color: var(--sage);
   }
   input[type="range"] {
@@ -169,11 +168,9 @@
     font-family: var(--font-mono);
     font-size: 0.8rem;
     cursor: pointer;
-    transition: border-color var(--dur-fast) var(--ease-smooth), transform var(--dur-fast) var(--ease-out);
   }
   .run:hover:enabled {
     border-color: var(--sage);
-    transform: translateY(-1px);
   }
   .run:disabled {
     opacity: 0.5;

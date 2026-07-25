@@ -83,10 +83,6 @@
     border-radius: var(--radius);
     background: var(--surface-2);
     color: var(--ink-faint);
-    transition:
-      color var(--dur-slow) var(--ease-smooth),
-      border-color var(--dur-fast) var(--ease-smooth),
-      transform var(--dur-fast) var(--ease-spring);
   }
   .cell.prompt {
     background: var(--surface);
@@ -101,7 +97,6 @@
   .cell.committed.mid { color: var(--sage-deep); }
   .cell.committed.high { color: var(--sage-bright); }
   .cell.fresh {
-    transform: scale(1.06);
     border-color: var(--line-strong);
   }
   .hint {
@@ -128,11 +123,9 @@
     font-family: var(--font-mono);
     font-size: 0.72rem;
     cursor: pointer;
-    transition: border-color var(--dur-fast) var(--ease-smooth), transform var(--dur-fast) var(--ease-out);
   }
   .ghost:hover {
     border-color: var(--sage);
-    transform: translateY(-1px);
   }
   .verdict {
     font-family: var(--font-mono);

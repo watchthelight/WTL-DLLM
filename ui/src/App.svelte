@@ -8,7 +8,6 @@
   import DenoiseBoard from "./lib/DenoiseBoard.svelte";
   import Starfield from "./lib/Starfield.svelte";
   import TickRule from "./lib/TickRule.svelte";
-  import { glare } from "./lib/glare";
   import { session } from "./lib/ws.svelte";
 
   onMount(() => session.loadMeta());
@@ -36,14 +35,12 @@
 
   <main>
     <TickRule label="denoise" />
-    <section class="card" use:glare={{ tilt: false }}>
-      <span class="glare-layer"></span>
+    <section class="card">
       <DenoiseBoard />
     </section>
 
     <TickRule label="controls" />
-    <section class="card" use:glare={{ tilt: true }}>
-      <span class="glare-layer"></span>
+    <section class="card">
       <Controls />
     </section>
   </main>
@@ -106,31 +103,11 @@
     padding: 0 var(--space-section) var(--space-section);
   }
   .card {
-    position: relative;
     background: var(--surface);
     border: 1px solid var(--line-soft);
     border-radius: var(--radius);
     box-shadow: var(--shadow);
     padding: var(--space-card);
-    overflow: hidden;
-    transition: border-color var(--dur-fast) var(--ease-smooth), transform 120ms var(--ease-out);
-    transform-style: preserve-3d;
-  }
-  .card:hover {
-    border-color: var(--line-strong);
-  }
-  .glare-layer {
-    position: absolute;
-    inset: 0;
-    border-radius: inherit;
-    pointer-events: none;
-    opacity: var(--glare, 0);
-    transition: opacity var(--dur-fast) var(--ease-smooth);
-    background: radial-gradient(
-      220px at var(--mx, 50%) var(--my, 50%),
-      oklch(78% var(--accent-c) var(--accent-h) / 0.14),
-      transparent 60%
-    );
   }
   @media (max-width: 720px) {
     .shell {
