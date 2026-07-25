@@ -110,6 +110,17 @@ def _eval_left_ok(expr: str):
         return None
 
 
+def prompt_len(text: str, level: int) -> int:
+    """Chars that stay visible at inference (the question); the rest diffuses.
+
+    L1-L3: through the '='.  L4: through ',x=' (equation given, x wanted).
+    L5: through the '=' after the target.
+    """
+    if level == 4:
+        return text.index(",x=") + 3
+    return text.index("=") + 1
+
+
 def check_l5(problem: str) -> bool:
     """`3,7,25:46=25+3*7` — expression uses exactly the given numbers and hits target."""
     given, rest = problem.split(":", 1)
