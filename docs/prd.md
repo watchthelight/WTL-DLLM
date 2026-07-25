@@ -7,7 +7,7 @@ tags: [docs, product, requirements]
 
 # PRD
 
-One local app. Left rail: controls. Center: a token canvas where a math answer denoises in real time. Behind everything: a square starfield with mouse parallax. Nothing leaves the machine.
+One local app: a controls rail on the left, a token canvas in the center where a math answer denoises in real time, and a square starfield with mouse parallax behind everything. Nothing leaves the machine.
 
 ## Task ladder
 

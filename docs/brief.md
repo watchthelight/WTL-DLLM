@@ -21,7 +21,7 @@ Two research results make the corner look reachable. First, the 2024 convergence
 
 ## The honest risk
 
-Nobody has documented a from-scratch diffusion model trained on laptop-class compute that produces anything but gibberish. Both public attempts failed — one of them using exactly the recipe above. So coherent output is not an assumption here; it's gate number one, with an autoregressive twin trained on the same data as the control, and a fallback path (fine-tuning a small encoder) if the mainline stalls. The plan treats this as an experiment with instruments, not a product with a ship date.
+Nobody has documented a from-scratch diffusion model trained on laptop-class compute that produces anything but gibberish. Both public attempts failed — one of them using exactly the recipe above. So coherent output is gate number one, with an autoregressive twin trained on the same data as the control, and a fallback path (fine-tuning a small encoder) if the mainline stalls. The whole plan is built like an instrumented experiment, because that is what it honestly is.
 
 ## What done looks like
 

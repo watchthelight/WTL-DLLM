@@ -4,7 +4,7 @@
 
 A 10M-parameter diffusion language model you can watch think. Trained from scratch on one laptop in about 13 minutes, it solves arithmetic by unmasking tokens over a handful of refinement steps — and the web UI renders every step live, over a starfield, in a theme built for OLED black.
 
-Why diffusion? Mostly because you can *see* it. A left-to-right model streams tokens; this one starts from a fully masked canvas and commits tokens wherever it's most sure, so an answer condenses out of noise in front of you. It also turns out to degrade ~3× more gracefully than its autoregressive twin when the arithmetic leaves its training distribution — more on that below.
+The main reason to pick diffusion here: you can *see* it. A left-to-right model streams tokens; this one starts from a fully masked canvas and commits tokens wherever it's most sure, so an answer condenses out of noise in front of you. It also turns out to degrade ~3× more gracefully than its autoregressive twin when the arithmetic leaves its training distribution — more on that below.
 
 ![live run](docs/results/real-run-correct.png)
 
@@ -18,7 +18,7 @@ Every model here is the same 10M-parameter trunk, same tokenizer, same data, sam
 | diffusion, fresh data | 1.000 | 0.190 |
 | ar twin, frozen corpus | 0.999 | 0.092 |
 
-Reading guide: *heldout* is a 10% slice of the problem space the model never trained on (md5 split, same digit distribution) — the standard generalization claim, and it saturates. *Perturbed* holds out operand-final digits 8/9 from training entirely, which demands extrapolation to digit patterns never seen in those positions — a known open problem for small transformers. Both models fall off that cliff; the diffusion objective falls three times slower. Well-formed rate is 1.000 everywhere: nothing ever produced gibberish, which is worth saying out loud because both previously documented laptop attempts at from-scratch text diffusion did.
+Reading guide: *heldout* is a 10% slice of the problem space the model never trained on (md5 split, same digit distribution) — the standard generalization claim, and it saturates. *Perturbed* holds out operand-final digits 8/9 from training entirely, which demands extrapolation to digit patterns never seen in those positions — a known open problem for small transformers. Both models fall off that cliff; the diffusion objective falls three times slower. Well-formed rate is 1.000 everywhere: nothing ever produced gibberish, and that matters because both previously documented laptop attempts at from-scratch text diffusion did.
 
 Also measured here, because the literature only knew it at 7–8B scale: at 10M params, *random* unmasking order beats *confidence* order on hard inputs (0.112 vs 0.084). Tiny models are confidently wrong; their confidence isn't worth ordering by. On easy inputs every ordering ties at 1.000, even at 2 denoising steps.
 
@@ -45,7 +45,7 @@ This repo trained on an RTX 5070 Laptop (8GB): ~100k tokens/s, 0.56GB VRAM.
 
 ## What it doesn't do
 
-No speed claims — at this size everything is fast, and at large sizes the literature says diffusion decoding is *slower* than AR for math. No self-correction — a committed token is frozen, and the UI never pretends otherwise. No word problems — symbolic templates only, on purpose. No digit lengths beyond training ranges — that's the perturbed column telling you what happens. The model is a laboratory, not a calculator.
+It makes no speed claims: at this size everything is fast, and at large sizes the literature says diffusion decoding is actually *slower* than AR for math. A committed token is frozen — there's no self-correction, and the UI never pretends otherwise. The scope stays at symbolic templates (word problems were ruled out on evidence, see the dossier), within trained digit lengths — the perturbed column shows what happens past them. The model is a laboratory, not a calculator.
 
 ## The research
 
