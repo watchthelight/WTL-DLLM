@@ -1,89 +1,144 @@
-<script>
-  import svelteLogo from './assets/svelte.svg'
-  import viteLogo from './assets/vite.svg'
-  import heroImg from './assets/hero.png'
-  import Counter from './lib/Counter.svelte'
+<!-- wtl-dllm · ui/src/App.svelte -->
+<script lang="ts">
+  /* what: shell — rail, board, controls over the starfield
+     by:   <wtl> watchthelight
+     tags: ui, shell */
+  import { onMount } from "svelte";
+  import Controls from "./lib/Controls.svelte";
+  import DenoiseBoard from "./lib/DenoiseBoard.svelte";
+  import Starfield from "./lib/Starfield.svelte";
+  import TickRule from "./lib/TickRule.svelte";
+  import { glare } from "./lib/glare";
+  import { session } from "./lib/ws.svelte";
+
+  onMount(() => session.loadMeta());
+
+  const modelLine = $derived(
+    session.info
+      ? `${session.info.model} · ${(Number(session.info.params) / 1e6).toFixed(1)}m params · ${session.info.device}`
+      : "connecting…"
+  );
 </script>
 
-<section id="center">
-  <div class="hero">
-    <img src={heroImg} class="base" width="170" height="179" alt="" />
-    <img src={svelteLogo} class="framework" alt="Svelte logo" />
-    <img src={viteLogo} class="vite" alt="Vite logo" />
-  </div>
-  <div>
-    <h1>Get started</h1>
-    <p>Edit <code>src/App.svelte</code> and save to test <code>HMR</code></p>
-  </div>
-  <Counter />
-</section>
+<Starfield />
 
-<div class="ticks"></div>
+<div class="shell">
+  <aside class="rail">
+    <div class="brand">
+      <span class="tick"></span>
+      <h1>wtl-dllm</h1>
+    </div>
+    <p class="sub">a tiny diffusion language model, live</p>
+    <div class="meta mono">{modelLine}</div>
+    <div class="spacer"></div>
+    <footer class="mono">built by watchthelight · mit</footer>
+  </aside>
 
-<section id="next-steps">
-  <div id="docs">
-    <svg class="icon" role="presentation" aria-hidden="true">
-      <use href="/icons.svg#documentation-icon"></use>
-    </svg>
-    <h2>Documentation</h2>
-    <p>Your questions, answered</p>
-    <ul>
-      <li>
-        <a href="https://vite.dev/" target="_blank" rel="noreferrer">
-          <img class="logo" src={viteLogo} alt="" />
-          Explore Vite
-        </a>
-      </li>
-      <li>
-        <a href="https://svelte.dev/" target="_blank" rel="noreferrer">
-          <img class="button-icon" src={svelteLogo} alt="" />
-          Learn more
-        </a>
-      </li>
-    </ul>
-  </div>
-  <div id="social">
-    <svg class="icon" role="presentation" aria-hidden="true">
-      <use href="/icons.svg#social-icon"></use>
-    </svg>
-    <h2>Connect with us</h2>
-    <p>Join the Vite community</p>
-    <ul>
-      <li>
-        <a href="https://github.com/vitejs/vite" target="_blank" rel="noreferrer">
-          <svg class="button-icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#github-icon"></use>
-          </svg>
-          GitHub
-        </a>
-      </li>
-      <li>
-        <a href="https://chat.vite.dev/" target="_blank" rel="noreferrer">
-          <svg class="button-icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#discord-icon"></use>
-          </svg>
-          Discord
-        </a>
-      </li>
-      <li>
-        <a href="https://x.com/vite_js" target="_blank" rel="noreferrer">
-          <svg class="button-icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#x-icon"></use>
-          </svg>
-          X.com
-        </a>
-      </li>
-      <li>
-        <a href="https://bsky.app/profile/vite.dev" target="_blank" rel="noreferrer">
-          <svg class="button-icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#bluesky-icon"></use>
-          </svg>
-          Bluesky
-        </a>
-      </li>
-    </ul>
-  </div>
-</section>
+  <main>
+    <TickRule label="denoise" />
+    <section class="card" use:glare={{ tilt: false }}>
+      <span class="glare-layer"></span>
+      <DenoiseBoard />
+    </section>
 
-<div class="ticks"></div>
-<section id="spacer"></section>
+    <TickRule label="controls" />
+    <section class="card" use:glare={{ tilt: true }}>
+      <span class="glare-layer"></span>
+      <Controls />
+    </section>
+  </main>
+</div>
+
+<style>
+  .shell {
+    display: grid;
+    grid-template-columns: 15rem 1fr;
+    min-height: 100dvh;
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+  .rail {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: var(--space-section);
+    border-right: 1px solid var(--line-soft);
+  }
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .tick {
+    width: 8px;
+    height: 8px;
+    background: var(--sage);
+    transform: rotate(45deg);
+  }
+  h1 {
+    font-size: 1.15rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    margin: 0;
+  }
+  .sub {
+    color: var(--ink-2);
+    font-size: 0.82rem;
+    margin: 0;
+  }
+  .meta {
+    font-size: 0.62rem;
+    color: var(--ink-3);
+    margin-top: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+  }
+  .spacer {
+    flex: 1;
+  }
+  footer {
+    font-size: 0.6rem;
+    color: var(--ink-faint);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+  }
+  main {
+    padding: 0 var(--space-section) var(--space-section);
+  }
+  .card {
+    position: relative;
+    background: var(--surface);
+    border: 1px solid var(--line-soft);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: var(--space-card);
+    overflow: hidden;
+    transition: border-color var(--dur-fast) var(--ease-smooth), transform 120ms var(--ease-out);
+    transform-style: preserve-3d;
+  }
+  .card:hover {
+    border-color: var(--line-strong);
+  }
+  .glare-layer {
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    pointer-events: none;
+    opacity: var(--glare, 0);
+    transition: opacity var(--dur-fast) var(--ease-smooth);
+    background: radial-gradient(
+      220px at var(--mx, 50%) var(--my, 50%),
+      oklch(78% var(--accent-c) var(--accent-h) / 0.14),
+      transparent 60%
+    );
+  }
+  @media (max-width: 720px) {
+    .shell {
+      grid-template-columns: 1fr;
+    }
+    .rail {
+      border-right: none;
+      border-bottom: 1px solid var(--line-soft);
+    }
+  }
+</style>
