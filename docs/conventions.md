@@ -40,7 +40,7 @@ Rules:
 
 Markdown files carry YAML frontmatter instead, with at least `title`, `author: "<wtl>"`, `project: wtl-dllm`, and `tags: [...]`.
 
-Exempt: LICENSE, .gitignore, .gitattributes, lockfiles, generated assets, data files (json/csv/jsonl), and everything under `research/raw/`.
+Exempt: LICENSE, .gitignore, .gitattributes, README.md and CLAUDE.md (root display docs), lockfiles, configs (toml/txt/ps1), generated assets, data files (json/csv/jsonl), and everything under `research/raw/`.
 
 `scripts/lint_headers.py` enforces all of this. Run it before you call anything done.
 

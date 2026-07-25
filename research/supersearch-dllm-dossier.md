@@ -1,3 +1,10 @@
+---
+title: "building a local diffusion language model for math — research dossier"
+author: "<wtl>"
+project: wtl-dllm
+tags: [research, dossier, diffusion]
+---
+
 # Building a Local Diffusion Language Model for Math: Supersearch Research Dossier
 
 > Generated: 2026-07-25

@@ -1,3 +1,10 @@
+---
+title: "pawtropolis ui methodology — recon report"
+author: "<wtl>"
+project: wtl-dllm
+tags: [research, ui, design]
+---
+
 # Pawtropolis UI Methodology — Recon Report
 
 > Extracted 2026-07-25 from a local checkout of the pawtropolis-tech repo (`..\pawtropolis-tech`), https://pawtropolis.tech (live, verified via Playwright), and reactbits.dev (props personally verified).
