@@ -1,0 +1,21 @@
+{
+  "ckpt": "runs\\ckpt\\g2-diffusion-fresh\\step0020000.pt",
+  "mode": "diffusion",
+  "weights": "raw",
+  "level": 1,
+  "split": "eval_heldout",
+  "n": 2000,
+  "steps": "canvas",
+  "ordering": "confidence",
+  "temperature": 0.0,
+  "seed": 0,
+  "date": "2026-07-25",
+  "accuracy": 1.0,
+  "wellformed": 1.0,
+  "counts": {
+    "correct": 2000,
+    "wrong": 0,
+    "malformed": 0
+  },
+  "bad_examples": []
+}

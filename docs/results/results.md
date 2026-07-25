@@ -18,3 +18,5 @@ Every number with its full config. Append-only.
 | 2026-07-25 | runs\ckpt\g2-diffusion\step0020000.pt | diffusion | raw | L1 | eval_perturbed | 2000 | canvas | confidence | 0.0 | 0 | 0.258 | 1.0 |
 | 2026-07-25 | runs\ckpt\g2-ar\step0020000.pt | ar | raw | L1 | eval_heldout | 2000 | canvas | left-to-right | 0.0 | 0 | 0.999 | 1.0 |
 | 2026-07-25 | runs\ckpt\g2-ar\step0020000.pt | ar | raw | L1 | eval_perturbed | 2000 | canvas | left-to-right | 0.0 | 0 | 0.092 | 1.0 |
+| 2026-07-25 | runs\ckpt\g2-diffusion-fresh\step0020000.pt | diffusion | raw | L1 | eval_heldout | 2000 | canvas | confidence | 0.0 | 0 | 1.0 | 1.0 |
+| 2026-07-25 | runs\ckpt\g2-diffusion-fresh\step0020000.pt | diffusion | raw | L1 | eval_perturbed | 2000 | canvas | confidence | 0.0 | 0 | 0.1895 | 1.0 |

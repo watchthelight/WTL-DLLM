@@ -1,0 +1,72 @@
+{
+  "ckpt": "runs\\ckpt\\g2-diffusion-fresh\\step0020000.pt",
+  "mode": "diffusion",
+  "weights": "raw",
+  "level": 1,
+  "split": "eval_perturbed",
+  "n": 2000,
+  "steps": "canvas",
+  "ordering": "confidence",
+  "temperature": 0.0,
+  "seed": 0,
+  "date": "2026-07-25",
+  "accuracy": 0.1895,
+  "wellformed": 1.0,
+  "counts": {
+    "correct": 379,
+    "wrong": 1621,
+    "malformed": 0
+  },
+  "bad_examples": [
+    {
+      "problem": "29+88=117",
+      "generated": "119",
+      "verdict": "wrong"
+    },
+    {
+      "problem": "18+88=106",
+      "generated": "97",
+      "verdict": "wrong"
+    },
+    {
+      "problem": "9+98=107",
+      "generated": "108",
+      "verdict": "wrong"
+    },
+    {
+      "problem": "39-28=11",
+      "generated": "9",
+      "verdict": "wrong"
+    },
+    {
+      "problem": "69-29=40",
+      "generated": "30",
+      "verdict": "wrong"
+    },
+    {
+      "problem": "98-29=69",
+      "generated": "6",
+      "verdict": "wrong"
+    },
+    {
+      "problem": "68+28=96",
+      "generated": "86",
+      "verdict": "wrong"
+    },
+    {
+      "problem": "9+38=47",
+      "generated": "328",
+      "verdict": "wrong"
+    },
+    {
+      "problem": "69+18=87",
+      "generated": "74",
+      "verdict": "wrong"
+    },
+    {
+      "problem": "98-39=59",
+      "generated": "6",
+      "verdict": "wrong"
+    }
+  ]
+}
