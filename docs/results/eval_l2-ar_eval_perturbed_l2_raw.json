@@ -1,0 +1,72 @@
+{
+  "ckpt": "runs\\ckpt\\l2-ar\\step0020000.pt",
+  "mode": "ar",
+  "weights": "raw",
+  "level": 2,
+  "split": "eval_perturbed",
+  "n": 2000,
+  "steps": "canvas",
+  "ordering": "left-to-right",
+  "temperature": 0.0,
+  "seed": 0,
+  "date": "2026-07-25",
+  "accuracy": 0.0,
+  "wellformed": 1.0,
+  "counts": {
+    "correct": 0,
+    "wrong": 2000,
+    "malformed": 0
+  },
+  "bad_examples": [
+    {
+      "problem": "64/8=8",
+      "generated": "12",
+      "verdict": "wrong"
+    },
+    {
+      "problem": "8*9=72",
+      "generated": "77",
+      "verdict": "wrong"
+    },
+    {
+      "problem": "81/9=9",
+      "generated": "7",
+      "verdict": "wrong"
+    },
+    {
+      "problem": "8*9=72",
+      "generated": "77",
+      "verdict": "wrong"
+    },
+    {
+      "problem": "8*9=72",
+      "generated": "77",
+      "verdict": "wrong"
+    },
+    {
+      "problem": "9*9=81",
+      "generated": "33",
+      "verdict": "wrong"
+    },
+    {
+      "problem": "9*8=72",
+      "generated": "33",
+      "verdict": "wrong"
+    },
+    {
+      "problem": "8*8=64",
+      "generated": "18",
+      "verdict": "wrong"
+    },
+    {
+      "problem": "9*8=72",
+      "generated": "33",
+      "verdict": "wrong"
+    },
+    {
+      "problem": "9*8=72",
+      "generated": "33",
+      "verdict": "wrong"
+    }
+  ]
+}

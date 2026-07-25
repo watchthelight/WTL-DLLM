@@ -1,0 +1,8 @@
+{
+  "task": "operand-b infill",
+  "n": 200,
+  "equation_valid": 1.0,
+  "ckpt": "l1-diffusion-mix/step0020000.pt",
+  "split": "eval_heldout[:200]",
+  "note": "any operand making the equation true counts; the original b is not required"
+}

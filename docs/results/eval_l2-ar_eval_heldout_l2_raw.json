@@ -1,0 +1,72 @@
+{
+  "ckpt": "runs\\ckpt\\l2-ar\\step0020000.pt",
+  "mode": "ar",
+  "weights": "raw",
+  "level": 2,
+  "split": "eval_heldout",
+  "n": 2000,
+  "steps": "canvas",
+  "ordering": "left-to-right",
+  "temperature": 0.0,
+  "seed": 0,
+  "date": "2026-07-25",
+  "accuracy": 0.2145,
+  "wellformed": 1.0,
+  "counts": {
+    "correct": 429,
+    "wrong": 1571,
+    "malformed": 0
+  },
+  "bad_examples": [
+    {
+      "problem": "60/12=5",
+      "generated": "5",
+      "verdict": "wrong"
+    },
+    {
+      "problem": "3*3=9",
+      "generated": "11",
+      "verdict": "wrong"
+    },
+    {
+      "problem": "55/5=11",
+      "generated": "15",
+      "verdict": "wrong"
+    },
+    {
+      "problem": "3*3=9",
+      "generated": "11",
+      "verdict": "wrong"
+    },
+    {
+      "problem": "3*3=9",
+      "generated": "11",
+      "verdict": "wrong"
+    },
+    {
+      "problem": "72/6=12",
+      "generated": "12",
+      "verdict": "wrong"
+    },
+    {
+      "problem": "10/5=2",
+      "generated": "3",
+      "verdict": "wrong"
+    },
+    {
+      "problem": "10/5=2",
+      "generated": "3",
+      "verdict": "wrong"
+    },
+    {
+      "problem": "42/6=7",
+      "generated": "4",
+      "verdict": "wrong"
+    },
+    {
+      "problem": "18/6=3",
+      "generated": "6",
+      "verdict": "wrong"
+    }
+  ]
+}
