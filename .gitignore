@@ -1,0 +1,20 @@
+# python
+__pycache__/
+*.py[cod]
+.venv/
+*.egg-info/
+.pytest_cache/
+
+# training artifacts
+runs/*
+!runs/.gitkeep
+*.pt
+*.ckpt
+
+# node
+node_modules/
+ui/dist/
+
+# os noise
+.DS_Store
+Thumbs.db
