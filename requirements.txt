@@ -1,0 +1,8 @@
+# wtl-dllm runtime deps (torch installed separately — cuda wheel per your gpu)
+torch>=2.11
+numpy>=2.4
+fastapi>=0.140
+uvicorn[standard]>=0.35
+websockets>=16
+pytest>=9
+httpx>=0.28
