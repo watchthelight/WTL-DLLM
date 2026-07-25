@@ -18,7 +18,7 @@ The model's entire world, all machine-generated, all symbolic. No word problems 
 | L1 | single-op add/sub, operands ≤ 2 digits, results ≥ 0 | `47+58=105` |
 | L2 | multiply / exact divide | `12*7=84` · `84/7=12` |
 | L3 | 3–4 digit add/sub with carries, two-op precedence | `1847+2596=4443` · `3+4*5=23` |
-| L4 | solve for x, integer solutions | `7x+3=52 x=7` |
+| L4 | solve for x, integer solutions | `7x+3=52,x=7` |
 | L5 | countdown: reach target from given numbers | `3,7,25:46=25+3*7` |
 
 Fixed answer formats, fixed canvas length per level, `[EOS]` then `[PAD]` termination.

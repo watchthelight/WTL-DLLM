@@ -16,7 +16,7 @@ tags: [plan, data, generator]
   - L1: `47+58=105` · `82-19=63` (operands 1–2 digits, results non-negative)
   - L2: `12*7=84` · `84/7=12` (division exact by construction)
   - L3: `1847+2596=4443` · `703-458=245` (3–4 digit, carries/borrows guaranteed present in ≥50% of samples) · `3+4*5=23` (two-op precedence)
-  - L4: `7x+3=52 x=7` (a in 2–12, integer x in 1–99, format exactly `{a}x{+|-}{b}={c} x={x}`)
+  - L4: `7x+3=52,x=7` (a in 2–12, integer x in 1–99, format exactly `{a}x{+|-}{b}={c},x={x}` — comma separator, space is not in the vocab)
   - L5: `3,7,25:46=25+3*7` (3–4 given numbers, target reachable by construction, `+ - *` only, answer is one valid expression)
 - Character-level vocabulary: digits `0-9`, ops `+ - * / = x , :`, specials `[PAD] [MASK] [BOS] [EOS]`. Emit `runs/data/vocab.json` (ordered list; specials first). No letters beyond `x`.
 - Canvas lengths (pad with `[PAD]` after `[EOS]`): L1 12 · L2 12 · L3 16 · L4 16 · L5 32. Document in module docstring.
