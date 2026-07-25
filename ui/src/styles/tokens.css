@@ -1,0 +1,59 @@
+/* wtl-dllm · ui/src/styles/tokens.css
+   what: the whole design system — oklch off one seed hue, oled void, square everything
+   why:  retheming is two numbers; depth is borders and surface steps, never blur
+   by:   <wtl> watchthelight
+   tags: ui, tokens */
+
+:root {
+  --accent-h: 152;
+  --accent-c: 0.075;
+
+  /* ground — true black for oled, green-tinted steps above it */
+  --void: oklch(0% 0 0);
+  --surface: oklch(18% 0.013 var(--accent-h));
+  --surface-2: oklch(22% 0.015 var(--accent-h));
+  --surface-3: oklch(26% 0.016 var(--accent-h));
+
+  /* ink ramp */
+  --ink: oklch(93% 0.014 110);
+  --ink-2: oklch(75% 0.016 140);
+  --ink-3: oklch(60% 0.014 150);
+  --ink-faint: oklch(48% 0.012 150);
+
+  /* hairlines */
+  --line: oklch(33% 0.014 var(--accent-h));
+  --line-soft: oklch(27% 0.012 var(--accent-h));
+  --line-strong: oklch(46% 0.02 var(--accent-h));
+
+  /* sage accent family */
+  --sage: oklch(78% var(--accent-c) var(--accent-h));
+  --sage-bright: oklch(85% 0.095 var(--accent-h));
+  --sage-deep: oklch(58% 0.085 var(--accent-h));
+  --sage-soft: oklch(30% 0.041 var(--accent-h));
+  --sage-fill: oklch(24% 0.03 var(--accent-h));
+
+  /* status */
+  --good: oklch(74% 0.09 150);
+  --warn: oklch(78% 0.1 78);
+  --danger: oklch(70% 0.11 32);
+  --info: oklch(74% 0.07 220);
+
+  /* square is the signature */
+  --radius: 2px;
+
+  /* flat by design: hairline top highlight, no bloom */
+  --shadow: 0 1px 0 oklch(100% 0 0 / 0.03);
+
+  --font-body: "Figtree Variable", system-ui, sans-serif;
+  --font-mono: "Space Mono", "Courier New", monospace;
+
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-smooth: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-out: cubic-bezier(0.22, 0.61, 0.36, 1);
+  --dur-fast: 150ms;
+  --dur-med: 250ms;
+  --dur-slow: 400ms;
+
+  --space-card: clamp(14px, 2.5vw, 24px);
+  --space-section: clamp(16px, 3vw, 28px);
+}
