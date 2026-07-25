@@ -31,10 +31,19 @@ def check_code(path, prefix):
 
 def check_block(path):
     text = path.read_text(encoding="utf-8", errors="replace")
+    lead = []
+    if path.suffix == ".svelte":
+        # svelte: path line rides the opening html comment, the rest sits in a
+        # block comment at the top of <script>
+        mm = re.match(r"\s*<!--\s*(.*?)\s*-->", text, re.S)
+        if mm:
+            lead = [mm.group(1).strip()]
+            text = text[mm.end():]
+        text = re.sub(r"^\s*<script[^>]*>\s*", "", text, count=1)
     m = re.match(r"\s*/\*(.*?)\*/", text, re.S)
     if not m:
         return "missing /* header */ block"
-    head = [l.strip() for l in m.group(1).strip().splitlines()]
+    head = lead + [l.strip() for l in m.group(1).strip().splitlines()]
     return validate(head)
 
 
